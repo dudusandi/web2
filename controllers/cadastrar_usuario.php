@@ -1,5 +1,5 @@
 <?php
-require_once '../dao/usuarioDao.php';
+require_once '../dao/ClienteDao.php';
 require_once '../config/database.php'; 
 
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {

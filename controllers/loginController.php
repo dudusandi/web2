@@ -1,7 +1,7 @@
 <?php
 session_start();
 
-require_once '../dao/usuarioDao.php';
+require_once '../dao/ClienteDao.php';
 require_once '../config/database.php';
 
 

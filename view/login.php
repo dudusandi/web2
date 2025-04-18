@@ -16,5 +16,6 @@
         <input type="password" name="senha" required><br><br>
         <button type="submit">Entrar</button>
     </form>
+    <a href="cadastro.php">Cadastre-se</a>
 </body>
 </html>

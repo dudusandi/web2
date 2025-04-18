@@ -7,4 +7,4 @@ if (!isset($_SESSION['usuario_id'])) {
 ?>
 
 <h1>Bem-vindo, <?= $_SESSION['usuario_nome'] ?>!</h1>
-<a href="logout.php">Sair</a>
+<a href="../controllers/logoutController.php">Sair</a>

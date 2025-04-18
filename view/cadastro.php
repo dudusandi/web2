@@ -6,7 +6,7 @@
     <title>Cadastro de Usuário</title>
 </head>
 <body>
-    <h2>Cadastro de Usuários</h2>
+    <h2>Cadastro de Clientes</h2>
     <form action="../controllers/cadastrar_usuario.php" method="POST">
         <label for="nome">Nome:</label>
         <input type="text" id="nome" name="nome" required><br><br>

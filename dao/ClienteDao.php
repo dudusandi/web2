@@ -1,6 +1,6 @@
 <?php
 require_once '../config/database.php';
-require_once '../model/Usuario.php';
+require_once '../model/Cliente.php';
 
 class UsuarioDAO {
     private $pdo;
@@ -27,7 +27,7 @@ class UsuarioDAO {
     }
 
 
-    public function cadastrarUsuario($nome, $email, $senha) {
+    public function cadastrarCliente($nome, $email, $senha) {
         try {
             $sql = "INSERT INTO usuarios (nome, email, senha) VALUES (:nome, :email, :senha)";
             $stmt = $this->pdo->prepare($sql);
