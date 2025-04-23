@@ -145,7 +145,7 @@
             <input type="password" id="senha" name="senha" required>
             <button type="submit">Entrar</button>
         </form>
-        <a href="cadastro.php">Cadastre-se</a>
+        <a href="cadastro_cliente.php">Cadastre-se</a>
     </div>
 </body>
 </html>

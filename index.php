@@ -1,1 +1,4 @@
-<?php include __DIR__ . "../view/login.php"; ?>
+<?php
+header("Location: view/login.php");
+exit();
+?>
