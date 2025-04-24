@@ -37,13 +37,13 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 
     foreach ($camposObrigatorios as $campo => $valor) {
         if (empty($valor)) {
-            header("Location: ../view/cadastro.php?erro=campos_obrigatorios&campo=" . urlencode($campo));
+            header("Location: ../view/cadastro_cliente.php?erro=campos_obrigatorios&campo=" . urlencode($campo));
             exit;
         }
     }
 
     if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
-        header("Location: ../view/cadastro.php?erro=email_invalido");
+        header("Location: ../view/cadastro_cliente.php?erro=email_invalido");
         exit;
     }
 
@@ -65,22 +65,22 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         
         // Verificar se email já existe
         if ($clienteDao->emailExiste($email)) {
-            header("Location: ../view/cadastro.php?erro=email_existente");
+            header("Location: ../view/cadastro_cliente.php?erro=email_existente");
             exit;
         }
 
         if ($resultado) {
-            header('Location: ../view/cadastro.php?sucesso=1');
+            header('Location: ../view/cadastro_cliente.php?sucesso=1');
             exit;
         } else {
-            throw new Exception("Não foi possível completar o cadastro.");
+            throw new Exception("Não foi possível completar o cadastro_cliente.");
         }
     } catch (Exception $e) {
-        error_log("Erro no cadastro: " . $e->getMessage());
-        header('Location: ../view/cadastro.php?erro=erro_sistema');
+        error_log("Erro no cadastro_cliente: " . $e->getMessage());
+        header('Location: ../view/cadastro_cliente.php?erro=erro_sistema');
         exit;
     }
 } else {
-    header('Location: ../view/cadastro.php');
+    header('Location: ../view/cadastro_cliente.php');
     exit;
 }

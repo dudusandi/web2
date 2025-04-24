@@ -257,13 +257,6 @@
             e.target.value = value;
         });
 
-        document.getElementById('cartao_credito').addEventListener('input', function(e) {
-            let value = e.target.value.replace(/\D/g, '');
-            if (value.length > 16) value = value.substring(0, 16);
-            
-            value = value.replace(/(\d{4})(?=\d)/g, '$1 ');
-            e.target.value = value.trim();
-        });
     </script>
 </body>
 </html>
