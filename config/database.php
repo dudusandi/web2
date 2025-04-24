@@ -4,10 +4,10 @@ class Database {
 
     public static function getConnection() {
         if (self::$pdo === null) {
-            $host = 'localhost';
+            $host = '192.168.1.55';
             $dbname = 'web2';
             $user = 'postgres';
-            $pass = 'postgres';
+            $pass = 'dsds';
 
             try {
                 self::$pdo = new PDO("pgsql:host=$host;dbname=$dbname", $user, $pass);

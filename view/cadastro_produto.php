@@ -1,7 +1,7 @@
 <?php
 session_start();
 if (!isset($_SESSION['usuario_id'])) {
-    header('Location: /web2/view/login.php');
+    header('Location: ./login.php');
     exit;
 }
 $erro = $_GET['erro'] ?? '';
@@ -60,7 +60,7 @@ $sucesso = isset($_GET['sucesso']) && $_GET['sucesso'] == '1';
         <?php endif; ?>
 
         <!-- Formulário de cadastro -->
-        <form action="/web2/controller/cadastro_produto.php" method="POST" enctype="multipart/form-data">
+        <form action="../controllers/cadastrar_produto.php" method="POST" enctype="multipart/form-data">
             <div class="mb-3">
                 <label for="nome" class="form-label">Nome do Produto *</label>
                 <input type="text" class="form-control" id="nome" name="nome" required
@@ -75,7 +75,7 @@ $sucesso = isset($_GET['sucesso']) && $_GET['sucesso'] == '1';
             <div class="mb-3">
                 <label for="foto" class="form-label">Foto do Produto</label>
                 <input type="file" class="form-control" id="foto" name="foto" accept="image/jpeg,image/png,image/gif">
-                <small class="form-text text-muted">Formatos aceitos: JPEG, PNG, GIF. Tamanho máximo: 2MB. Escolha uma imagem clara para destacar seu produto.</small>
+                <small class="form-text text-muted">Formatos aceitos: JPEG, PNG, GIF. Tamanho máximo: 16MB. Escolha uma imagem clara para destacar seu produto.</small>
             </div>
 
             <div class="mb-3">

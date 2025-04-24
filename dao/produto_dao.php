@@ -12,24 +12,25 @@ class ProdutoDAO {
 
     public function cadastrarProduto(Produto $produto) {
         try {
-            $this->pdo->beginTransaction();
-
             $sql = "INSERT INTO produtos 
                     (nome, descricao, foto, fornecedor, estoque) 
                     VALUES (:nome, :descricao, :foto, :fornecedor, :estoque)";
             $stmt = $this->pdo->prepare($sql);
-            $stmt->execute([
+            
+            $params = [
                 ':nome' => $produto->getNome(),
-                ':descricao' => $produto->getDescricao(),
-                ':foto' => $produto->getFoto(),
+                ':descricao' => $produto->getDescricao() ?? null, // Trata explicitamente
+                ':foto' => $produto->getFoto() ?? null,
                 ':fornecedor' => $produto->getFornecedor(),
                 ':estoque' => $produto->getEstoque() ?? 0
-            ]);
-
-            $this->pdo->commit();
+            ];
+            
+            if (!$stmt->execute($params)) {
+                throw new Exception("Falha ao executar a query");
+            }
+            
             return true;
         } catch (PDOException $e) {
-            $this->pdo->rollBack();
             throw new Exception("Erro ao cadastrar produto: " . $e->getMessage());
         }
     }

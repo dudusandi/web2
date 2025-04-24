@@ -1,4 +1,6 @@
 <?php
+ini_set('display_errors', 1);
+error_reporting(E_ALL);
 $basePath = realpath(dirname(__DIR__));
 require_once "$basePath/dao/produto_dao.php";
 require_once "$basePath/model/produto.php";
@@ -9,7 +11,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $nome = trim(htmlspecialchars($_POST['nome'] ?? '', ENT_QUOTES, 'UTF-8'));
     $descricao = trim(htmlspecialchars($_POST['descricao'] ?? '', ENT_QUOTES, 'UTF-8'));
     $fornecedor = trim(htmlspecialchars($_POST['fornecedor'] ?? '', ENT_QUOTES, 'UTF-8'));
-    $estoque = trim(filter_input(INPUT_POST, 'estoque', FILTER_SANITIZE_NUMBER_INT));
+    $estoque = isset($_POST['estoque']) ? (int)$_POST['estoque'] : 0;
+    
     $foto = null;
 
     // Validar campos obrigatórios
@@ -36,7 +39,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     if (isset($_FILES['foto']) && $_FILES['foto']['error'] !== UPLOAD_ERR_NO_FILE) {
         $file = $_FILES['foto'];
         $allowedTypes = ['image/jpeg', 'image/png', 'image/gif'];
-        $maxSize = 2 * 1024 * 1024; // 2MB
+        $maxSize = 16 * 1024 * 1024; // 16MB
 
         // Validar tipo e tamanho
         if (!in_array($file['type'], $allowedTypes) || $file['size'] > $maxSize || $file['error'] !== UPLOAD_ERR_OK) {
@@ -47,7 +50,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         // Gerar nome único para o arquivo
         $ext = pathinfo($file['name'], PATHINFO_EXTENSION);
         $nomeArquivo = uniqid('produto_') . '.' . strtolower($ext);
-        $caminhoDestino = $basePath . '/public/uploads/imagens/' . $nomeArquivo;
+        $caminhoDestino = '../public/uploads/imagens/' . $nomeArquivo;
 
         // Mover o arquivo para o destino
         if (!move_uploaded_file($file['tmp_name'], $caminhoDestino)) {
@@ -55,7 +58,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             exit;
         }
 
-        $foto = '/uploads/imagens/' . $nomeArquivo;
+        $foto = '/public/uploads/imagens/' . $nomeArquivo;
     }
 
     try {
