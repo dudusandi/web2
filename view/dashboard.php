@@ -9,3 +9,4 @@ if (!isset($_SESSION['usuario_id'])) {
 <h1>Bem-vindo, <?= $_SESSION['usuario_nome'] ?>!</h1>
 <a href="../controllers/logout_controller.php">Sair</a>
 <a href="../controllers/cadastrar_produto.php">Cadastrar Produto</a>
+<a href="./listar_produtos.php">Listar Produtos</a>
