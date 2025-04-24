@@ -127,6 +127,7 @@
             input[type="password"],
             button {
                 font-size: 0.95em;
+    
                 padding: 10px;
             }
         }

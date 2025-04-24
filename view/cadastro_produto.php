@@ -1,5 +1,9 @@
 <?php
-// Iniciar sessão ou outras configurações, se necessário
+session_start();
+if (!isset($_SESSION['usuario_id'])) {
+    header('Location: /web2/view/login.php');
+    exit;
+}
 $erro = $_GET['erro'] ?? '';
 $campo = $_GET['campo'] ?? '';
 $sucesso = isset($_GET['sucesso']) && $_GET['sucesso'] == '1';
@@ -56,7 +60,7 @@ $sucesso = isset($_GET['sucesso']) && $_GET['sucesso'] == '1';
         <?php endif; ?>
 
         <!-- Formulário de cadastro -->
-        <form action="../controller/cadastro_produto.php" method="POST" enctype="multipart/form-data">
+        <form action="/web2/controller/cadastro_produto.php" method="POST" enctype="multipart/form-data">
             <div class="mb-3">
                 <label for="nome" class="form-label">Nome do Produto *</label>
                 <input type="text" class="form-control" id="nome" name="nome" required
@@ -87,7 +91,7 @@ $sucesso = isset($_GET['sucesso']) && $_GET['sucesso'] == '1';
             </div>
 
             <button type="submit" class="btn btn-primary">Cadastrar</button>
-            <a href="../view/listar_produtos.php" class="btn btn-secondary">Voltar</a>
+            <a href="../view/dashboard.php" class="btn btn-secondary">Voltar</a>
         </form>
     </div>
 
