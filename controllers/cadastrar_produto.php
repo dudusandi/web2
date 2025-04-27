@@ -58,7 +58,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             exit;
         }
 
-        $foto = '/public/uploads/imagens/' . $nomeArquivo;
+        $foto = '../public/uploads/imagens/' . $nomeArquivo;
     }
 
     try {
