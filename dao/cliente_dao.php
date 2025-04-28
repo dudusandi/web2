@@ -24,7 +24,6 @@ class ClienteDAO {
         if ($stmt->rowCount() > 0) {
             $linha = $stmt->fetch(PDO::FETCH_ASSOC);
             
-            // Verificar a senha diretamente
             if (password_verify($senha, $linha['senha'])) {
                 $endereco = new Endereco(
                     $linha['rua'],
@@ -90,7 +89,6 @@ class ClienteDAO {
         try {
             $this->pdo->beginTransaction();
 
-            // Inserir endereço
             $endereco = $cliente->getEndereco();
             $sqlEndereco = "INSERT INTO enderecos 
                             (rua, numero, complemento, bairro, cep, cidade, estado) 
@@ -109,7 +107,6 @@ class ClienteDAO {
 
             $enderecoId = $stmtEndereco->fetch(PDO::FETCH_ASSOC)['id'];
 
-            // Inserir cliente
             $sqlCliente = "INSERT INTO clientes 
                           (nome, telefone, email, cartao_credito, endereco_id, senha) 
                           VALUES (:nome, :telefone, :email, :cartao_credito, :endereco_id, :senha)";

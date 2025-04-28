@@ -91,7 +91,7 @@ $sucesso = isset($_GET['sucesso']) && $_GET['sucesso'] == '1';
             </div>
 
             <button type="submit" class="btn btn-primary">Cadastrar</button>
-            <a href="../view/dashboard.php" class="btn btn-secondary">Voltar</a>
+            <a href="../view/listar_produtos.php" class="btn btn-secondary">Voltar</a>
         </form>
     </div>
 

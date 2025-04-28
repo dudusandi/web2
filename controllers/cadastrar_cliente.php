@@ -1,9 +1,11 @@
 <?php
-$basePath = realpath(dirname(__DIR__));
-require_once "$basePath/dao/cliente_dao.php";
-require_once "$basePath/model/cliente.php";
-require_once "$basePath/model/endereco.php";
-require_once "$basePath/config/database.php";
+define('BASE_PATH', realpath(dirname(__DIR__)));
+
+// Depois nos outros arquivos
+require_once BASE_PATH . '/dao/cliente_dao.php';
+require_once BASE_PATH . '/model/cliente.php';
+require_once BASE_PATH . '/model/endereco.php';
+require_once BASE_PATH . '/config/database.php';
 
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     // Coletar e sanitizar dados do formulário - Versão atualizada sem FILTER_SANITIZE_STRING

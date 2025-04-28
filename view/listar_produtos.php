@@ -265,7 +265,7 @@ try {
                     document.getElementById('produtoFornecedor').textContent = data.fornecedor;
                     document.getElementById('produtoEstoque').textContent = data.estoque;
                     document.getElementById('produtoFoto').src = data.foto || 'https://via.placeholder.com/200';
-                    document.getElementById('btnConfirmarExclusao').href = `../view/excluir_produto.php?id=${id}`;
+                    document.getElementById('btnConfirmarExclusao').href = `../controllers/excluir_produto.php?id=${id}`;
 
                     // Preencher campos do formulário
                     document.getElementById('produtoId').value = id;
