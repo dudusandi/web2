@@ -43,7 +43,15 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 
         $ext = pathinfo($file['name'], PATHINFO_EXTENSION);
         $nomeArquivo = uniqid('produto_') . '.' . strtolower($ext);
-        $caminhoDestino = '../public/uploads/imagens/' . $nomeArquivo;
+        $uploadDir = BASE_PATH . '/public/uploads/imagens/';
+
+// Verifica se o diretório existe, se não, cria
+if (!file_exists($uploadDir)) {
+    mkdir($uploadDir, 0775, true);
+}
+
+$caminhoDestino = $uploadDir . $nomeArquivo;
+$foto = '/public/uploads/imagens/' . $nomeArquivo; // Caminho relativo para o banco
 
         if (!move_uploaded_file($file['tmp_name'], $caminhoDestino)) {
             header("Location: ../view/cadastro_produto.php?erro=erro_sistema");
