@@ -51,7 +51,7 @@ class Produto {
     public function setUsuarioId($usuario_id) {
         $this->usuario_id = (int)$usuario_id;
     }
-
+//oi
     public function getUsuarioId() {
         return $this->usuario_id;
     }
