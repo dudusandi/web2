@@ -6,6 +6,7 @@ if (!isset($_SESSION['usuario_id'])) {
     echo json_encode(['error' => 'Usuário não autenticado']);
     exit;
 }
+$usuario_id = (int)$_SESSION['usuario_id'];
 
 require_once __DIR__ . '/../config/database.php';
 require_once __DIR__ . '/../dao/produto_dao.php';
@@ -16,7 +17,7 @@ try {
     $produtoDao = new ProdutoDAO($pdo);
 
     // Verificar ID do produto
-    $id = isset($_POST['id']) ? (int)$_POST['id'] : 0;
+    $id = (int)($_POST['id'] ?? 0);
     if ($id <= 0) {
         echo json_encode(['error' => 'ID inválido']);
         exit;
@@ -32,7 +33,7 @@ try {
     $nome = trim(htmlspecialchars($_POST['nome'] ?? '', ENT_QUOTES, 'UTF-8'));
     $descricao = trim(htmlspecialchars($_POST['descricao'] ?? '', ENT_QUOTES, 'UTF-8'));
     $fornecedor = trim(htmlspecialchars($_POST['fornecedor'] ?? '', ENT_QUOTES, 'UTF-8'));
-    $estoque = trim(filter_input(INPUT_POST, 'estoque', FILTER_SANITIZE_NUMBER_INT));
+    $estoque = (int)($_POST['estoque'] ?? 0);
     $foto = $produto->getFoto();
 
     // Validar campos
@@ -40,7 +41,7 @@ try {
         echo json_encode(['error' => 'Nome e fornecedor são obrigatórios']);
         exit;
     }
-    if (!is_numeric($estoque) || (int)$estoque < 0) {
+    if ($estoque < 0) {
         echo json_encode(['error' => 'Estoque inválido']);
         exit;
     }
@@ -62,16 +63,15 @@ try {
 
         $ext = pathinfo($file['name'], PATHINFO_EXTENSION);
         $nomeArquivo = uniqid('produto_') . '.' . strtolower($ext);
-        $caminhoDestino = '../public/uploads/imagens/' . $nomeArquivo;
+        $caminhoDestino = __DIR__ . '/../public/uploads/imagens/' . $nomeArquivo;
 
         if (move_uploaded_file($file['tmp_name'], $caminhoDestino)) {
-            // Remover foto antiga
-            if ($foto && file_exists('../public' . $foto)) {
-                unlink('../public' . $foto);
-                error_log("Foto antiga removida: ../public$foto");
+            if ($foto && file_exists(__DIR__ . '/../public' . $foto)) {
+                unlink(__DIR__ . '/../public' . $foto);
+                error_log(date('[Y-m-d H:i:s] ') . "Foto antiga removida: ../public$foto" . PHP_EOL);
             }
-            $foto = '/public/uploads/imagens/' . $nomeArquivo;
-            error_log("Nova foto salva: $foto");
+            $foto = '../public/uploads/imagens/' . $nomeArquivo;
+            error_log(date('[Y-m-d H:i:s] ') . "Nova foto salva: $foto" . PHP_EOL);
         } else {
             echo json_encode(['error' => 'Erro ao salvar a foto']);
             exit;
@@ -79,8 +79,8 @@ try {
     }
 
     // Atualizar produto
-    $produtoAtualizado = new Produto($nome, $descricao, $foto, $fornecedor);
-    $produtoAtualizado->setEstoque((int)$estoque);
+    $produtoAtualizado = new Produto($nome, $descricao, $foto, $fornecedor, $usuario_id);
+    $produtoAtualizado->setEstoque($estoque);
     $produtoAtualizado->setId($id);
 
     if ($produtoDao->atualizarProduto($produtoAtualizado, $id)) {
@@ -89,7 +89,7 @@ try {
         echo json_encode(['error' => 'Erro ao atualizar o produto']);
     }
 } catch (Exception $e) {
-    error_log("Erro em atualizar_produto.php: " . $e->getMessage());
+    error_log(date('[Y-m-d H:i:s] ') . "Erro em atualizar_produto.php: " . $e->getMessage() . PHP_EOL);
     echo json_encode(['error' => 'Erro ao processar: ' . $e->getMessage()]);
 }
 ?>

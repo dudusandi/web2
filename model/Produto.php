@@ -6,16 +6,18 @@ class Produto {
     private $foto;
     private $fornecedor;
     private $estoque;
+    private $usuario_id;
 
-    public function __construct($nome, $descricao, $foto, $fornecedor) {
+    public function __construct($nome, $descricao, $foto, $fornecedor, $usuario_id) {
         $this->nome = $nome;
         $this->descricao = $descricao;
         $this->foto = $foto;
         $this->fornecedor = $fornecedor;
+        $this->usuario_id = (int)$usuario_id; // Garante que usuario_id seja inteiro
     }
 
     public function setId($id) {
-        $this->id = $id;
+        $this->id = (int)$id;
     }
 
     public function getId() {
@@ -44,5 +46,13 @@ class Produto {
 
     public function getEstoque() {
         return $this->estoque;
+    }
+
+    public function setUsuarioId($usuario_id) {
+        $this->usuario_id = (int)$usuario_id;
+    }
+
+    public function getUsuarioId() {
+        return $this->usuario_id;
     }
 }
