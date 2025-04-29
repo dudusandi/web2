@@ -10,11 +10,14 @@ $usuario_id = (int)$_SESSION['usuario_id'];
 
 require_once __DIR__ . '/../config/database.php';
 require_once __DIR__ . '/../dao/produto_dao.php';
+require_once __DIR__ . '/../dao/estoque_dao.php'; // Novo: EstoqueDAO
 require_once __DIR__ . '/../model/produto.php';
+require_once __DIR__ . '/../model/estoque.php'; // Novo: Estoque
 
 try {
     $pdo = Database::getConnection();
     $produtoDao = new ProdutoDAO($pdo);
+    $estoqueDao = new EstoqueDAO($pdo); // Instanciar EstoqueDAO também
 
     // Verificar ID do produto
     $id = (int)($_POST['id'] ?? 0);
@@ -33,7 +36,7 @@ try {
     $nome = trim(htmlspecialchars($_POST['nome'] ?? '', ENT_QUOTES, 'UTF-8'));
     $descricao = trim(htmlspecialchars($_POST['descricao'] ?? '', ENT_QUOTES, 'UTF-8'));
     $fornecedor = trim(htmlspecialchars($_POST['fornecedor'] ?? '', ENT_QUOTES, 'UTF-8'));
-    $estoque = (int)($_POST['estoque'] ?? 0);
+    $estoqueQuantidade = (int)($_POST['estoque'] ?? 0);
     $foto = $produto->getFoto();
 
     // Validar campos
@@ -41,7 +44,7 @@ try {
         echo json_encode(['error' => 'Nome e fornecedor são obrigatórios']);
         exit;
     }
-    if ($estoque < 0) {
+    if ($estoqueQuantidade < 0) {
         echo json_encode(['error' => 'Estoque inválido']);
         exit;
     }
@@ -80,13 +83,25 @@ try {
 
     // Atualizar produto
     $produtoAtualizado = new Produto($nome, $descricao, $foto, $fornecedor, $usuario_id);
-    $produtoAtualizado->setEstoque($estoque);
     $produtoAtualizado->setId($id);
 
-    if ($produtoDao->atualizarProduto($produtoAtualizado, $id)) {
+    // Atualizar o Produto no banco
+    $produtoAtualizadoComSucesso = $produtoDao->atualizarProduto($produtoAtualizado, $id);
+
+    // Atualizar o Estoque no banco
+    $estoqueExistente = $estoqueDao->buscarPorProdutoId($id);
+    if ($estoqueExistente) {
+        $estoqueExistente->adicionar($estoqueQuantidade - $estoqueExistente->getQuantidade());
+        $estoqueAtualizado = $estoqueDao->atualizarEstoque($estoqueExistente);
+    } else {
+        $novoEstoque = new Estoque($produtoAtualizado, $estoqueQuantidade);
+        $estoqueAtualizado = $estoqueDao->inserirEstoque($novoEstoque);
+    }
+
+    if ($produtoAtualizadoComSucesso && $estoqueAtualizado) {
         echo json_encode(['success' => true, 'foto' => $foto]);
     } else {
-        echo json_encode(['error' => 'Erro ao atualizar o produto']);
+        echo json_encode(['error' => 'Erro ao atualizar produto ou estoque']);
     }
 } catch (Exception $e) {
     error_log(date('[Y-m-d H:i:s] ') . "Erro em atualizar_produto.php: " . $e->getMessage() . PHP_EOL);

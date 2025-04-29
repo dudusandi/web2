@@ -3,7 +3,7 @@ class Pedido {
     private $numero;
     private $dataPedido;
     private $dataEntrega;
-    private $situacao; // NOVO, ENTREGUE ou CANCELADO
+    private $situacao; 
     private $cliente;
     private $itensPedido = array();
     
@@ -15,7 +15,7 @@ class Pedido {
         $this->cliente = $cliente;
     }
     
-    // Getters
+ 
     public function getNumero() {
         return $this->numero;
     }

@@ -2,7 +2,9 @@
 define('BASE_PATH', realpath(dirname(__DIR__)));
 
 require_once BASE_PATH . '/dao/produto_dao.php';
+require_once BASE_PATH . '/dao/estoque_dao.php'; // Adicionado EstoqueDAO
 require_once BASE_PATH . '/model/produto.php';
+require_once BASE_PATH . '/model/estoque.php'; // Adicionado Estoque
 require_once BASE_PATH . '/config/database.php';
 
 session_start();
@@ -38,9 +40,9 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 $nome = trim(htmlspecialchars($_POST['nome'] ?? '', ENT_QUOTES, 'UTF-8'));
 $descricao = trim(htmlspecialchars($_POST['descricao'] ?? '', ENT_QUOTES, 'UTF-8'));
 $fornecedor = trim(htmlspecialchars($_POST['fornecedor'] ?? '', ENT_QUOTES, 'UTF-8'));
-$estoque = filter_var($_POST['estoque'] ?? '', FILTER_VALIDATE_INT, ['options' => ['min_range' => 0]]);
+$estoqueQuantidade = filter_var($_POST['estoque'] ?? '', FILTER_VALIDATE_INT, ['options' => ['min_range' => 0]]);
 
-logError("Dados recebidos: nome=$nome, fornecedor=$fornecedor, estoque=$estoque, descricao=$descricao, usuario_id=$usuario_id");
+logError("Dados recebidos: nome=$nome, fornecedor=$fornecedor, estoque=$estoqueQuantidade, descricao=$descricao, usuario_id=$usuario_id");
 
 // Validação campos obrigatórios
 foreach (['nome' => $nome, 'fornecedor' => $fornecedor] as $campo => $valor) {
@@ -49,7 +51,7 @@ foreach (['nome' => $nome, 'fornecedor' => $fornecedor] as $campo => $valor) {
         redirectWithError('campos_obrigatorios', $campo);
     }
 }
-if ($estoque === false || $estoque === null) {
+if ($estoqueQuantidade === false || $estoqueQuantidade === null) {
     logError("Erro: Estoque inválido (valor: {$_POST['estoque']})");
     redirectWithError('estoque_invalido');
 }
@@ -90,12 +92,12 @@ if (!empty($_FILES['foto']) && $_FILES['foto']['error'] !== UPLOAD_ERR_NO_FILE) 
 
 try {
     $produto = new Produto($nome, $descricao, $foto, $fornecedor, $usuario_id);
-    $produto->setEstoque($estoque);
 
     $pdo = Database::getConnection();
     if (!$pdo) throw new Exception("Falha na conexão com o banco de dados");
 
     $produtoDao = new ProdutoDAO($pdo);
+    $estoqueDao = new EstoqueDAO($pdo); // Novo
 
     logError("Verificando se o nome '$nome' já existe");
     if ($produtoDao->nomeExiste($nome)) {
@@ -109,6 +111,17 @@ try {
     logError("Cadastrando produto no banco de dados");
     if ($produtoDao->cadastrarProduto($produto)) {
         logError("Produto cadastrado com sucesso: nome=$nome");
+
+        // Recuperar ID do produto inserido
+        $produtoId = $pdo->lastInsertId();
+        $produto->setId($produtoId);
+
+        // Agora cadastrar o estoque
+        $estoque = new Estoque($produto, $estoqueQuantidade);
+        if (!$estoqueDao->inserirEstoque($estoque)) {
+            throw new Exception("Falha ao cadastrar estoque do produto.");
+        }
+
         header('Location: ../view/cadastro_produto.php?sucesso=1');
         exit;
     }
