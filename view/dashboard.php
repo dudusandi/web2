@@ -204,7 +204,10 @@ try {
         </div>
     </div>
     <div class="nav-bar">
-        <a href="../view/listar_produtos.php">Meus Produtos</a>
+        <a href="../view/listar_produtos.php">Meus Produtos</a> 
+        <a href="../view/cadastro_fornecedor.php">Cadastrar Fornecedor</a> 
+
+
     </div>
     <div class="welcome">
     </div>
