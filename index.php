@@ -7,7 +7,7 @@ if (!isset($_SESSION['usuario_id'])) {
 }
 header(header: "Location: ./view/dashboard.php");
 
-//777
+
 
 ?>
 
