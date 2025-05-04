@@ -45,6 +45,12 @@ CREATE TABLE enderecos (
     estado VARCHAR(2) NOT NULL
 );
 
+CREATE TABLE estoques (
+    id SERIAL PRIMARY KEY,
+    quantidade INTEGER NOT NULL CHECK (quantidade >= 0),
+    preco DECIMAL(10, 2) NOT NULL CHECK (preco >= 0),
+);
+
 CREATE TABLE clientes (
     id SERIAL PRIMARY KEY,
     nome VARCHAR(255) NOT NULL,

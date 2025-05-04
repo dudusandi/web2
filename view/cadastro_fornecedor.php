@@ -1,5 +1,4 @@
 <?php
-// Verifica se há mensagens de sucesso ou erro (opcional, pode ser passado pelo controller)
 $mensagem = isset($_GET['mensagem']) ? $_GET['mensagem'] : '';
 ?>
 

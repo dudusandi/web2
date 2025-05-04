@@ -11,7 +11,6 @@ class FornecedorDAO {
         $this->pdo = $pdo;
     }
 
-    // Cadastra um novo fornecedor
     public function cadastrarFornecedor(Fornecedor $fornecedor) {
         try {
             $this->pdo->beginTransaction();
@@ -54,7 +53,6 @@ class FornecedorDAO {
         }
     }
 
-    // Lista todos os fornecedores
     public function listarTodos() {
         $sql = "SELECT f.id, f.nome, f.descricao, f.telefone, f.email, 
                        e.rua, e.numero, e.bairro, e.cep, e.cidade, e.estado, e.complemento
@@ -83,14 +81,14 @@ class FornecedorDAO {
                 $linha['email'],
                 $endereco
             );
-            $fornecedor->setId($linha['id']); // Assumindo que Fornecedor tem setId
+            $fornecedor->setId($linha['id']); 
             $fornecedores[] = $fornecedor;
         }
 
         return $fornecedores;
     }
 
-    // Busca fornecedor por ID
+
     public function buscarPorId($id) {
         $sql = "SELECT f.id, f.nome, f.descricao, f.telefone, f.email, 
                        e.rua, e.numero, e.bairro, e.cep, e.cidade, e.estado, e.complemento
@@ -121,14 +119,14 @@ class FornecedorDAO {
                 $linha['email'],
                 $endereco
             );
-            $fornecedor->setId($linha['id']); // Assumindo que Fornecedor tem setId
+            $fornecedor->setId($linha['id']); 
             return $fornecedor;
         }
 
         return null;
     }
 
-    // Atualiza um fornecedor
+
     public function atualizarFornecedor(Fornecedor $fornecedor) {
         try {
             $this->pdo->beginTransaction();
@@ -176,7 +174,7 @@ class FornecedorDAO {
         }
     }
 
-    // Remove um fornecedor
+
     public function removerFornecedor($id) {
         try {
             $this->pdo->beginTransaction();

@@ -1,131 +1,57 @@
 <?php
-define('BASE_PATH', realpath(dirname(__DIR__)));
-
-require_once BASE_PATH . '/dao/produto_dao.php';
-require_once BASE_PATH . '/model/produto.php';
-require_once BASE_PATH . '/config/database.php';
-
 session_start();
-
-function logError(string $msg): void {
-    error_log(date('[Y-m-d H:i:s] ') . $msg . PHP_EOL);
-}
-
-function redirectWithError(string $error, string $campo = ''): void {
-    $url = "../view/cadastro_produto.php?erro=$error";
-    if ($campo) $url .= "&campo=" . urlencode($campo);
-    header("Location: $url");
+if (!isset($_SESSION['usuario_id'])) {
+    header('Location: ../view/login.php');
     exit;
 }
 
-// Verifica usuário logado
-if (empty($_SESSION['usuario_id'])) {
-    logError("Erro: Usuário não está logado");
-    header("Location: ../view/login.php?erro=nao_logado");
-    exit;
-}
-$usuario_id = (int)$_SESSION['usuario_id'];
-logError("Usuário logado: usuario_id=$usuario_id");
+require_once '../model/produto.php';
+require_once '../model/endereco.php';
+require_once '../model/fornecedor.php';
+require_once '../model/estoque.php';
+require_once '../dao/produto_dao.php';
+require_once '../config/database.php';
 
-// Só aceita POST
-if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-    logError("Erro: Método de requisição inválido (não é POST)");
-    header('Location: ../view/cadastro_produto.php');
-    exit;
-}
+$controller = new ProdutoDAO(Database::getConnection());
 
-// Sanitiza e obtém dados do POST
-$nome = trim(htmlspecialchars($_POST['nome'] ?? '', ENT_QUOTES, 'UTF-8'));
-$descricao = trim(htmlspecialchars($_POST['descricao'] ?? '', ENT_QUOTES, 'UTF-8'));
-$fornecedor = trim(htmlspecialchars($_POST['fornecedor'] ?? '', ENT_QUOTES, 'UTF-8'));
-$estoque = filter_var($_POST['estoque'] ?? '', FILTER_VALIDATE_INT, ['options' => ['min_range' => 0]]);
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    $nome = trim($_POST['nome'] ?? '');
+    $descricao = trim($_POST['descricao'] ?? '');
+    $fornecedorId = (int)($_POST['fornecedor_id'] ?? 0);
+    $quantidade = (int)($_POST['quantidade'] ?? 0);
+    $preco = floatval($_POST['preco'] ?? 0.00);
+    $usuarioId = (int)($_SESSION['usuario_id']);
+    $foto = $_FILES['foto'] ?? null;
 
-logError("Dados recebidos: nome=$nome, fornecedor=$fornecedor, estoque=$estoque, descricao=$descricao, usuario_id=$usuario_id");
-
-// Validação campos obrigatórios
-foreach (['nome' => $nome, 'fornecedor' => $fornecedor] as $campo => $valor) {
-    if ($valor === '') {
-        logError("Erro: Campo obrigatório '$campo' está vazio");
-        redirectWithError('campos_obrigatorios', $campo);
-    }
-}
-if ($estoque === false || $estoque === null) {
-    logError("Erro: Estoque inválido (valor: {$_POST['estoque']})");
-    redirectWithError('estoque_invalido');
-}
-
-// Tratamento do upload da foto
-$foto = null;
-if (!empty($_FILES['foto']) && $_FILES['foto']['error'] !== UPLOAD_ERR_NO_FILE) {
-    $file = $_FILES['foto'];
-    $allowedTypes = ['image/jpeg', 'image/png', 'image/gif'];
-    $maxSize = 16 * 1024 * 1024; // 16MB
-
-    logError("Arquivo recebido: nome={$file['name']}, tipo={$file['type']}, tamanho={$file['size']}, erro={$file['error']}");
-
-    if (!in_array($file['type'], $allowedTypes) || $file['size'] > $maxSize || $file['error'] !== UPLOAD_ERR_OK) {
-        logError("Erro: Foto inválida (tipo={$file['type']}, tamanho={$file['size']}, erro={$file['error']})");
-        redirectWithError('foto_invalida');
-    }
-
-    $ext = strtolower(pathinfo($file['name'], PATHINFO_EXTENSION));
-    $nomeArquivo = uniqid('produto_') . '.' . $ext;
-    $uploadDir = BASE_PATH . '/public/uploads/imagens/';
-
-    if (!is_dir($uploadDir) && !mkdir($uploadDir, 0775, true)) {
-        logError("Erro: Falha ao criar diretório de upload ($uploadDir)");
-        redirectWithError('erro_diretorio');
-    }
-
-    $caminhoDestino = $uploadDir . $nomeArquivo;
-    $foto = '../public/uploads/imagens/' . $nomeArquivo;
-
-    if (!move_uploaded_file($file['tmp_name'], $caminhoDestino)) {
-        logError("Erro: Falha ao mover arquivo para $caminhoDestino");
-        redirectWithError('erro_sistema');
-    }
-
-    logError("Arquivo movido com sucesso para $caminhoDestino");
-}
-
-try {
-    $produto = new Produto($nome, $descricao, $foto, $fornecedor, $usuario_id);
-    $produto->setEstoque($estoque);
-
-    $pdo = Database::getConnection();
-    if (!$pdo) throw new Exception("Falha na conexão com o banco de dados");
-
-    $produtoDao = new ProdutoDAO($pdo);
-
-    logError("Verificando se o nome '$nome' já existe");
-    if ($produtoDao->nomeExiste($nome)) {
-        if ($foto && file_exists(BASE_PATH . '/public' . $foto)) {
-            unlink(BASE_PATH . '/public' . $foto);
-            logError("Arquivo $foto removido devido a nome existente");
-        }
-        redirectWithError('nome_existente');
-    }
-
-    logError("Cadastrando produto no banco de dados");
-    if ($produtoDao->cadastrarProduto($produto)) {
-        logError("Produto cadastrado com sucesso: nome=$nome");
-        header('Location: ../view/cadastro_produto.php?sucesso=1');
+    // Validações
+    if (empty($nome) || $fornecedorId <= 0 || $quantidade < 0 || $preco < 0) {
+        $campo = empty($nome) ? 'nome' : ($fornecedorId <= 0 ? 'fornecedor' : 'estoque');
+        $erro = 'campos_obrigatorios';
+        header("Location: ../view/cadastro_produto.php?erro=$erro&campo=$campo");
         exit;
     }
 
-    // Caso cadastro falhe
-    if ($foto && file_exists(BASE_PATH . '/public' . $foto)) {
-        unlink(BASE_PATH . '/public' . $foto);
-        logError("Arquivo $foto removido devido a falha no cadastro");
-    }
-    throw new Exception("Não foi possível completar o cadastro do produto.");
+    // Criação do fornecedor (placeholder, deve ser buscado no banco)
+    $fornecedor = new Fornecedor("Nome Temporário", "", "", "", new Endereco("", "", "", "", "", "", ""));
+    $fornecedor->setId($fornecedorId);
 
-} catch (Exception $e) {
-    if ($foto && file_exists(BASE_PATH . '/public' . $foto)) {
-        unlink(BASE_PATH . '/public' . $foto);
-        logError("Arquivo $foto removido devido a exceção");
+    // Processamento da foto (simplificado)
+    $fotoNome = null;
+    if ($foto && $foto['error'] === UPLOAD_ERR_OK) {
+        $extensao = pathinfo($foto['name'], PATHINFO_EXTENSION);
+        $fotoNome = uniqid() . '.' . $extensao;
+        move_uploaded_file($foto['tmp_name'], '../public/uploads/imagens/' . $fotoNome);
     }
-    logError("Erro no cadastro de produto: " . $e->getMessage() . " | Stacktrace: " . $e->getTraceAsString());
-    redirectWithError('erro_sistema');
+
+    // Criação do produto
+    $produto = new Produto($nome, $descricao, $fotoNome ?? '', $fornecedor, $usuarioId);
+    try {
+        $produtoDAO->inserir($produto); // Estoque será criado com valores iniciais no DAO
+        header('Location: ../view/cadastro_produto.php?sucesso=1');
+        exit;
+    } catch (Exception $e) {
+        header("Location: ../view/cadastro_produto.php?erro=erro_sistema");
+        exit;
+    }
 }
 ?>

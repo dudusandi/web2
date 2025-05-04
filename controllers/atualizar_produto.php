@@ -16,7 +16,7 @@ try {
     $pdo = Database::getConnection();
     $produtoDao = new ProdutoDAO($pdo);
 
-    // Verificar ID do produto
+    // Verifica ID do produto
     $id = (int)($_POST['id'] ?? 0);
     if ($id <= 0) {
         echo json_encode(['error' => 'ID inválido']);
@@ -29,14 +29,13 @@ try {
         exit;
     }
 
-    // Coletar e sanitizar dados
+
     $nome = trim(htmlspecialchars($_POST['nome'] ?? '', ENT_QUOTES, 'UTF-8'));
     $descricao = trim(htmlspecialchars($_POST['descricao'] ?? '', ENT_QUOTES, 'UTF-8'));
     $fornecedor = trim(htmlspecialchars($_POST['fornecedor'] ?? '', ENT_QUOTES, 'UTF-8'));
     $estoque = (int)($_POST['estoque'] ?? 0);
     $foto = $produto->getFoto();
 
-    // Validar campos
     if (empty($nome) || empty($fornecedor)) {
         echo json_encode(['error' => 'Nome e fornecedor são obrigatórios']);
         exit;
@@ -50,7 +49,6 @@ try {
         exit;
     }
 
-    // Processar nova foto
     if (isset($_FILES['foto']) && $_FILES['foto']['error'] === UPLOAD_ERR_OK) {
         $file = $_FILES['foto'];
         $allowedTypes = ['image/jpeg', 'image/png', 'image/gif'];
@@ -78,7 +76,6 @@ try {
         }
     }
 
-    // Atualizar produto
     $produtoAtualizado = new Produto($nome, $descricao, $foto, $fornecedor, $usuario_id);
     $produtoAtualizado->setEstoque($estoque);
     $produtoAtualizado->setId($id);

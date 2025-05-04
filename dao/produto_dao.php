@@ -1,57 +1,68 @@
 <?php
 require_once __DIR__ . '/../config/database.php';
 require_once __DIR__ . '/../model/produto.php';
+require_once __DIR__ . '/../model/fornecedor.php';
+require_once __DIR__ . '/../model/estoque.php';
+require_once __DIR__ . '/../dao/estoque_dao.php';
+require_once __DIR__ . '/../dao/fornecedor_dao.php';
 
 class ProdutoDAO {
     private $pdo;
+    private $estoqueDAO;
+    private $fornecedorDAO;
 
     public function __construct($pdo) {
         $this->pdo = $pdo;
+        $this->estoqueDAO = new EstoqueDAO($pdo);
+        $this->fornecedorDAO = new FornecedorDAO($pdo);
     }
 
-    public function cadastrarProduto(Produto $produto) {
+    public function cadastrarProduto(Produto $produto, $quantidade, $preco) {
         try {
             $this->pdo->beginTransaction();
 
-            $sql = "INSERT INTO produtos 
-                    (nome, descricao, foto, fornecedor, estoque, usuario_id) 
-                    VALUES (:nome, :descricao, :foto, :fornecedor, :estoque, :usuario_id)";
-            $stmt = $this->pdo->prepare($sql);
-
+            // Validações
             $nome = $produto->getNome() ?? '';
-            $descricao = $produto->getDescricao();
-            $foto = $produto->getFoto();
-            $fornecedor = $produto->getFornecedor() ?? '';
-            $estoque = (int)($produto->getEstoque() ?? 0);
-            $usuario_id = (int)($produto->getUsuarioId() ?? 0);
+            $fornecedor = $produto->getFornecedor();
+            $fornecedorId = $fornecedor ? $fornecedor->getId() : 0;
+            $usuarioId = (int)($produto->getUsuarioId() ?? 0);
 
-            if (empty($nome) || empty($fornecedor)) {
+            if (empty($nome) || $fornecedorId <= 0) {
                 throw new Exception("Nome e fornecedor são obrigatórios");
             }
-            if ($usuario_id === 0) {
+            if ($usuarioId === 0) {
                 throw new Exception("ID do usuário é obrigatório");
             }
+            if ($quantidade < 0 || $preco < 0) {
+                throw new Exception("Quantidade e preço devem ser não negativos");
+            }
 
-            error_log(date('[Y-m-d H:i:s] ') . "Executando query: $sql com valores: " . print_r([
-                'nome' => $nome,
-                'descricao' => $descricao,
-                'foto' => $foto,
-                'fornecedor' => $fornecedor,
-                'estoque' => $estoque,
-                'usuario_id' => $usuario_id
-            ], true) . PHP_EOL);
+            // Insere o estoque
+            $estoque = new Estoque($quantidade, $preco);
+            $estoqueId = $this->estoqueDAO->inserir($estoque);
+
+            // Insere o produto
+            $sql = "INSERT INTO produtos 
+                    (nome, descricao, foto, fornecedor_id, estoque_id, usuario_id) 
+                    VALUES (:nome, :descricao, :foto, :fornecedor_id, :estoque_id, :usuario_id)
+                    RETURNING id";
+            $stmt = $this->pdo->prepare($sql);
 
             $stmt->execute([
-                ':nome' => $nome,
-                ':descricao' => $descricao,
-                ':foto' => $foto,
-                ':fornecedor' => $fornecedor,
-                ':estoque' => $estoque,
-                ':usuario_id' => $usuario_id
+                ':nome' => $produto->getNome(),
+                ':descricao' => $produto->getDescricao(),
+                ':foto' => $produto->getFoto(),
+                ':fornecedor_id' => $fornecedorId,
+                ':estoque_id' => $estoqueId,
+                ':usuario_id' => $usuarioId
             ]);
 
+            $produtoId = $stmt->fetch(PDO::FETCH_ASSOC)['id'];
+            $produto->setId($produtoId);
+            $produto->setEstoque($estoqueId);
+
             $this->pdo->commit();
-            error_log(date('[Y-m-d H:i:s] ') . "Produto inserido com sucesso" . PHP_EOL);
+            error_log(date('[Y-m-d H:i:s] ') . "Produto inserido com sucesso, ID: $produtoId" . PHP_EOL);
             return true;
         } catch (PDOException $e) {
             $this->pdo->rollBack();
@@ -83,7 +94,10 @@ class ProdutoDAO {
 
     public function listarTodos($limit = null, $offset = null) {
         try {
-            $sql = "SELECT id, nome, descricao, foto, fornecedor, estoque, usuario_id FROM produtos";
+            $sql = "SELECT p.id, p.nome, p.descricao, p.foto, p.fornecedor_id, p.estoque_id, p.usuario_id,
+                           e.quantidade, e.preco
+                    FROM produtos p
+                    LEFT JOIN estoques e ON p.estoque_id = e.id";
             if ($limit !== null && $offset !== null) {
                 $sql .= " LIMIT :limit OFFSET :offset";
             }
@@ -96,15 +110,21 @@ class ProdutoDAO {
 
             $produtos = [];
             while ($linha = $stmt->fetch(PDO::FETCH_ASSOC)) {
+                $fornecedor = $this->fornecedorDAO->buscarPorId($linha['fornecedor_id']);
+                if (!$fornecedor) {
+                    $fornecedor = new Fornecedor("Fornecedor Desconhecido", "", "", "", new Endereco("", "", "", "", "", "", ""));
+                    $fornecedor->setId($linha['fornecedor_id']);
+                }
+
                 $produto = new Produto(
                     $linha['nome'],
                     $linha['descricao'],
                     $linha['foto'],
-                    $linha['fornecedor'],
+                    $fornecedor,
                     $linha['usuario_id']
                 );
                 $produto->setId($linha['id']);
-                $produto->setEstoque($linha['estoque']);
+                $produto->setEstoque($linha['estoque_id']);
                 $produtos[] = $produto;
             }
             return $produtos;
@@ -128,9 +148,11 @@ class ProdutoDAO {
 
     public function listarProdutosPorUsuario($usuario_id, $limit = null, $offset = null) {
         try {
-            $sql = "SELECT id, nome, descricao, foto, fornecedor, estoque, usuario_id 
-                    FROM produtos 
-                    WHERE usuario_id = :usuario_id";
+            $sql = "SELECT p.id, p.nome, p.descricao, p.foto, p.fornecedor_id, p.estoque_id, p.usuario_id,
+                           e.quantidade, e.preco
+                    FROM produtos p
+                    LEFT JOIN estoques e ON p.estoque_id = e.id
+                    WHERE p.usuario_id = :usuario_id";
             if ($limit !== null && $offset !== null) {
                 $sql .= " LIMIT :limit OFFSET :offset";
             }
@@ -141,18 +163,24 @@ class ProdutoDAO {
                 $stmt->bindValue(':offset', $offset, PDO::PARAM_INT);
             }
             $stmt->execute();
-    
+
             $produtos = [];
             while ($linha = $stmt->fetch(PDO::FETCH_ASSOC)) {
+                $fornecedor = $this->fornecedorDAO->buscarPorId($linha['fornecedor_id']);
+                if (!$fornecedor) {
+                    $fornecedor = new Fornecedor("Fornecedor Desconhecido", "", "", "", new Endereco("", "", "", "", "", "", ""));
+                    $fornecedor->setId($linha['fornecedor_id']);
+                }
+
                 $produto = new Produto(
                     $linha['nome'],
                     $linha['descricao'],
                     $linha['foto'],
-                    $linha['fornecedor'],
+                    $fornecedor,
                     $linha['usuario_id']
                 );
                 $produto->setId($linha['id']);
-                $produto->setEstoque($linha['estoque']);
+                $produto->setEstoque($linha['estoque_id']);
                 $produtos[] = $produto;
             }
             return $produtos;
@@ -175,24 +203,32 @@ class ProdutoDAO {
 
     public function buscarPorId($id) {
         try {
-            $sql = "SELECT id, nome, descricao, foto, fornecedor, estoque, usuario_id 
-                    FROM produtos 
-                    WHERE id = :id";
+            $sql = "SELECT p.id, p.nome, p.descricao, p.foto, p.fornecedor_id, p.estoque_id, p.usuario_id,
+                           e.quantidade, e.preco
+                    FROM produtos p
+                    LEFT JOIN estoques e ON p.estoque_id = e.id
+                    WHERE p.id = :id";
             $stmt = $this->pdo->prepare($sql);
             $stmt->bindValue(':id', $id, PDO::PARAM_INT);
             $stmt->execute();
 
             if ($stmt->rowCount() > 0) {
                 $linha = $stmt->fetch(PDO::FETCH_ASSOC);
+                $fornecedor = $this->fornecedorDAO->buscarPorId($linha['fornecedor_id']);
+                if (!$fornecedor) {
+                    $fornecedor = new Fornecedor("Fornecedor Desconhecido", "", "", "", new Endereco("", "", "", "", "", "", ""));
+                    $fornecedor->setId($linha['fornecedor_id']);
+                }
+
                 $produto = new Produto(
                     $linha['nome'],
                     $linha['descricao'],
                     $linha['foto'],
-                    $linha['fornecedor'],
+                    $fornecedor,
                     $linha['usuario_id']
                 );
                 $produto->setId($linha['id']);
-                $produto->setEstoque($linha['estoque']);
+                $produto->setEstoque($linha['estoque_id']);
                 return $produto;
             }
             return null;
@@ -204,24 +240,32 @@ class ProdutoDAO {
 
     public function buscarPorNome($nome) {
         try {
-            $sql = "SELECT id, nome, descricao, foto, fornecedor, estoque, usuario_id 
-                    FROM produtos 
-                    WHERE LOWER(nome) = LOWER(:nome)";
+            $sql = "SELECT p.id, p.nome, p.descricao, p.foto, p.fornecedor_id, p.estoque_id, p.usuario_id,
+                           e.quantidade, e.preco
+                    FROM produtos p
+                    LEFT JOIN estoques e ON p.estoque_id = e.id
+                    WHERE LOWER(p.nome) = LOWER(:nome)";
             $stmt = $this->pdo->prepare($sql);
             $stmt->bindValue(':nome', $nome, PDO::PARAM_STR);
             $stmt->execute();
 
             if ($stmt->rowCount() > 0) {
                 $linha = $stmt->fetch(PDO::FETCH_ASSOC);
+                $fornecedor = $this->fornecedorDAO->buscarPorId($linha['fornecedor_id']);
+                if (!$fornecedor) {
+                    $fornecedor = new Fornecedor("Fornecedor Desconhecido", "", "", "", new Endereco("", "", "", "", "", "", ""));
+                    $fornecedor->setId($linha['fornecedor_id']);
+                }
+
                 $produto = new Produto(
                     $linha['nome'],
                     $linha['descricao'],
                     $linha['foto'],
-                    $linha['fornecedor'],
+                    $fornecedor,
                     $linha['usuario_id']
                 );
                 $produto->setId($linha['id']);
-                $produto->setEstoque($linha['estoque']);
+                $produto->setEstoque($linha['estoque_id']);
                 return $produto;
             }
             return null;
@@ -231,20 +275,31 @@ class ProdutoDAO {
         }
     }
 
-    public function atualizarProduto(Produto $produto, $id) {
+    public function atualizarProduto(Produto $produto, $quantidade, $preco) {
         try {
             $this->pdo->beginTransaction();
-    
-            if (empty($produto->getNome()) || empty($produto->getFornecedor())) {
+
+            if (empty($produto->getNome()) || !$produto->getFornecedor()) {
                 throw new Exception("Nome e fornecedor são obrigatórios");
             }
-    
+
+            // Atualiza o estoque associado
+            $estoqueId = $produto->getEstoque();
+            $estoque = $this->estoqueDAO->buscarPorId($estoqueId);
+            if ($estoque) {
+                $estoque->setQuantidade($quantidade);
+                $estoque->setPreco($preco);
+                $this->estoqueDAO->atualizar($estoque);
+            } else {
+                throw new Exception("Estoque não encontrado para o produto");
+            }
+
+            // Atualiza o produto
             $sql = "UPDATE produtos SET 
                     nome = :nome, 
                     descricao = :descricao, 
                     foto = :foto, 
-                    fornecedor = :fornecedor, 
-                    estoque = :estoque,
+                    fornecedor_id = :fornecedor_id, 
                     usuario_id = :usuario_id
                     WHERE id = :id";
             $stmt = $this->pdo->prepare($sql);
@@ -252,12 +307,11 @@ class ProdutoDAO {
                 ':nome' => $produto->getNome(),
                 ':descricao' => $produto->getDescricao(),
                 ':foto' => $produto->getFoto(),
-                ':fornecedor' => $produto->getFornecedor(),
-                ':estoque' => (int)($produto->getEstoque() ?? 0),
+                ':fornecedor_id' => $produto->getFornecedor()->getId(),
                 ':usuario_id' => $produto->getUsuarioId(),
-                ':id' => $id
+                ':id' => $produto->getId()
             ]);
-    
+
             $this->pdo->commit();
             return true;
         } catch (PDOException $e) {
@@ -272,21 +326,32 @@ class ProdutoDAO {
             $this->pdo->beginTransaction();
 
             $produto = $this->buscarPorId($id);
-            if ($produto && $produto->getFoto()) {
-                $caminhoFoto = __DIR__ . '/../../public' . $produto->getFoto();
-                if (file_exists($caminhoFoto)) {
-                    unlink($caminhoFoto);
-                    error_log(date('[Y-m-d H:i:s] ') . "Foto removida: $caminhoFoto" . PHP_EOL);
+            if ($produto) {
+                // Remove a foto, se existir
+                if ($produto->getFoto()) {
+                    $caminhoFoto = __DIR__ . '/../../public/uploads/imagens/' . $produto->getFoto();
+                    if (file_exists($caminhoFoto)) {
+                        unlink($caminhoFoto);
+                        error_log(date('[Y-m-d H:i:s] ') . "Foto removida: $caminhoFoto" . PHP_EOL);
+                    }
                 }
+
+                // Remove o estoque associado
+                $estoqueId = $produto->getEstoque();
+                if ($estoqueId) {
+                    $this->estoqueDAO->remover($estoqueId);
+                }
+
+                // Remove o produto
+                $sql = "DELETE FROM produtos WHERE id = :id";
+                $stmt = $this->pdo->prepare($sql);
+                $stmt->bindValue(':id', $id, PDO::PARAM_INT);
+                $stmt->execute();
+
+                $this->pdo->commit();
+                return true;
             }
-
-            $sql = "DELETE FROM produtos WHERE id = :id";
-            $stmt = $this->pdo->prepare($sql);
-            $stmt->bindValue(':id', $id, PDO::PARAM_INT);
-            $stmt->execute();
-
-            $this->pdo->commit();
-            return true;
+            throw new Exception("Produto não encontrado");
         } catch (PDOException $e) {
             $this->pdo->rollBack();
             error_log(date('[Y-m-d H:i:s] ') . "Erro em removerProduto: " . $e->getMessage() . PHP_EOL);

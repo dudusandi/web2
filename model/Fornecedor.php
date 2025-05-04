@@ -1,6 +1,7 @@
 <?php
 
 class Fornecedor {
+    private $id;
     private $nome;
     private $descricao;
     private $telefone;
@@ -17,6 +18,10 @@ class Fornecedor {
     }
     
     // Getters
+    public function getId() {
+        return $this->id;
+    }
+    
     public function getNome() {
         return $this->nome;
     }
@@ -42,6 +47,10 @@ class Fornecedor {
     }
     
     // Setters
+    public function setId($id) {
+        $this->id = $id;
+    }
+    
     public function setNome($nome) {
         $this->nome = $nome;
     }

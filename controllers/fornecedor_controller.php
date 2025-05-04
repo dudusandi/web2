@@ -1,38 +1,63 @@
 <?php
 require_once '../model/fornecedor.php';
-require_once '../dao/fornecedor_dao.php'; 
+require_once '../model/endereco.php';
+require_once '../dao/fornecedor_dao.php';
+require_once '../config/database.php'; // Inclui a classe Database
+
 class FornecedorController {
     private $fornecedorDAO;
 
     public function __construct() {
-        $this->fornecedorDAO = new FornecedorDAO(); 
+        // Obtém a conexão PDO da classe Database
+        $this->fornecedorDAO = new FornecedorDAO(Database::getConnection());
     }
 
     // Cadastra um novo fornecedor
     public function cadastrarFornecedor($nome, $descricao, $telefone, $email, $rua, $numero, $complemento, $bairro, $cep, $cidade, $estado) {
-        $endereco = new Endereco($rua, $numero, $bairro, $cep, $cidade, $estado, $complemento);
-        $fornecedor = new Fornecedor($nome, $descricao, $telefone, $email, $endereco);
-        $this->fornecedorDAO->cadastrarFornecedor($fornecedor);
-        header('Location: ../public/view/cadastro_fornecedor.php?mensagem=Cadastro realizado com sucesso');
+        try {
+            $endereco = new Endereco($rua, $numero, $bairro, $cep, $cidade, $estado, $complemento);
+            $fornecedor = new Fornecedor($nome, $descricao, $telefone, $email, $endereco);
+            $this->fornecedorDAO->cadastrarFornecedor($fornecedor);
+            header('Location: ../view/cadastro_fornecedor.php?mensagem=Cadastro realizado com sucesso');
+            exit;
+        } catch (Exception $e) {
+            header('Location: ../view/cadastro_fornecedor.php?mensagem=Erro ao cadastrar: ' . urlencode($e->getMessage()));
+            exit;
+        }
     }
 
     // Lista todos os fornecedores
     public function listarFornecedores() {
-        $fornecedores = $this->fornecedorDAO->listarTodos(); // Método hipotético no DAO
-        return $fornecedores;
+        try {
+            $fornecedores = $this->fornecedorDAO->listarTodos();
+            return $fornecedores;
+        } catch (Exception $e) {
+            // Tratar erro, por exemplo, retornando uma mensagem ou array vazio
+            return [];
+        }
     }
 
     // Edita um fornecedor existente
-    public function editarFornecedor($id, $nome, $descricao, $telefone, $email, $endereco) {
-        $fornecedor = $this->fornecedorDAO->buscarPorId($id); // Método hipotético no DAO
-        if ($fornecedor) {
-            $fornecedor->setNome($nome);
-            $fornecedor->setDescricao($descricao);
-            $fornecedor->setTelefone($telefone);
-            $fornecedor->setEmail($email);
-            $fornecedor->setEndereco($endereco);
-            $this->fornecedorDAO->atualizar($fornecedor); // Método hipotético no DAO
-            header('Location: ../public/view/listar_fornecedores.php');
+    public function editarFornecedor($id, $nome, $descricao, $telefone, $email, $rua, $numero, $complemento, $bairro, $cep, $cidade, $estado) {
+        try {
+            $fornecedorExistente = $this->fornecedorDAO->buscarPorId($id);
+            if ($fornecedorExistente) {
+                $endereco = new Endereco($rua, $numero, $bairro, $cep, $cidade, $estado, $complemento);
+                $fornecedorExistente->setNome($nome);
+                $fornecedorExistente->setDescricao($descricao);
+                $fornecedorExistente->setTelefone($telefone);
+                $fornecedorExistente->setEmail($email);
+                $fornecedorExistente->setEndereco($endereco);
+                $this->fornecedorDAO->atualizarFornecedor($fornecedorExistente);
+                header('Location: ../view/listar_fornecedores.php?mensagem=Edição realizada com sucesso');
+                exit;
+            } else {
+                header('Location: ../view/listar_fornecedores.php?mensagem=Fornecedor não encontrado');
+                exit;
+            }
+        } catch (Exception $e) {
+            header('Location: ../view/listar_fornecedores.php?mensagem=Erro ao editar: ' . urlencode($e->getMessage()));
+            exit;
         }
     }
 }
@@ -54,14 +79,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $_POST['cidade'],
             $_POST['estado']
         );
-    }elseif (isset($_POST['acao']) && $_POST['acao'] === 'editar') {
+    } elseif (isset($_POST['acao']) && $_POST['acao'] === 'editar') {
         $controller->editarFornecedor(
             $_POST['id'],
             $_POST['nome'],
             $_POST['descricao'],
             $_POST['telefone'],
             $_POST['email'],
-            $_POST['endereco']
+            $_POST['rua'],
+            $_POST['numero'],
+            $_POST['complemento'],
+            $_POST['bairro'],
+            $_POST['cep'],
+            $_POST['cidade'],
+            $_POST['estado']
         );
     }
 }
