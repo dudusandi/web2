@@ -1,20 +1,15 @@
 <?php
 require_once __DIR__ . '/../config/database.php';
 require_once __DIR__ . '/../model/produto.php';
-require_once __DIR__ . '/../model/fornecedor.php';
-require_once __DIR__ . '/../model/estoque.php';
 require_once __DIR__ . '/../dao/estoque_dao.php';
-require_once __DIR__ . '/../dao/fornecedor_dao.php';
 
 class ProdutoDAO {
     private $pdo;
     private $estoqueDAO;
-    private $fornecedorDAO;
 
     public function __construct($pdo) {
         $this->pdo = $pdo;
         $this->estoqueDAO = new EstoqueDAO($pdo);
-        $this->fornecedorDAO = new FornecedorDAO($pdo);
     }
 
     public function cadastrarProduto(Produto $produto, $quantidade, $preco) {
@@ -23,8 +18,7 @@ class ProdutoDAO {
 
             // Validações
             $nome = $produto->getNome() ?? '';
-            $fornecedor = $produto->getFornecedor();
-            $fornecedorId = $fornecedor ? $fornecedor->getId() : 0;
+            $fornecedorId = (int)($produto->getFornecedorId() ?? 0);
             $usuarioId = (int)($produto->getUsuarioId() ?? 0);
 
             if (empty($nome) || $fornecedorId <= 0) {
@@ -32,9 +26,6 @@ class ProdutoDAO {
             }
             if ($usuarioId === 0) {
                 throw new Exception("ID do usuário é obrigatório");
-            }
-            if ($quantidade < 0 || $preco < 0) {
-                throw new Exception("Quantidade e preço devem ser não negativos");
             }
 
             // Insere o estoque
@@ -59,7 +50,7 @@ class ProdutoDAO {
 
             $produtoId = $stmt->fetch(PDO::FETCH_ASSOC)['id'];
             $produto->setId($produtoId);
-            $produto->setEstoque($estoqueId);
+            $produto->setEstoqueId($estoqueId);
 
             $this->pdo->commit();
             error_log(date('[Y-m-d H:i:s] ') . "Produto inserido com sucesso, ID: $produtoId" . PHP_EOL);
@@ -110,21 +101,15 @@ class ProdutoDAO {
 
             $produtos = [];
             while ($linha = $stmt->fetch(PDO::FETCH_ASSOC)) {
-                $fornecedor = $this->fornecedorDAO->buscarPorId($linha['fornecedor_id']);
-                if (!$fornecedor) {
-                    $fornecedor = new Fornecedor("Fornecedor Desconhecido", "", "", "", new Endereco("", "", "", "", "", "", ""));
-                    $fornecedor->setId($linha['fornecedor_id']);
-                }
-
                 $produto = new Produto(
                     $linha['nome'],
                     $linha['descricao'],
                     $linha['foto'],
-                    $fornecedor,
+                    $linha['fornecedor_id'],
                     $linha['usuario_id']
                 );
                 $produto->setId($linha['id']);
-                $produto->setEstoque($linha['estoque_id']);
+                $produto->setEstoqueId($linha['estoque_id']);
                 $produtos[] = $produto;
             }
             return $produtos;
@@ -166,21 +151,15 @@ class ProdutoDAO {
 
             $produtos = [];
             while ($linha = $stmt->fetch(PDO::FETCH_ASSOC)) {
-                $fornecedor = $this->fornecedorDAO->buscarPorId($linha['fornecedor_id']);
-                if (!$fornecedor) {
-                    $fornecedor = new Fornecedor("Fornecedor Desconhecido", "", "", "", new Endereco("", "", "", "", "", "", ""));
-                    $fornecedor->setId($linha['fornecedor_id']);
-                }
-
                 $produto = new Produto(
                     $linha['nome'],
                     $linha['descricao'],
                     $linha['foto'],
-                    $fornecedor,
+                    $linha['fornecedor_id'],
                     $linha['usuario_id']
                 );
                 $produto->setId($linha['id']);
-                $produto->setEstoque($linha['estoque_id']);
+                $produto->setEstoqueId($linha['estoque_id']);
                 $produtos[] = $produto;
             }
             return $produtos;
@@ -214,21 +193,15 @@ class ProdutoDAO {
 
             if ($stmt->rowCount() > 0) {
                 $linha = $stmt->fetch(PDO::FETCH_ASSOC);
-                $fornecedor = $this->fornecedorDAO->buscarPorId($linha['fornecedor_id']);
-                if (!$fornecedor) {
-                    $fornecedor = new Fornecedor("Fornecedor Desconhecido", "", "", "", new Endereco("", "", "", "", "", "", ""));
-                    $fornecedor->setId($linha['fornecedor_id']);
-                }
-
                 $produto = new Produto(
                     $linha['nome'],
                     $linha['descricao'],
                     $linha['foto'],
-                    $fornecedor,
+                    $linha['fornecedor_id'],
                     $linha['usuario_id']
                 );
                 $produto->setId($linha['id']);
-                $produto->setEstoque($linha['estoque_id']);
+                $produto->setEstoqueId($linha['estoque_id']);
                 return $produto;
             }
             return null;
@@ -251,21 +224,15 @@ class ProdutoDAO {
 
             if ($stmt->rowCount() > 0) {
                 $linha = $stmt->fetch(PDO::FETCH_ASSOC);
-                $fornecedor = $this->fornecedorDAO->buscarPorId($linha['fornecedor_id']);
-                if (!$fornecedor) {
-                    $fornecedor = new Fornecedor("Fornecedor Desconhecido", "", "", "", new Endereco("", "", "", "", "", "", ""));
-                    $fornecedor->setId($linha['fornecedor_id']);
-                }
-
                 $produto = new Produto(
                     $linha['nome'],
                     $linha['descricao'],
                     $linha['foto'],
-                    $fornecedor,
+                    $linha['fornecedor_id'],
                     $linha['usuario_id']
                 );
                 $produto->setId($linha['id']);
-                $produto->setEstoque($linha['estoque_id']);
+                $produto->setEstoqueId($linha['estoque_id']);
                 return $produto;
             }
             return null;
@@ -279,12 +246,12 @@ class ProdutoDAO {
         try {
             $this->pdo->beginTransaction();
 
-            if (empty($produto->getNome()) || !$produto->getFornecedor()) {
+            if (empty($produto->getNome()) || $produto->getFornecedorId() <= 0) {
                 throw new Exception("Nome e fornecedor são obrigatórios");
             }
 
             // Atualiza o estoque associado
-            $estoqueId = $produto->getEstoque();
+            $estoqueId = $produto->getEstoqueId();
             $estoque = $this->estoqueDAO->buscarPorId($estoqueId);
             if ($estoque) {
                 $estoque->setQuantidade($quantidade);
@@ -307,7 +274,7 @@ class ProdutoDAO {
                 ':nome' => $produto->getNome(),
                 ':descricao' => $produto->getDescricao(),
                 ':foto' => $produto->getFoto(),
-                ':fornecedor_id' => $produto->getFornecedor()->getId(),
+                ':fornecedor_id' => $produto->getFornecedorId(),
                 ':usuario_id' => $produto->getUsuarioId(),
                 ':id' => $produto->getId()
             ]);
@@ -337,7 +304,7 @@ class ProdutoDAO {
                 }
 
                 // Remove o estoque associado
-                $estoqueId = $produto->getEstoque();
+                $estoqueId = $produto->getEstoqueId();
                 if ($estoqueId) {
                     $this->estoqueDAO->remover($estoqueId);
                 }

@@ -87,16 +87,16 @@ $preco = htmlspecialchars($_POST['preco'] ?? '0.00', ENT_QUOTES, 'UTF-8');
             <div class="mb-3">
                 <label for="fornecedor_id" class="form-label">Fornecedor *</label>
                 <?php
-                require_once '../../dao/fornecedor_dao.php';
                 require_once '../../config/database.php';
-                $fornecedorDAO = new FornecedorDAO(Database::getConnection());
-                $fornecedores = $fornecedorDAO->listarTodos();
+                $pdo = Database::getConnection();
+                $stmt = $pdo->query("SELECT id, nome FROM fornecedores ORDER BY nome");
+                $fornecedores = $stmt->fetchAll(PDO::FETCH_ASSOC);
                 ?>
                 <select class="form-control" id="fornecedor_id" name="fornecedor_id" required>
                     <option value="">Selecione um fornecedor</option>
                     <?php foreach ($fornecedores as $fornecedor): ?>
-                        <option value="<?= $fornecedor->getId() ?>" <?= $fornecedorId == $fornecedor->getId() ? 'selected' : '' ?>>
-                            <?= htmlspecialchars($fornecedor->getNome()) ?>
+                        <option value="<?= $fornecedor['id'] ?>" <?= $fornecedorId == $fornecedor['id'] ? 'selected' : '' ?>>
+                            <?= htmlspecialchars($fornecedor['nome']) ?>
                         </option>
                     <?php endforeach; ?>
                 </select>

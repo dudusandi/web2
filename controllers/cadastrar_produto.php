@@ -6,13 +6,10 @@ if (!isset($_SESSION['usuario_id'])) {
 }
 
 require_once '../model/produto.php';
-require_once '../model/endereco.php';
-require_once '../model/fornecedor.php';
-require_once '../model/estoque.php';
 require_once '../dao/produto_dao.php';
 require_once '../config/database.php';
 
-$controller = new ProdutoDAO(Database::getConnection());
+$produtoDAO = new ProdutoDAO(Database::getConnection());
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $nome = trim($_POST['nome'] ?? '');
@@ -26,16 +23,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     // Validações
     if (empty($nome) || $fornecedorId <= 0 || $quantidade < 0 || $preco < 0) {
         $campo = empty($nome) ? 'nome' : ($fornecedorId <= 0 ? 'fornecedor' : 'estoque');
-        $erro = 'campos_obrigatorios';
+        $erro = empty($nome) || $fornecedorId <= 0 ? 'campos_obrigatorios' : 'estoque_invalido';
         header("Location: ../view/cadastro_produto.php?erro=$erro&campo=$campo");
         exit;
     }
 
-    // Criação do fornecedor (placeholder, deve ser buscado no banco)
-    $fornecedor = new Fornecedor("Nome Temporário", "", "", "", new Endereco("", "", "", "", "", "", ""));
-    $fornecedor->setId($fornecedorId);
-
-    // Processamento da foto (simplificado)
+    // Processamento da foto
     $fotoNome = null;
     if ($foto && $foto['error'] === UPLOAD_ERR_OK) {
         $extensao = pathinfo($foto['name'], PATHINFO_EXTENSION);
@@ -44,9 +37,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 
     // Criação do produto
-    $produto = new Produto($nome, $descricao, $fotoNome ?? '', $fornecedor, $usuarioId);
+    $produto = new Produto($nome, $descricao, $fotoNome ?? '', $fornecedorId, $usuarioId);
     try {
-        $produtoDAO->inserir($produto); // Estoque será criado com valores iniciais no DAO
+        $produtoDAO->cadastrarProduto($produto, $quantidade, $preco);
         header('Location: ../view/cadastro_produto.php?sucesso=1');
         exit;
     } catch (Exception $e) {
