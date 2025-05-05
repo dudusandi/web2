@@ -1,8 +1,4 @@
 <?php
-if (!isset($_SESSION['usuario_id'])) {
-    header('Location: login.php');
-    exit;
-}
 
 require_once '../config/database.php';
 require_once '../dao/cliente_dao.php';
