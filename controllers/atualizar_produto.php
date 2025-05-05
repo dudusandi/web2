@@ -71,7 +71,7 @@ try {
         }
     }
 
-    $produtoAtualizado = new Produto($nome, $descricao, $foto, $fornecedor, usuario_id: $usuario_id);
+    $produtoAtualizado = new Produto($nome, $descricao, $foto, $fornecedor, $usuario_id);
     $produtoAtualizado->setId($id);
     $produtoAtualizado->setEstoqueId($produtoExistente->getEstoqueId());
     if ($produtoDao->atualizarProduto($produtoAtualizado)) {

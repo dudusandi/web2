@@ -10,12 +10,14 @@ class Produto {
     private $quantidade; 
     private $preco;      
 
-    public function __construct($nome, $descricao = '', $foto = '', $fornecedorId, $usuarioId) {
+    public function __construct($nome, $fornecedorId, $usuarioId, $quantidade = '', $preco = '', $descricao = '', $foto = '') {
         $this->nome = $nome;
         $this->descricao = $descricao;
         $this->foto = $foto;
         $this->fornecedorId = $fornecedorId;
         $this->usuarioId = $usuarioId;
+        $this->quantidade = $quantidade;
+        $this->preco = $preco;
     }
 
     // Getters
