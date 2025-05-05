@@ -10,12 +10,14 @@ $usuario_id = (int)$_SESSION['usuario_id'];
 
 require_once __DIR__ . '/../config/database.php';
 require_once __DIR__ . '/../dao/produto_dao.php';
+require_once __DIR__ . '/../dao/estoque_dao.php';
 require_once __DIR__ . '/../model/produto.php';
 
 try {
     $pdo = Database::getConnection();
     $produtoDao = new ProdutoDAO($pdo);
     $estoqueDao = new EstoqueDAO($pdo);
+
     // Verifica ID do produto
     $id = (int)($_POST['id'] ?? 0);
     if ($id <= 0) {
@@ -23,14 +25,21 @@ try {
         exit;
     }
 
+    // Busca o produto existente
+    $produtoExistente = $produtoDao->buscarPorId($id);
+    if (!$produtoExistente) {
+        echo json_encode(['error' => 'Produto não encontrado']);
+        exit;
+    }
 
-
+    // Obtém os dados do formulário
     $nome = trim(htmlspecialchars($_POST['nome'] ?? '', ENT_QUOTES, 'UTF-8'));
     $descricao = trim(htmlspecialchars($_POST['descricao'] ?? '', ENT_QUOTES, 'UTF-8'));
     $fornecedor = trim(htmlspecialchars($_POST['fornecedor'] ?? '', ENT_QUOTES, 'UTF-8'));
     $estoque = (int)($_POST['estoque'] ?? 0);
-    $foto = $produto->getFoto();
+    $preco = (float)($_POST['preco'] ?? 0);
 
+    // Validações
     if (empty($nome) || empty($fornecedor)) {
         echo json_encode(['error' => 'Nome e fornecedor são obrigatórios']);
         exit;
@@ -39,11 +48,19 @@ try {
         echo json_encode(['error' => 'Estoque inválido']);
         exit;
     }
+    if ($preco < 0) {
+        echo json_encode(['error' => 'Preço inválido']);
+        exit;
+    }
     if ($produtoDao->nomeExiste($nome, $id)) {
         echo json_encode(['error' => 'Nome do produto já existe']);
         exit;
     }
 
+    // Obtém a foto atual do produto existente
+    $foto = $produtoExistente->getFoto() ?? null;
+
+    // Processa a nova foto, se enviada (opcional)
     if (isset($_FILES['foto']) && $_FILES['foto']['error'] === UPLOAD_ERR_OK) {
         $file = $_FILES['foto'];
         $allowedTypes = ['image/jpeg', 'image/png', 'image/gif'];
@@ -59,11 +76,12 @@ try {
         $caminhoDestino = __DIR__ . '/../public/uploads/imagens/' . $nomeArquivo;
 
         if (move_uploaded_file($file['tmp_name'], $caminhoDestino)) {
-            if ($foto && file_exists(__DIR__ . '/../public' . $foto)) {
-                unlink(__DIR__ . '/../public' . $foto);
-                error_log(date('[Y-m-d H:i:s] ') . "Foto antiga removida: ../public$foto" . PHP_EOL);
+            // Remove a foto antiga, se existir
+            if ($foto && file_exists(__DIR__ . '/../public/uploads/imagens/' . basename($foto))) {
+                unlink(__DIR__ . '/../public/uploads/imagens/' . basename($foto));
+                error_log(date('[Y-m-d H:i:s] ') . "Foto antiga removida: $foto" . PHP_EOL);
             }
-            $foto = '../public/uploads/imagens/' . $nomeArquivo;
+            $foto = $nomeArquivo; // Apenas o nome do arquivo, já que o caminho será adicionado no front
             error_log(date('[Y-m-d H:i:s] ') . "Nova foto salva: $foto" . PHP_EOL);
         } else {
             echo json_encode(['error' => 'Erro ao salvar a foto']);
@@ -71,12 +89,17 @@ try {
         }
     }
 
-    $produtoAtualizado = new Produto($nome, $descricao, $foto, $fornecedor, $usuario_id);
+    // Cria o objeto do produto atualizado
+    $produtoAtualizado = new Produto($nome, $descricao, $foto, (int)$fornecedor, $usuario_id);
     $produtoAtualizado->setId($id);
     $produtoAtualizado->setEstoqueId($produtoExistente->getEstoqueId());
+    $produtoAtualizado->setQuantidade($estoque);
+    $produtoAtualizado->setPreco($preco);
+
+    // Atualiza o produto e o estoque
     if ($produtoDao->atualizarProduto($produtoAtualizado)) {
         $estoqueId = $produtoExistente->getEstoqueId();
-        if ($estoqueDao->atualizarQuantidade($estoqueId, $quantidade)) {
+        if ($estoqueDao->atualizarQuantidade($estoqueId, $estoque)) {
             echo json_encode(['success' => true, 'foto' => $foto]);
         } else {
             echo json_encode(['error' => 'Erro ao atualizar o estoque']);
