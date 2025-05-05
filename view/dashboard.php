@@ -374,7 +374,7 @@ try {
 
         function mostrarDetalhes(id, nome) {
             currentProdutoId = id;
-            fetch(`../controllers/get_produto.php?id=${id}`)
+            fetch('../controllers/get_produto.php?id=${id}')
                 .then(response => response.json())
                 .then(data => {
                     if (data.error) {

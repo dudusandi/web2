@@ -4,7 +4,7 @@ class Database {
 
     public static function getConnection() {
         if (self::$pdo === null) {
-            $host = '192.168.1.55';
+            $host = 'localhost';
             $dbname = 'web2';
             $user = 'postgres';
             $pass = 'dsds';

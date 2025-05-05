@@ -87,7 +87,7 @@ $preco = htmlspecialchars($_POST['preco'] ?? '0.00', ENT_QUOTES, 'UTF-8');
             <div class="mb-3">
                 <label for="fornecedor_id" class="form-label">Fornecedor *</label>
                 <?php
-                require_once '../../config/database.php';
+                require_once '../config/database.php';
                 $pdo = Database::getConnection();
                 $stmt = $pdo->query("SELECT id, nome FROM fornecedores ORDER BY nome");
                 $fornecedores = $stmt->fetchAll(PDO::FETCH_ASSOC);
