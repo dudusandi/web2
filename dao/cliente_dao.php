@@ -256,13 +256,15 @@ class ClienteDAO {
     }
 
     // Método para remover cliente
-    public function removerCliente($id) {
+      // Método para remover cliente
+      public function removerCliente($id) {
         try {
             $this->pdo->beginTransaction();
 
+            // Verifica se o cliente existe antes de prosseguir
             $sqlGetEndereco = "SELECT endereco_id FROM clientes WHERE id = :id";
             $stmtGet = $this->pdo->prepare($sqlGetEndereco);
-            $stmtGet->bindParam(":id", $id);
+            $stmtGet->bindParam(":id", $id, PDO::PARAM_INT);
             $stmtGet->execute();
 
             if ($stmtGet->rowCount() == 0) {
@@ -271,14 +273,16 @@ class ClienteDAO {
 
             $enderecoId = $stmtGet->fetch(PDO::FETCH_ASSOC)['endereco_id'];
 
+            // Remove o cliente da tabela clientes
             $sqlCliente = "DELETE FROM clientes WHERE id = :id";
             $stmtCliente = $this->pdo->prepare($sqlCliente);
-            $stmtCliente->bindParam(":id", $id);
+            $stmtCliente->bindParam(":id", $id, PDO::PARAM_INT);
             $stmtCliente->execute();
 
+            // Remove o endereço associado
             $sqlEndereco = "DELETE FROM enderecos WHERE id = :id";
             $stmtEndereco = $this->pdo->prepare($sqlEndereco);
-            $stmtEndereco->bindParam(":id", $enderecoId);
+            $stmtEndereco->bindParam(":id", $enderecoId, PDO::PARAM_INT);
             $stmtEndereco->execute();
 
             $this->pdo->commit();

@@ -38,7 +38,7 @@ class ClienteController {
                 throw new Exception('Email inválido.');
             }
 
-            // Verificar se o email  existe
+            // Verificar se o email existe
             if ($this->clienteDAO->emailExiste($email)) {
                 throw new Exception('Email já cadastrado.');
             }
@@ -64,8 +64,7 @@ class ClienteController {
         }
     }
 
-
-    //Listar Clientes
+    // Listar Clientes
     public function listarClientes() {
         try {
             $clientes = $this->clienteDAO->listarTodos();
@@ -76,8 +75,7 @@ class ClienteController {
         }
     }
 
-
-    //Editar Clientes
+    // Editar Clientes
     public function editarCliente($id, $nome, $telefone, $email, $cartaoCredito, $rua, $numero, $complemento, $bairro, $cep, $cidade, $estado) {
         try {
             // Validação básica
@@ -109,8 +107,7 @@ class ClienteController {
                 throw new Exception('Email já cadastrado');
             }
 
-
-            //Usar metodo buscarPorId no clienteDAO para verificar se o cliente existe
+            // Usar método buscarPorId no clienteDAO para verificar se o cliente existe
             $clienteExistente = $this->clienteDAO->buscarPorId($id);
             if ($clienteExistente) {
                 $endereco = new Endereco($rua, $numero, $bairro, $cep, $cidade, $estado, $complemento);
@@ -132,7 +129,6 @@ class ClienteController {
         }
     }
 
-    
     // Buscar clientes por ID
     public function buscarClientePorId($id) {
         try {
@@ -141,6 +137,28 @@ class ClienteController {
         } catch (Exception $e) {
             error_log("Erro ao buscar cliente por ID: " . $e->getMessage());
             return null;
+        }
+    }
+
+    // Excluir Cliente
+    public function excluirCliente($id) {
+        try {
+            if (empty($id)) {
+                throw new Exception('ID do cliente não fornecido.');
+            }
+
+            $clienteExistente = $this->clienteDAO->buscarPorId($id);
+            if (!$clienteExistente) {
+                throw new Exception('Cliente não encontrado.');
+            }
+
+            $this->clienteDAO->removerCliente($id);
+            header('Location: ../view/listar_clientes.php?mensagem=Cliente+removido+com+sucesso&tipo_mensagem=success');
+            exit;
+        } catch (Exception $e) {
+            error_log("Erro ao excluir cliente: " . $e->getMessage());
+            header('Location: ../view/listar_clientes.php?mensagem=' . urlencode($e->getMessage()) . '&tipo_mensagem=erro');
+            exit;
         }
     }
 }
@@ -179,6 +197,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $_POST['estado']
         );
     }
-} elseif ($_SERVER['REQUEST_METHOD'] === 'GET' && isset($_GET['id'])) {
-
+} elseif ($_SERVER['REQUEST_METHOD'] === 'GET' && isset($_GET['acao'])) {
+    $controller = new ClienteController();
+    if ($_GET['acao'] === 'excluir' && isset($_GET['id'])) {
+        $controller->excluirCliente($_GET['id']);
+    }
 }

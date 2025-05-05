@@ -86,14 +86,44 @@ $tipoMensagem = $_GET['tipo_mensagem'] ?? '';
                                 <a href="editar_cliente.php?id=<?= $cliente->getId() ?>" class="btn btn-sm btn-primary">
                                     <i class="bi bi-pencil"></i> Editar
                                 </a>
+                                <button class="btn btn-sm btn-danger" onclick="confirmarExclusao(<?= $cliente->getId() ?>, '<?= htmlspecialchars($cliente->getNome(), ENT_QUOTES, 'UTF-8') ?>')">
+                                    <i class="bi bi-trash"></i> Excluir
+                                </button>
                             </div>
                         </div>
                     </div>
                 <?php endforeach; ?>
             </div>
         <?php endif; ?>
+
+        <!-- Modal de Confirmação de Exclusão -->
+        <div class="modal fade" id="confirmModal" tabindex="-1" aria-labelledby="confirmModalLabel" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="confirmModalLabel">Confirmar Exclusão</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <p>Tem certeza que deseja excluir o cliente "<span id="confirmClienteNome"></span>"?</p>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                        <a id="btnConfirmarExclusao" href="#" class="btn btn-danger">Excluir</a>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        function confirmarExclusao(id, nome) {
+            document.getElementById('confirmClienteNome').textContent = nome;
+            document.getElementById('btnConfirmarExclusao').href = `../controllers/cliente_controller.php?acao=excluir&id=${id}`;
+            const confirmModal = new bootstrap.Modal(document.getElementById('confirmModal'));
+            confirmModal.show();
+        }
+    </script>
 </body>
 </html>
