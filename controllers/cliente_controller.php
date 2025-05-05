@@ -38,7 +38,7 @@ class ClienteController {
                 throw new Exception('Email inválido.');
             }
 
-            // Verificar se o email já existe
+            // Verificar se o email  existe
             if ($this->clienteDAO->emailExiste($email)) {
                 throw new Exception('Email já cadastrado.');
             }
@@ -64,6 +64,8 @@ class ClienteController {
         }
     }
 
+
+    //Listar Clientes
     public function listarClientes() {
         try {
             $clientes = $this->clienteDAO->listarTodos();
@@ -74,6 +76,8 @@ class ClienteController {
         }
     }
 
+
+    //Editar Clientes
     public function editarCliente($id, $nome, $telefone, $email, $cartaoCredito, $rua, $numero, $complemento, $bairro, $cep, $cidade, $estado) {
         try {
             // Validação básica
@@ -100,11 +104,13 @@ class ClienteController {
                 throw new Exception('Email inválido.');
             }
 
-            // Verificar se o email já existe para outro cliente
+            // Verificar se o email já existe
             if ($this->clienteDAO->emailExiste($email, $id)) {
-                throw new Exception('Email já cadastrado para outro cliente.');
+                throw new Exception('Email já cadastrado');
             }
 
+
+            //Usar metodo buscarPorId no clienteDAO para verificar se o cliente existe
             $clienteExistente = $this->clienteDAO->buscarPorId($id);
             if ($clienteExistente) {
                 $endereco = new Endereco($rua, $numero, $bairro, $cep, $cidade, $estado, $complemento);
@@ -126,6 +132,8 @@ class ClienteController {
         }
     }
 
+    
+    // Buscar clientes por ID
     public function buscarClientePorId($id) {
         try {
             $cliente = $this->clienteDAO->buscarPorId($id);
@@ -137,7 +145,7 @@ class ClienteController {
     }
 }
 
-// Processamento das requisições
+// Recebe todos os dados com POST e envia os dados para o banco de dados
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $controller = new ClienteController();
     if (isset($_POST['acao']) && $_POST['acao'] === 'cadastrar') {

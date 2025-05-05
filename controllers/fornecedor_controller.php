@@ -13,6 +13,7 @@ class FornecedorController {
     }
 
 
+    //Cadastra um novo fornecedor
     public function cadastrarFornecedor($nome, $descricao, $telefone, $email, $rua, $numero, $complemento, $bairro, $cep, $cidade, $estado) {
         try {
             $endereco = new Endereco($rua, $numero, $bairro, $cep, $cidade, $estado, $complemento);
@@ -26,16 +27,17 @@ class FornecedorController {
         }
     }
 
+
     // Lista todos os fornecedores
     public function listarFornecedores() {
         try {
             $fornecedores = $this->fornecedorDAO->listarTodos();
             return $fornecedores;
         } catch (Exception $e) {
-            // Tratar erro, por exemplo, retornando uma mensagem ou array vazio
             return [];
         }
     }
+
 
     // Edita um fornecedor existente
     public function editarFornecedor($id, $nome, $descricao, $telefone, $email, $rua, $numero, $complemento, $bairro, $cep, $cidade, $estado) {
@@ -62,7 +64,7 @@ class FornecedorController {
     }
 }
 
-
+// Recebe todos os dados com POST e envia os dados para o banco de dados
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $controller = new FornecedorController();
     if (isset($_POST['acao']) && $_POST['acao'] === 'cadastrar') {

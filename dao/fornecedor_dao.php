@@ -11,6 +11,7 @@ class FornecedorDAO {
         $this->pdo = $pdo;
     }
 
+    //Cadastra um novo fornecedor
     public function cadastrarFornecedor(Fornecedor $fornecedor) {
         try {
             $this->pdo->beginTransaction();
@@ -53,6 +54,8 @@ class FornecedorDAO {
         }
     }
 
+
+    //Exclui um fornecedor
     public function excluir($id) {
         try {
             $sql = "DELETE FROM fornecedores WHERE id = :id";
@@ -63,6 +66,7 @@ class FornecedorDAO {
         }
     }
 
+    //Buscar fornecedor por ID
     public function buscarNomePorId($fornecedorId) {
         try {
             $sql = "SELECT nome FROM fornecedores WHERE id = :id";
@@ -77,6 +81,8 @@ class FornecedorDAO {
         }
     }
 
+
+    //Listar todos os fornecedores
     public function listarTodos() {
         $sql = "SELECT f.id, f.nome, f.descricao, f.telefone, f.email, 
                        e.rua, e.numero, e.bairro, e.cep, e.cidade, e.estado, e.complemento
@@ -112,7 +118,7 @@ class FornecedorDAO {
         return $fornecedores;
     }
 
-
+    //Buscar fornecedor por ID
     public function buscarPorId($id) {
         $sql = "SELECT f.id, f.nome, f.descricao, f.telefone, f.email, 
                        e.rua, e.numero, e.bairro, e.cep, e.cidade, e.estado, e.complemento
@@ -150,6 +156,7 @@ class FornecedorDAO {
         return null;
     }
 
+    // Listar fornecedores para o select
     public function listarFornecedores() {
         try {
             $sql = "SELECT id, nome FROM fornecedores ORDER BY nome ASC";
@@ -157,12 +164,11 @@ class FornecedorDAO {
             $stmt->execute();
             return $stmt->fetchAll(PDO::FETCH_ASSOC);
         } catch (PDOException $e) {
-            error_log(date('[Y-m-d H:i:s] ') . "Erro em listarFornecedores: " . $e->getMessage() . PHP_EOL);
             throw $e;
         }
     }
 
-
+    //Atualizar fornecedor
     public function atualizarFornecedor(Fornecedor $fornecedor) {
         try {
             $this->pdo->beginTransaction();
@@ -211,6 +217,7 @@ class FornecedorDAO {
     }
 
 
+    //Remover fornecedor
     public function removerFornecedor($id) {
         try {
             $this->pdo->beginTransaction();

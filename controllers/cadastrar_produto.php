@@ -1,8 +1,4 @@
 <?php
-ini_set('display_errors', 1);
-ini_set('display_startup_errors', 1);
-error_reporting(E_ALL);
-
 session_start();
 if (!isset($_SESSION['usuario_id'])) {
     header('Location: ../view/login.php');
@@ -24,7 +20,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $usuarioId = (int)($_SESSION['usuario_id']);
     $foto = $_FILES['foto'] ?? null;
 
-    // Log dos dados recebidos
+    // Log dos dados 
     error_log("Dados recebidos: nome=$nome, fornecedorId=$fornecedorId, quantidade=$quantidade, preco=$preco, usuarioId=$usuarioId");
 
     // Validações
@@ -36,7 +32,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         exit;
     }
 
-    // Validar se o fornecedor existe para o usuário
+    // Validar se o fornecedor existe
     $pdo = Database::getConnection();
     $stmt = $pdo->prepare("SELECT COUNT(*) FROM fornecedores WHERE id = :fornecedor_id");
     $stmt->execute([':fornecedor_id' => $fornecedorId]);
@@ -45,11 +41,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         exit;
     }
 
-    // Processamento da foto
+    // Envio da Foto
     $fotoNome = null;
     if ($foto && $foto['error'] === UPLOAD_ERR_OK) {
         $allowedTypes = ['image/jpeg', 'image/png', 'image/gif'];
-        $maxSize = 16 * 1024 * 1024; // 16MB
+        $maxSize = 16 * 1024 * 1024; // 16MB 
         if (!in_array($foto['type'], $allowedTypes) || $foto['size'] > $maxSize) {
             error_log("Foto inválida: tipo={$foto['type']}, tamanho={$foto['size']}");
             header("Location: ../view/cadastro_produto.php?erro=foto_invalida");
@@ -69,7 +65,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         error_log("Nenhum arquivo enviado ou erro no upload: " . ($foto['error'] ?? 'N/A'));
     }
 
-    // Criação do produto
+    // Novo Produto
     $produto = new Produto($nome, $descricao, $fotoNome ?? '', $fornecedorId, $usuarioId);
     try {
         error_log("Tentando cadastrar produto: nome=$nome, fornecedorId=$fornecedorId, usuarioId=$usuarioId");

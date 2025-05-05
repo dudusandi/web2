@@ -9,7 +9,7 @@ class Produto {
     private $usuario_id;
     private $quantidade;
     private $preco;
-    public $fornecedor_nome; // Adiciona explicitamente
+    public $fornecedor_nome; 
 
     public function __construct($nome, $descricao, $foto, $fornecedor_id, $usuario_id) {
         $this->nome = $nome;
@@ -19,7 +19,6 @@ class Produto {
         $this->usuario_id = $usuario_id;
     }
 
-    // Getters e setters existentes
     public function getId() { return $this->id; }
     public function setId($id) { $this->id = $id; }
     public function getNome() { return $this->nome; }
@@ -34,7 +33,6 @@ class Produto {
     public function getPreco() { return $this->preco; }
     public function setPreco($preco) { $this->preco = $preco; }
 
-    // Getter para fornecedor_nome (opcional, já que é público)
     public function getFornecedorNome() {
         return $this->fornecedor_nome ?? 'Sem fornecedor';
     }

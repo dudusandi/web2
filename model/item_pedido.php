@@ -13,7 +13,6 @@ class ItemPedido {
         $this->pedido = $pedido;
     }
     
-    // Getters
     public function getQuantidade() {
         return $this->quantidade;
     }
@@ -30,7 +29,6 @@ class ItemPedido {
         return $this->pedido;
     }
     
-    // Setters
     public function setQuantidade($quantidade) {
         $this->quantidade = $quantidade;
     }
@@ -47,9 +45,5 @@ class ItemPedido {
         $this->pedido = $pedido;
     }
     
-    // Método para calcular o valor total do item
-    public function calcularTotal() {
-        return $this->quantidade * $this->preco;
-    }
 }
 ?>

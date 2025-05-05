@@ -16,7 +16,6 @@ class Fornecedor {
         $this->endereco = $endereco;
     }
     
-    // Getters
     public function getId() {
         return $this->id;
     }
@@ -42,7 +41,6 @@ class Fornecedor {
     }
     
     
-    // Setters
     public function setId($id) {
         $this->id = $id;
     }

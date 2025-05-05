@@ -10,7 +10,7 @@ require_once '../dao/cliente_dao.php';
 require_once '../model/cliente.php';
 require_once '../model/endereco.php';
 
-// Verifica se é uma edição (ID presente)
+// Verifica se ja existe o ID
 $id = $_GET['id'] ?? null;
 if (!$id) {
     header('Location: listar_clientes.php?mensagem=ID do cliente não fornecido&tipo_mensagem=erro');
@@ -41,40 +41,7 @@ $mensagem = $_GET['mensagem'] ?? '';
     <title>Editar Cliente - UcsExpress</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
-    <style>
-        body {
-            background-color: #f8f9fa;
-        }
-        .container {
-            max-width: 800px;
-            margin-top: 30px;
-        }
-        .header {
-            background-color: #007bff;
-            color: white;
-            padding: 15px;
-            text-align: center;
-            margin-bottom: 20px;
-        }
-        .header .logo {
-            font-size: 24px;
-            font-weight: bold;
-        }
-        .header .logo span {
-            color: #ffca2c;
-        }
-        .form-section {
-            background-color: white;
-            padding: 20px;
-            border-radius: 8px;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-        }
-        .form-section h2 {
-            margin-bottom: 20px;
-            font-size: 24px;
-            color: #333;
-        }
-    </style>
+    <link rel="stylesheet" href="editar.css">
 </head>
 <body>
     <!-- Cabeçalho -->

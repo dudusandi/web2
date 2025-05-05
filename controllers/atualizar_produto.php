@@ -18,21 +18,21 @@ try {
     $produtoDao = new ProdutoDAO($pdo);
     $estoqueDao = new EstoqueDAO($pdo);
 
-    // Verifica ID do produto
+    // Verificar ID
     $id = (int)($_POST['id'] ?? 0);
     if ($id <= 0) {
         echo json_encode(['error' => 'ID inválido']);
         exit;
     }
 
-    // Busca o produto existente
+    // Buscar Produtos
     $produtoExistente = $produtoDao->buscarPorId($id);
     if (!$produtoExistente) {
         echo json_encode(['error' => 'Produto não encontrado']);
         exit;
     }
 
-    // Obtém os dados do formulário
+    // Dados do formulário
     $nome = trim(htmlspecialchars($_POST['nome'] ?? '', ENT_QUOTES, 'UTF-8'));
     $descricao = trim(htmlspecialchars($_POST['descricao'] ?? '', ENT_QUOTES, 'UTF-8'));
     $fornecedor = trim(htmlspecialchars($_POST['fornecedor'] ?? '', ENT_QUOTES, 'UTF-8'));
@@ -60,11 +60,11 @@ try {
     // Obtém a foto atual do produto existente
     $foto = $produtoExistente->getFoto() ?? null;
 
-    // Processa a nova foto, se enviada (opcional)
+    // Salvar Foto
     if (isset($_FILES['foto']) && $_FILES['foto']['error'] === UPLOAD_ERR_OK) {
         $file = $_FILES['foto'];
         $allowedTypes = ['image/jpeg', 'image/png', 'image/gif'];
-        $maxSize = 16 * 1024 * 1024;
+        $maxSize = 16 * 1024 * 1024; //Tamanho Maximo de 16mb pro raspberry não chorar.
 
         if (!in_array($file['type'], $allowedTypes) || $file['size'] > $maxSize) {
             echo json_encode(['error' => 'Foto inválida. Use JPEG, PNG ou GIF (máx. 16MB)']);
@@ -76,27 +76,29 @@ try {
         $caminhoDestino = __DIR__ . '/../public/uploads/imagens/' . $nomeArquivo;
 
         if (move_uploaded_file($file['tmp_name'], $caminhoDestino)) {
-            // Remove a foto antiga, se existir
             if ($foto && file_exists(__DIR__ . '/../public/uploads/imagens/' . basename($foto))) {
                 unlink(__DIR__ . '/../public/uploads/imagens/' . basename($foto));
                 error_log(date('[Y-m-d H:i:s] ') . "Foto antiga removida: $foto" . PHP_EOL);
             }
-            $foto = $nomeArquivo; // Apenas o nome do arquivo, já que o caminho será adicionado no front
+
+            $foto = $nomeArquivo; 
             error_log(date('[Y-m-d H:i:s] ') . "Nova foto salva: $foto" . PHP_EOL);
+
         } else {
             echo json_encode(['error' => 'Erro ao salvar a foto']);
             exit;
         }
     }
 
-    // Cria o objeto do produto atualizado
+    // Novo Produto
     $produtoAtualizado = new Produto($nome, $descricao, $foto, (int)$fornecedor, $usuario_id);
     $produtoAtualizado->setId($id);
     $produtoAtualizado->setEstoqueId($produtoExistente->getEstoqueId());
     $produtoAtualizado->setQuantidade($estoque);
     $produtoAtualizado->setPreco($preco);
 
-    // Atualiza o produto e o estoque
+
+    // Atualiza produto
     if ($produtoDao->atualizarProduto($produtoAtualizado)) {
         $estoqueId = $produtoExistente->getEstoqueId();
         if ($estoqueDao->atualizarQuantidade($estoqueId, $estoque)) {

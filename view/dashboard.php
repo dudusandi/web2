@@ -8,12 +8,12 @@ if (!isset($_SESSION['usuario_id'])) {
 require_once __DIR__ . '/../config/database.php';
 require_once __DIR__ . '/../dao/produto_dao.php';
 require_once __DIR__ . '/../model/produto.php';
-require_once __DIR__ . '/../dao/fornecedor_dao.php'; // Inclui o novo DAO
+require_once __DIR__ . '/../dao/fornecedor_dao.php'; 
 
 try {
     $pdo = Database::getConnection();
     $produtoDao = new ProdutoDAO($pdo);
-    $fornecedorDao = new FornecedorDAO($pdo); // Instancia o FornecedorDAO
+    $fornecedorDao = new FornecedorDAO($pdo); 
 
     // Filtros e paginação
     $pagina = isset($_GET['pagina']) ? (int)$_GET['pagina'] : 1;
@@ -70,6 +70,7 @@ try {
             </div>
         </div>
     </div>
+     <!-- Menu com visualizacao apenas para o admin -->
     <div class="nav-bar">
     <?php if (isset($_SESSION['is_admin']) && $_SESSION['is_admin']): ?>
         <a href="../view/cadastro_produto.php">Cadastrar Produto</a> 
@@ -124,7 +125,7 @@ try {
                 <?php endforeach; ?>
             </div>
 
-            <!-- Paginação -->
+            <!-- Home com Paginação -->
             <?php if ($totalProdutos > $itensPorPagina): ?>
                 <nav aria-label="Page navigation" class="mt-4">
                     <ul class="pagination">

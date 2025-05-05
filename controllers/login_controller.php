@@ -5,6 +5,8 @@ require_once "$basePath/model/cliente.php";
 require_once "$basePath/model/endereco.php";
 require_once "$basePath/dao/cliente_dao.php";
 
+
+// Controlador para login de cliente com adição de um admin para acesso a configurações
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $email = $_POST['email'] ?? '';
     $senha = $_POST['senha'] ?? '';

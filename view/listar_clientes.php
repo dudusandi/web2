@@ -19,7 +19,7 @@ try {
     $tipoMensagem = 'erro';
 }
 
-// Mensagens de feedback
+// Mensagens
 $mensagem = $_GET['mensagem'] ?? '';
 $tipoMensagem = $_GET['tipo_mensagem'] ?? '';
 ?>

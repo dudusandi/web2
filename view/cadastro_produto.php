@@ -6,9 +6,9 @@ if (!isset($_SESSION['usuario_id'])) {
 }
 
 require_once '../config/database.php';
-require_once '../dao/fornecedor_dao.php'; // Adicionado para consistência, caso necessário
+require_once '../dao/fornecedor_dao.php'; 
 require_once '../model/fornecedor.php';
-require_once '../model/produto.php'; // Adicionado para consistência, caso necessário
+require_once '../model/produto.php';
 
 // Inicialização de variáveis para mensagens
 $erro = $_GET['erro'] ?? '';

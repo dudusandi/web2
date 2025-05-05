@@ -9,6 +9,8 @@ class EstoqueDAO {
         $this->pdo = $pdo;
     }
 
+
+    /// Método para inserir um novo estoque
     public function inserir(Estoque $estoque) {
         try {
             $sql = "INSERT INTO estoques (quantidade, preco) 
@@ -29,6 +31,7 @@ class EstoqueDAO {
         }
     }
 
+    /// Método para buscar quandiade do estoque por ID
     public function buscarQuantidadePorId($estoqueId) {
         try {
             $sql = "SELECT quantidade FROM estoques WHERE id = :id";
@@ -43,6 +46,7 @@ class EstoqueDAO {
         }
     }
 
+    /// Método para atualizar a quantidade do estoque
     public function atualizarQuantidade($estoqueId, $quantidade) {
         try {
             $sql = "UPDATE estoques SET quantidade = :quantidade WHERE id = :id";
@@ -51,11 +55,11 @@ class EstoqueDAO {
             $stmt->bindValue(':id', $estoqueId, PDO::PARAM_INT);
             return $stmt->execute();
         } catch (PDOException $e) {
-            error_log(date('[Y-m-d H:i:s] ') . "Erro ao atualizar estoque: " . $e->getMessage() . PHP_EOL);
             throw $e;
         }
     }
 
+    /// Método para buscar por ID
     public function buscarPorId($id) {
         $sql = "SELECT id, quantidade, preco 
                 FROM estoques 
@@ -77,6 +81,7 @@ class EstoqueDAO {
         return null;
     }
 
+    //Método para atualizar o estoque
     public function atualizar(Estoque $estoque) {
         try {
             $sql = "UPDATE estoques 
@@ -95,6 +100,7 @@ class EstoqueDAO {
         }
     }
 
+    // Método para excluir um ID do estoque
     public function excluir($id) {
         try {
             $sql = "DELETE FROM estoques WHERE id = :id";
@@ -102,7 +108,6 @@ class EstoqueDAO {
             $stmt->bindValue(':id', $id, PDO::PARAM_INT);
             return $stmt->execute();
         } catch (PDOException $e) {
-            error_log(date('[Y-m-d H:i:s] ') . "Erro ao excluir estoque: " . $e->getMessage() . PHP_EOL);
             throw $e;
         }
     }

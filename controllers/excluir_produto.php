@@ -9,6 +9,8 @@ require_once __DIR__ . '/../config/database.php';
 require_once __DIR__ . '/../dao/produto_dao.php';
 require_once __DIR__ . '/../dao/estoque_dao.php'; 
 
+    //Exluir Produto
+
 try {
     $pdo = Database::getConnection();
     $produtoDao = new ProdutoDAO($pdo);

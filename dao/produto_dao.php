@@ -12,6 +12,7 @@ class ProdutoDAO {
         $this->estoqueDAO = new EstoqueDAO($pdo);
     }
 
+    //Cadastra um novo produto
     public function cadastrarProduto(Produto $produto, $quantidade, $preco) {
         try {
             $this->pdo->beginTransaction();
@@ -28,11 +29,9 @@ class ProdutoDAO {
                 throw new Exception("ID do usuário é obrigatório");
             }
 
-            // Insere o estoque
             $estoque = new Estoque($quantidade, $preco);
             $estoqueId = $this->estoqueDAO->inserir($estoque);
 
-            // Insere o produto
             $sql = "INSERT INTO produtos 
                     (nome, descricao, foto, fornecedor_id, estoque_id, usuario_id) 
                     VALUES (:nome, :descricao, :foto, :fornecedor_id, :estoque_id, :usuario_id)
@@ -55,15 +54,14 @@ class ProdutoDAO {
             $produto->setPreco($preco);
 
             $this->pdo->commit();
-            error_log(date('[Y-m-d H:i:s] ') . "Produto inserido com sucesso, ID: $produtoId" . PHP_EOL);
             return true;
         } catch (Exception $e) {
             $this->pdo->rollBack();
-            error_log(date('[Y-m-d H:i:s] ') . "Erro ao cadastrar produto: " . $e->getMessage() . PHP_EOL);
             throw $e;
         }
     }
 
+    //Lista todos os produtos 
     public function listarTodosProdutos($itensPorPagina, $offset) {
         try {
             $sql = "SELECT p.id, p.nome, p.descricao, p.foto, p.fornecedor_id, p.estoque_id, p.usuario_id,
@@ -102,6 +100,7 @@ class ProdutoDAO {
         }
     }
 
+    //Verifica se o nome do produto já existe
     public function nomeExiste($nome, $excludeId = null) {
         try {
             $sql = "SELECT COUNT(*) FROM produtos WHERE LOWER(nome) = LOWER(:nome)";
@@ -115,14 +114,13 @@ class ProdutoDAO {
             }
             $stmt->execute();
             $exists = $stmt->fetchColumn() > 0;
-            error_log(date('[Y-m-d H:i:s] ') . "Verificando nome: $nome, existe: " . ($exists ? 'sim' : 'não') . PHP_EOL);
             return $exists;
         } catch (PDOException $e) {
-            error_log(date('[Y-m-d H:i:s] ') . "Erro em nomeExiste: " . $e->getMessage() . PHP_EOL);
             throw $e;
         }
     }
 
+    //Lista todos os produtos com paginação
     public function listarTodos($limit = null, $offset = null) {
         try {
             $sql = "SELECT p.id, p.nome, p.descricao, p.foto, p.fornecedor_id, p.estoque_id, p.usuario_id,
@@ -161,17 +159,19 @@ class ProdutoDAO {
         }
     }
 
+    //Contar Produtos totais
     public function contarTodosProdutos() {
         try {
             $sql = "SELECT COUNT(*) FROM produtos";
             $stmt = $this->pdo->query($sql);
             return (int)$stmt->fetchColumn();
         } catch (PDOException $e) {
-            error_log(date('[Y-m-d H:i:s] ') . "Erro em contarTodosProdutos: " . $e->getMessage() . PHP_EOL);
             throw $e;
         }
     }
 
+
+    //Excluir produto
     public function excluir($id) {
         try {
             $sql = "DELETE FROM produtos WHERE id = :id";
@@ -184,6 +184,7 @@ class ProdutoDAO {
         }
     }
 
+    //Contar produtos por usuario
     public function contarProdutosPorUsuario($usuario_id) {
         try {
             $stmt = $this->pdo->prepare("SELECT COUNT(*) FROM produtos WHERE usuario_id = :usuario_id");
@@ -196,6 +197,7 @@ class ProdutoDAO {
         }
     }
 
+    //Listar produtos por usuario
     public function listarProdutosPorUsuario($usuario_id, $limit = null, $offset = null) {
         try {
             $sql = "SELECT p.id, p.nome, p.descricao, p.foto, p.fornecedor_id, p.estoque_id, p.usuario_id,
@@ -239,17 +241,18 @@ class ProdutoDAO {
         }
     }
 
+    //Contar produtos totais
     public function contarProdutos() {
         try {
             $stmt = $this->pdo->prepare("SELECT COUNT(*) FROM produtos");
             $stmt->execute();
             return (int)$stmt->fetchColumn();
         } catch (PDOException $e) {
-            error_log(date('[Y-m-d H:i:s] ') . "Erro em contarProdutos: " . $e->getMessage() . PHP_EOL);
             throw $e;
         }
     }
 
+    //Buscar produto por ID
     public function buscarPorId($id) {
         try {
             $sql = "SELECT p.id, p.nome, p.descricao, p.foto, p.fornecedor_id, p.estoque_id, p.usuario_id,
@@ -287,6 +290,7 @@ class ProdutoDAO {
         }
     }
 
+    //Buscar produto por nome
     public function buscarPorNome($nome) {
         try {
             $sql = "SELECT p.id, p.nome, p.descricao, p.foto, p.fornecedor_id, p.estoque_id, p.usuario_id,
@@ -320,11 +324,12 @@ class ProdutoDAO {
         }
     }
 
+
+    //Atualizar produto
     public function atualizarProduto(Produto $produto) {
         try {
             $this->pdo->beginTransaction();
 
-            // Atualiza o estoque associado
             $estoqueId = $produto->getEstoqueId();
             if ($estoqueId) {
                 $estoque = new Estoque($produto->getQuantidade(), $produto->getPreco());
@@ -332,7 +337,6 @@ class ProdutoDAO {
                 $this->estoqueDAO->atualizar($estoque);
             }
 
-            // Atualiza o produto
             $sql = "UPDATE produtos SET nome = :nome, descricao = :descricao, foto = :foto, fornecedor_id = :fornecedor_id 
                     WHERE id = :id AND usuario_id = :usuario_id";
             $stmt = $this->pdo->prepare($sql);
@@ -348,11 +352,11 @@ class ProdutoDAO {
             return $success;
         } catch (PDOException $e) {
             $this->pdo->rollBack();
-            error_log(date('[Y-m-d H:i:s] ') . "Erro ao atualizar produto: " . $e->getMessage() . PHP_EOL);
             throw $e;
         }
     }
 
+    //Remover produto
     public function removerProduto($id) {
         try {
             $produto = $this->buscarPorId($id);
@@ -362,17 +366,14 @@ class ProdutoDAO {
                     $caminhoFoto = __DIR__ . '/../../public/uploads/imagens/' . $produto->getFoto();
                     if (file_exists($caminhoFoto)) {
                         unlink($caminhoFoto);
-                        error_log(date('[Y-m-d H:i:s] ') . "Foto removida: $caminhoFoto" . PHP_EOL);
                     }
                 }
     
-                // Remove o estoque associado
                 $estoqueId = $produto->getEstoqueId();
                 if ($estoqueId) {
                     $this->estoqueDAO->remover($estoqueId);
                 }
     
-                // Remove o produto
                 $sql = "DELETE FROM produtos WHERE id = :id";
                 $stmt = $this->pdo->prepare($sql);
                 $stmt->bindValue(':id', $id, PDO::PARAM_INT);
@@ -382,7 +383,6 @@ class ProdutoDAO {
             }
             throw new Exception("Produto não encontrado");
         } catch (Exception $e) {
-            error_log(date('[Y-m-d H:i:s] ') . "Erro em removerProduto: " . $e->getMessage() . PHP_EOL);
             throw $e;
         }
     }

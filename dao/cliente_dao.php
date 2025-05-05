@@ -11,6 +11,7 @@ class ClienteDAO {
         $this->pdo = $pdo;
     }
 
+    // Método para buscar cliente por email e senha
     public function buscarPorEmailSenha($email, $senha) {
         $sql = "SELECT c.id, c.nome, c.telefone, c.email, c.cartao_credito, c.senha, 
                        e.rua, e.numero, e.bairro, e.cep, e.cidade, e.estado, e.complemento
@@ -49,6 +50,7 @@ class ClienteDAO {
         return null;
     }
 
+    // Método para buscar cliente por email
     public function buscarPorEmail($email) {
         $sql = "SELECT c.id, c.nome, c.telefone, c.email, c.cartao_credito, 
                        e.rua, e.numero, e.bairro, e.cep, e.cidade, e.estado, e.complemento
@@ -85,6 +87,8 @@ class ClienteDAO {
         return null;
     }
 
+
+    // Método para cadastrar cliente
     public function cadastrarCliente(Cliente $cliente, string $senhaHash) {
         try {
             $this->pdo->beginTransaction();
@@ -128,6 +132,8 @@ class ClienteDAO {
         }
     }
 
+
+    // Método para listar todos os clientes
     public function listarTodos() {
         $sql = "SELECT c.id, c.nome, c.telefone, c.email, c.cartao_credito, 
                        e.rua, e.numero, e.bairro, e.cep, e.cidade, e.estado, e.complemento
@@ -163,6 +169,7 @@ class ClienteDAO {
         return $clientes;
     }
 
+    // Método para buscar cliente por ID
     public function buscarPorId($id) {
         $sql = "SELECT c.id, c.nome, c.telefone, c.email, c.cartao_credito, 
                        e.rua, e.numero, e.bairro, e.cep, e.cidade, e.estado, e.complemento
@@ -200,6 +207,7 @@ class ClienteDAO {
         return null;
     }
 
+    // Método para atualizar cliente
     public function atualizarCliente($cliente) {
         try {
             $this->pdo->beginTransaction();
@@ -247,6 +255,7 @@ class ClienteDAO {
         }
     }
 
+    // Método para remover cliente
     public function removerCliente($id) {
         try {
             $this->pdo->beginTransaction();
@@ -280,6 +289,7 @@ class ClienteDAO {
         }
     }
 
+    // Método para verificar se o email já existe
     public function emailExiste($email, $excludeId = null) {
         $sql = "SELECT COUNT(*) FROM clientes WHERE email = :email";
         if ($excludeId) {
@@ -294,6 +304,7 @@ class ClienteDAO {
         return $stmt->fetchColumn() > 0;
     }
 
+    // Método para atualizar a senha do cliente
     public function atualizarSenha($clienteId, $novaSenhaHash) {
         $sql = "UPDATE clientes SET senha = :senha WHERE id = :id";
         $stmt = $this->pdo->prepare($sql);

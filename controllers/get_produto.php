@@ -6,6 +6,8 @@ $pdo = Database::getConnection();
 $produtoDao = new ProdutoDAO($pdo);
 $id = $_GET['id'] ?? null;
 
+
+// Controlador para obter os produtos
 if ($id) {
     $produto = $produtoDao->buscarPorId((int)$id);
     if ($produto) {
