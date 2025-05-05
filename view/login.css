@@ -15,7 +15,7 @@ body {
 }
 
 .login-container {
-    background: #fff;
+    background: #394e65;
     padding: 30px;
     border-radius: 15px;
     box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
@@ -42,7 +42,7 @@ h2 {
 
 label {
     font-size: 1.1em;
-    color: #333;
+    color: #f0f0f0;
     margin-bottom: 5px;
     display: block;
     text-align: left;
@@ -69,10 +69,10 @@ input[type="password"]:focus {
 button {
     width: 100%;
     padding: 12px;
-    background: #6e8efb;
+    background: #75a1ce;
     border: none;
     border-radius: 8px;
-    color: #fff;
+    color: #fefefe;
     font-size: 1.1em;
     cursor: pointer;
     transition: background 0.3s ease;
@@ -120,4 +120,14 @@ a:focus {
         font-size: 0.95em;
         padding: 10px;
     }
+}
+
+.logo {
+    text-align: center;
+    margin-bottom: 20px;
+    font-size: 24px;
+    font-weight: bold;
+}
+.logo span {
+    color: #ffca2c;
 }
