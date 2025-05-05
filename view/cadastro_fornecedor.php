@@ -73,6 +73,8 @@ $mensagem = isset($_GET['mensagem']) ? $_GET['mensagem'] : '';
         </div>
 
         <button type="submit">Cadastrar Fornecedor</button>
+        <a href="../view/dashboard.php" class="btn btn-secondary">Voltar</a>
+
     </form>
 </body>
 </html>

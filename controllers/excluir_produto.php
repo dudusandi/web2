@@ -1,42 +1,54 @@
 <?php
-
-define('BASE_PATH', realpath(dirname(__DIR__)));
-
-require_once BASE_PATH . '/model/produto.php';
-require_once BASE_PATH . '/dao/produto_dao.php';
-require_once BASE_PATH . '/config/database.php';
-
 session_start();
 if (!isset($_SESSION['usuario_id'])) {
     header('Location: ../view/login.php');
     exit;
 }
 
+require_once __DIR__ . '/../config/database.php';
+require_once __DIR__ . '/../dao/produto_dao.php';
+require_once __DIR__ . '/../dao/estoque_dao.php'; // Inclua o DAO para estoques, se existir
+
 try {
     $pdo = Database::getConnection();
     $produtoDao = new ProdutoDAO($pdo);
+    $estoqueDao = new EstoqueDAO($pdo); // Instancia o EstoqueDAO, se necessário
 
-    $id = isset($_GET['id']) ? (int)$_GET['id'] : 0;
-    if ($id <= 0) {
-        header('Location: ../view/lista_produtos.php?mensagem=ID inválido&tipo_mensagem=erro');
-        exit;
-    }
+    $id = $_GET['id'] ?? null;
 
-    $produto = $produtoDao->buscarPorId($id);
-    if (!$produto) {
-        header('Location: ../view/listar_produtos.php?mensagem=Produto não encontrado&tipo_mensagem=erro');
-        exit;
-    }
+    if ($id) {
+        // Inicia uma transação
+        $pdo->beginTransaction();
 
-    if ($produtoDao->removerProduto($id)) {
-        header('Location: ../view/listar_produtos.php?mensagem=Produto excluído com sucesso&tipo_mensagem=sucesso');
-        exit;
+        // Busca o produto para obter o estoque_id
+        $produto = $produtoDao->buscarPorId((int)$id);
+        if ($produto) {
+            $estoqueId = $produto->getEstoqueId();
+
+            // Exclui o produto primeiro
+            $produtoDao->excluir((int)$id);
+
+            // Se o estoque_id existe e não é mais referenciado, exclui o estoque
+            if ($estoqueId) {
+                $contagemReferencias = $pdo->query("SELECT COUNT(*) FROM produtos WHERE estoque_id = $estoqueId")->fetchColumn();
+                if ($contagemReferencias == 0) {
+                    $estoqueDao->excluir((int)$estoqueId); // Exclui o estoque apenas se não houver mais referências
+                }
+            }
+
+            $pdo->commit();
+            header('Location: ../view/dashboard.php?mensagem=Produto+excluído+com+sucesso&tipo_mensagem=success');
+            exit;
+        } else {
+            throw new Exception('Produto não encontrado');
+        }
     } else {
-        header('Location: ../view/listar_produtos.php?mensagem=Erro ao excluir o produto&tipo_mensagem=erro');
-        exit;
+        throw new Exception('ID não fornecido');
     }
 } catch (Exception $e) {
-    error_log("Erro em excluir_produto.php: " . $e->getMessage());
-    header('Location: ../view/listar_produtos.php?mensagem=Erro ao excluir: ' . urlencode($e->getMessage()) . '&tipo_mensagem=erro');
+    $pdo->rollBack();
+    error_log(date('[Y-m-d H:i:s] ') . "Erro ao excluir produto: " . $e->getMessage() . PHP_EOL);
+    header('Location: ../view/dashboard.php?mensagem=Erro+ao+excluir:+' . urlencode($e->getMessage()) . '&tipo_mensagem=erro');
     exit;
 }
+?>

@@ -22,8 +22,8 @@ try {
 
     // Busca produtos do usuário logado com paginação
     error_log("Listando produtos do usuário {$_SESSION['usuario_id']}, página: $pagina, offset: $offset");
-    $produtos = $produtoDao->listarProdutosPorUsuario($_SESSION['usuario_id'], $itensPorPagina, $offset);
-    $totalProdutos = $produtoDao->contarProdutosPorUsuario($_SESSION['usuario_id']);
+    $produtos = $produtoDao->listarTodosProdutos($itensPorPagina, $offset);
+    $totalProdutos = $produtoDao->contarTodosProdutos();
 
     // Busca lista de fornecedores
     $fornecedores = [];
@@ -71,9 +71,11 @@ try {
         </div>
     </div>
     <div class="nav-bar">
+    <?php if (isset($_SESSION['is_admin']) && $_SESSION['is_admin']): ?>
         <a href="../view/cadastro_produto.php">Cadastrar Produto</a> 
         <a href="../view/cadastro_fornecedor.php">Cadastrar Fornecedor</a> 
-    </div>
+    <?php endif; ?>
+</div>
     <div class="welcome">
     </div>
 
@@ -98,7 +100,7 @@ try {
                 <?php foreach ($produtos as $produto): ?>
                     <div class="col">
                         <div class="card h-100" style="cursor: pointer;" 
-                             onclick="mostrarDetalhes(<?= $produto->getId() ?>, '<?= htmlspecialchars($produto->getNome(), ENT_QUOTES, 'UTF-8') ?>')">
+                        onclick="mostrarDetalhes(<?= $produto->getId() ?>, '<?= htmlspecialchars($produto->getNome(), ENT_QUOTES, 'UTF-8') ?>', <?= $produto->getUsuarioId() ?>)">
                             <?php if ($produto->getFoto()): ?>
                                 <img src="<?= htmlspecialchars('../public/uploads/imagens/' . $produto->getFoto(), ENT_QUOTES, 'UTF-8') ?>" 
                                      class="card-img-top" alt="Foto do produto">
@@ -244,62 +246,73 @@ try {
         let isEditando = false;
         let fornecedores = <?php echo json_encode($fornecedores); ?>;
 
-        function mostrarDetalhes(id, nome) {
-            currentProdutoId = id;
-            fetch(`../controllers/get_produto.php?id=${id}`)
-                .then(response => response.json())
-                .then(data => {
-                    if (data.error) {
-                        alert(data.error);
-                        return;
-                    }
-                    document.getElementById('produtoNome').textContent = data.nome;
-                    document.getElementById('produtoDescricao').textContent = data.descricao || 'Nenhuma';
-                    
-                    document.getElementById('produtoFornecedor').textContent = data.fornecedor;
-                    document.getElementById('produtoEstoque').textContent = data.estoque;
-                    document.getElementById('produtoPreco').textContent = `R$ ${number_format(data.preco ?? 0, 2, ',', '.')}`;
-                    document.getElementById('produtoFoto').src = data.foto ? `../public/uploads/imagens/${data.foto}` : 'https://via.placeholder.com/200';
-                    document.getElementById('btnConfirmarExclusao').href = `../controllers/excluir_produto.php?id=${id}`;
+        function mostrarDetalhes(id, nome, usuarioId) {
+    currentProdutoId = id;
+    fetch(`../controllers/get_produto.php?id=${id}`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.error) {
+                alert(data.error);
+                return;
+            }
+            document.getElementById('produtoNome').textContent = data.nome;
+            document.getElementById('produtoDescricao').textContent = data.descricao || 'Nenhuma';
+            document.getElementById('produtoFornecedor').textContent = data.fornecedor_nome || 'Sem fornecedor';
+            document.getElementById('produtoEstoque').textContent = data.estoque;
+            document.getElementById('produtoPreco').textContent = `R$ ${number_format(data.preco ?? 0, 2, ',', '.')}`;
+            document.getElementById('produtoFoto').src = data.foto ? `../public/uploads/imagens/${data.foto}` : 'https://via.placeholder.com/200';
+            document.getElementById('btnConfirmarExclusao').href = `../controllers/excluir_produto.php?id=${id}`;
 
-                    // Preencher campos do formulário
-                    document.getElementById('produtoId').value = id;
-                    document.getElementById('produtoNomeInput').value = data.nome;
-                    document.getElementById('produtoDescricaoInput').value = data.descricao || '';
-                    document.getElementById('produtoEstoqueInput').value = data.estoque;
-                    document.getElementById('produtoPrecoInput').value = data.preco ?? 0;
+            document.getElementById('produtoId').value = id;
+            document.getElementById('produtoNomeInput').value = data.nome;
+            document.getElementById('produtoDescricaoInput').value = data.descricao || '';
+            document.getElementById('produtoEstoqueInput').value = data.estoque;
+            document.getElementById('produtoPrecoInput').value = data.preco ?? 0;
 
-                    // Preencher o select de fornecedores
-                    const fornecedorSelect = document.getElementById('produtoFornecedorInput');
-                    fornecedorSelect.innerHTML = '';
-                    fornecedores.forEach(fornecedor => {
-                        const option = document.createElement('option');
-                        option.value = fornecedor.id;
-                        option.text = fornecedor.nome;
-                        if (fornecedor.id == data.fornecedor) {
-                            option.selected = true;
-                        }
-                        fornecedorSelect.appendChild(option);
-                    });
+            const fornecedorSelect = document.getElementById('produtoFornecedorInput');
+            fornecedorSelect.innerHTML = '';
+            fornecedores.forEach(fornecedor => {
+                const option = document.createElement('option');
+                option.value = fornecedor.id;
+                option.text = fornecedor.nome;
+                if (fornecedor.id == data.fornecedor) {
+                    option.selected = true;
+                }
+                fornecedorSelect.appendChild(option);
+            });
 
-                    // Resetar estado
-                    isEditando = false;
-                    document.getElementById('visualizacao').classList.remove('d-none');
-                    document.getElementById('editarForm').classList.add('d-none');
-                    document.getElementById('btnEditar').classList.remove('d-none');
-                    document.getElementById('btnSalvar').classList.add('d-none');
-                    document.getElementById('produtoFotoInput').classList.add('d-none');
-                    document.getElementById('mensagemErro').style.display = 'none';
-                    document.getElementById('mensagemSucesso').style.display = 'none';
+            // Mostrar ou ocultar botões Editar/Excluir com base no usuário
+            const usuarioLogadoId = <?php echo json_encode($_SESSION['usuario_id']); ?>;
+            const isAdmin = <?php echo json_encode(isset($_SESSION['is_admin']) && $_SESSION['is_admin']); ?>;
+            const btnEditar = document.getElementById('btnEditar');
+            const btnExcluir = document.getElementById('btnExcluir');
+            
+            if (isAdmin || usuarioId == usuarioLogadoId) {
+                btnEditar.classList.remove('d-none');
+                btnExcluir.classList.remove('d-none');
+            } else {
+                btnEditar.classList.add('d-none');
+                btnExcluir.classList.add('d-none');
+            }
 
-                    const modal = new bootstrap.Modal(document.getElementById('detalhesModal'));
-                    modal.show();
-                })
-                .catch(error => {
-                    console.error('Erro ao buscar detalhes:', error);
-                    alert('Erro ao carregar detalhes do produto');
-                });
-        }
+            // Resetar estado
+            isEditando = false;
+            document.getElementById('visualizacao').classList.remove('d-none');
+            document.getElementById('editarForm').classList.add('d-none');
+            document.getElementById('btnEditar').classList.remove('d-none');
+            document.getElementById('btnSalvar').classList.add('d-none');
+            document.getElementById('produtoFotoInput').classList.add('d-none');
+            document.getElementById('mensagemErro').style.display = 'none';
+            document.getElementById('mensagemSucesso').style.display = 'none';
+
+            const modal = new bootstrap.Modal(document.getElementById('detalhesModal'));
+            modal.show();
+        })
+        .catch(error => {
+            console.error('Erro ao buscar detalhes:', error);
+            alert('Erro ao carregar detalhes do produto');
+        });
+}
 
         function alternarEdicao() {
             isEditando = !isEditando;
@@ -319,44 +332,46 @@ try {
         }
 
         function salvarProduto() {
-            const form = document.getElementById('editarForm');
-            const formData = new FormData(form);
-            if (document.getElementById('produtoFotoInput').files[0]) {
-                formData.append('foto', document.getElementById('produtoFotoInput').files[0]);
-            }
+    const form = document.getElementById('editarForm');
+    const formData = new FormData(form);
+    if (document.getElementById('produtoFotoInput').files[0]) {
+        formData.append('foto', document.getElementById('produtoFotoInput').files[0]);
+    }
 
-            fetch('../controllers/atualizar_produto.php', {
-                method: 'POST',
-                body: formData
-            })
-                .then(response => response.json())
-                .then(data => {
-                    if (data.success) {
-                        document.getElementById('mensagemSucesso').style.display = 'block';
-                        document.getElementById('mensagemErro').style.display = 'none';
-                        // Atualizar visualização
-                        document.getElementById('produtoNome').textContent = formData.get('nome');
-                        document.getElementById('produtoDescricao').textContent = formData.get('descricao') || 'Nenhuma';
-                        document.getElementById('produtoFornecedor').textContent = formData.get('fornecedor');
-                        document.getElementById('produtoEstoque').textContent = formData.get('estoque');
-                        document.getElementById('produtoPreco').textContent = `R$ ${number_format(formData.get('preco'), 2, ',', '.')}`;
-                        if (data.foto) {
-                            document.getElementById('produtoFoto').src = `../public/uploads/imagens/${data.foto}`;
-                        }
-                        alternarEdicao();
-                    } else {
-                        document.getElementById('mensagemErroTexto').textContent = data.error;
-                        document.getElementById('mensagemErro').style.display = 'block';
-                        document.getElementById('mensagemSucesso').style.display = 'none';
-                    }
-                })
-                .catch(error => {
-                    console.error('Erro ao salvar:', error);
-                    document.getElementById('mensagemErroTexto').textContent = 'Erro ao salvar o produto';
-                    document.getElementById('mensagemErro').style.display = 'block';
-                    document.getElementById('mensagemSucesso').style.display = 'none';
-                });
-        }
+    fetch('../controllers/atualizar_produto.php', {
+        method: 'POST',
+        body: formData
+    })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                document.getElementById('mensagemSucesso').style.display = 'block';
+                document.getElementById('mensagemErro').style.display = 'none';
+                // Atualizar visualização
+                document.getElementById('produtoNome').textContent = formData.get('nome');
+                document.getElementById('produtoDescricao').textContent = formData.get('descricao') || 'Nenhuma';
+                const fornecedorId = formData.get('fornecedor');
+                const fornecedorNome = fornecedores.find(f => f.id == fornecedorId)?.nome || 'Sem fornecedor';
+                document.getElementById('produtoFornecedor').textContent = fornecedorNome; // Correção aqui
+                document.getElementById('produtoEstoque').textContent = formData.get('estoque');
+                document.getElementById('produtoPreco').textContent = `R$ ${number_format(formData.get('preco'), 2, ',', '.')}`;
+                if (data.foto) {
+                    document.getElementById('produtoFoto').src = `../public/uploads/imagens/${data.foto}`;
+                }
+                alternarEdicao();
+            } else {
+                document.getElementById('mensagemErroTexto').textContent = data.error;
+                document.getElementById('mensagemErro').style.display = 'block';
+                document.getElementById('mensagemSucesso').style.display = 'none';
+            }
+        })
+        .catch(error => {
+            console.error('Erro ao salvar:', error);
+            document.getElementById('mensagemErroTexto').textContent = 'Erro ao salvar o produto';
+            document.getElementById('mensagemErro').style.display = 'block';
+            document.getElementById('mensagemSucesso').style.display = 'none';
+        });
+}
 
         function confirmarExclusao() {
             document.getElementById('confirmProdutoNome').textContent = document.getElementById('produtoNome').textContent;

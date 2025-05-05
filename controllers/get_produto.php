@@ -12,8 +12,8 @@ if ($id) {
         $response = [
             'nome' => $produto->getNome(),
             'descricao' => $produto->getDescricao(),
-            'fornecedor' => $produto->getFornecedorId(), 
-            'fornecedor_nome' => $produto->fornecedor_nome ?? 'Sem fornecedor',
+            'fornecedor' => (int)$produto->getFornecedorId(), 
+            'fornecedor_nome' => $produto->fornecedor_nome ?? 'Sem fornecedor', 
             'estoque' => $produto->getQuantidade() ?? 0,
             'preco' => $produto->getPreco() ?? 0,
             'foto' => $produto->getFoto()

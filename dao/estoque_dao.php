@@ -95,6 +95,17 @@ class EstoqueDAO {
         }
     }
 
+    public function excluir($id) {
+        try {
+            $sql = "DELETE FROM estoques WHERE id = :id";
+            $stmt = $this->pdo->prepare($sql);
+            $stmt->bindValue(':id', $id, PDO::PARAM_INT);
+            return $stmt->execute();
+        } catch (PDOException $e) {
+            error_log(date('[Y-m-d H:i:s] ') . "Erro ao excluir estoque: " . $e->getMessage() . PHP_EOL);
+            throw $e;
+        }
+    }
     public function remover($id) {
         try {
             $sql = "DELETE FROM estoques WHERE id = :id";
