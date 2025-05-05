@@ -1,0 +1,31 @@
+body {
+    background-color: #f8f9fa;
+}
+.header {
+    background-color: #007bff;
+    color: white;
+    padding: 15px;
+    text-align: center;
+    margin-bottom: 20px;
+}
+.header .logo {
+    font-size: 24px;
+    font-weight: bold;
+}
+.header .logo span {
+    color: #ff6f00;
+}
+.container {
+    max-width: 1200px;
+}
+.card {
+    transition: transform 0.2s;
+}
+.card:hover {
+    transform: scale(1.02);
+}
+.empty-state {
+    text-align: center;
+    padding: 50px 0;
+    color: #6c757d;
+}

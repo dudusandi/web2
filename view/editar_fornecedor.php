@@ -168,7 +168,7 @@ $mensagem = $_GET['mensagem'] ?? '';
                             <option value="MS" <?= $endereco->getEstado() === 'MS' ? 'selected' : '' ?>>Mato Grosso do Sul</option>
                             <option value="MG" <?= $endereco->getEstado() === 'MG' ? 'selected' : '' ?>>Minas Gerais</option>
                             <option value="PA" <?= $endereco->getEstado() === 'PA' ? 'selected' : '' ?>>Pará</option>
-                            <option value="PB" <?= $endereco->getEstado() === 'PB' ? 'selected' : '' ?>>Paraíba</option>
+                            <option value="PB" <?= $endereco->getEstado() === 'PB' ? 'selected' : '' ?>>Paraíba</option>controller
                             <option value="PR" <?= $endereco->getEstado() === 'PR' ? 'selected' : '' ?>>Paraná</option>
                             <option value="PE" <?= $endereco->getEstado() === 'PE' ? 'selected' : '' ?>>Pernambuco</option>
                             <option value="PI" <?= $endereco->getEstado() === 'PI' ? 'selected' : '' ?>>Piauí</option>

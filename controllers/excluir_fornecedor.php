@@ -34,7 +34,7 @@ try {
     // Exclui o fornecedor
     $fornecedorDAO->excluir($id);
 
-    header('Location: ../view/cadastro_fornecedor.php?mensagem=Fornecedor excluído com sucesso&tipo_mensagem=success');
+    header('Location: ../view/listar_fornecedor.php?mensagem=Fornecedor excluído com sucesso&tipo_mensagem=success');
     exit;
 } catch (Exception $e) {
     error_log(date('[Y-m-d H:i:s] ') . "Erro ao excluir fornecedor: " . $e->getMessage() . PHP_EOL);

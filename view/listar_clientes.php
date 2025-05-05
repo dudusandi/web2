@@ -32,40 +32,7 @@ $tipoMensagem = $_GET['tipo_mensagem'] ?? '';
     <title>Listar Clientes - UcsExpress</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
-
-    <style>
-        body {
-            background-color: #f8f9fa;
-        }
-        .header {
-            background-color: #007bff;
-            color: white;
-            padding: 15px;
-            text-align: center;
-            margin-bottom: 20px;
-        }
-        .header .logo {
-            font-size: 24px;
-            font-weight: bold;
-        }
-        .header .logo span {
-            color: #ffca2c;
-        }
-        .container {
-            max-width: 1200px;
-        }
-        .card {
-            transition: transform 0.2s;
-        }
-        .card:hover {
-            transform: scale(1.02);
-        }
-        .empty-state {
-            text-align: center;
-            padding: 50px 0;
-            color: #6c757d;
-        }
-    </style>
+    <link rel="stylesheet" href="listar.css">
 </head>
 <body>
     <!-- Cabeçalho -->
