@@ -82,41 +82,120 @@ class FornecedorDAO {
     }
 
 
-    //Listar todos os fornecedores
-    public function listarTodos() {
-        $sql = "SELECT f.id, f.nome, f.descricao, f.telefone, f.email, 
-                       e.rua, e.numero, e.bairro, e.cep, e.cidade, e.estado, e.complemento
-                FROM fornecedores f
-                JOIN enderecos e ON f.endereco_id = e.id";
-        $stmt = $this->pdo->prepare($sql);
-        $stmt->execute();
+    public function listarTodos($limit = null, $offset = null) {
+        try {
+            $sql = "SELECT f.id, f.nome, f.descricao, f.telefone, f.email,
+                           e.rua, e.numero, e.bairro, e.cidade, e.estado, e.cep
+                    FROM fornecedores f
+                    LEFT JOIN enderecos e ON f.endereco_id = e.id";
+            if ($limit !== null && $offset !== null) {
+                $sql .= " LIMIT :limit OFFSET :offset";
+            }
+            $stmt = $this->pdo->prepare($sql);
+            if ($limit !== null && $offset !== null) {
+                $stmt->bindValue(':limit', $limit, PDO::PARAM_INT);
+                $stmt->bindValue(':offset', $offset, PDO::PARAM_INT);
+            }
+            $stmt->execute();
 
-        $fornecedores = array();
-
-        while ($linha = $stmt->fetch(PDO::FETCH_ASSOC)) {
-            $endereco = new Endereco(
-                $linha['rua'],
-                $linha['numero'],
-                $linha['bairro'],
-                $linha['cep'],
-                $linha['cidade'],
-                $linha['estado'],
-                $linha['complemento']
-            );
-
-            $fornecedor = new Fornecedor(
-                $linha['nome'],
-                $linha['descricao'],
-                $linha['telefone'],
-                $linha['email'],
-                $endereco
-            );
-            $fornecedor->setId($linha['id']); 
-            $fornecedores[] = $fornecedor;
+            $fornecedores = [];
+            while ($linha = $stmt->fetch(PDO::FETCH_ASSOC)) {
+                $endereco = new Endereco(
+                    $linha['rua'],
+                    $linha['numero'],
+                    $linha['bairro'],
+                    $linha['cidade'],
+                    $linha['estado'],
+                    $linha['cep']
+                );
+                $fornecedor = new Fornecedor(
+                    $linha['nome'],
+                    $linha['descricao'],
+                    $linha['telefone'],
+                    $linha['email'],
+                    $endereco
+                );
+                $fornecedor->setId($linha['id']);
+                $fornecedores[] = $fornecedor;
+            }
+            return $fornecedores;
+        } catch (PDOException $e) {
+            error_log(date('[Y-m-d H:i:s] ') . "Erro em listarTodos: " . $e->getMessage() . PHP_EOL);
+            throw $e;
         }
-
-        return $fornecedores;
     }
+
+    // Conta todos os fornecedores
+    public function contarTodos() {
+        try {
+            $sql = "SELECT COUNT(*) FROM fornecedores";
+            $stmt = $this->pdo->query($sql);
+            return (int)$stmt->fetchColumn();
+        } catch (PDOException $e) {
+            throw $e;
+        }
+    }
+
+    public function buscarFornecedoresDinamicos($termo, $itensPorPagina, $offset) {
+        try {
+            $termoPesquisa = '%' . strtolower($termo) . '%';
+            $sql = "SELECT f.id, f.nome, f.descricao, f.telefone, f.email,
+                           e.rua, e.numero, e.bairro, e.cidade, e.estado, e.cep
+                    FROM fornecedores f
+                    LEFT JOIN enderecos e ON f.endereco_id = e.id
+                    WHERE LOWER(f.nome) LIKE :termo OR LOWER(f.descricao) LIKE :termo OR LOWER(f.email) LIKE :termo
+                    ORDER BY f.id DESC
+                    LIMIT :itensPorPagina OFFSET :offset";
+            $stmt = $this->pdo->prepare($sql);
+            $stmt->bindValue(':termo', $termoPesquisa, PDO::PARAM_STR);
+            $stmt->bindValue(':itensPorPagina', $itensPorPagina, PDO::PARAM_INT);
+            $stmt->bindValue(':offset', $offset, PDO::PARAM_INT);
+            $stmt->execute();
+
+            $fornecedores = [];
+            while ($linha = $stmt->fetch(PDO::FETCH_ASSOC)) {
+                $endereco = new Endereco(
+                    $linha['rua'],
+                    $linha['numero'],
+                    $linha['bairro'],
+                    $linha['cidade'],
+                    $linha['estado'],
+                    $linha['cep']
+                );
+                $fornecedor = new Fornecedor(
+                    $linha['nome'],
+                    $linha['descricao'],
+                    $linha['telefone'],
+                    $linha['email'],
+                    $endereco
+                );
+                $fornecedor->setId($linha['id']);
+                $fornecedores[] = $fornecedor;
+            }
+            return $fornecedores;
+        } catch (PDOException $e) {
+            error_log(date('[Y-m-d H:i:s] ') . "Erro em buscarFornecedoresDinamicos: " . $e->getMessage() . PHP_EOL);
+            throw $e;
+        }
+    }
+
+    public function contarFornecedoresBuscados($termo) {
+        try {
+            $termoPesquisa = '%' . strtolower($termo) . '%';
+            $sql = "SELECT COUNT(*) 
+                    FROM fornecedores f
+                    LEFT JOIN enderecos e ON f.endereco_id = e.id
+                    WHERE LOWER(f.nome) LIKE :termo OR LOWER(f.descricao) LIKE :termo OR LOWER(f.email) LIKE :termo";
+            $stmt = $this->pdo->prepare($sql);
+            $stmt->bindValue(':termo', $termoPesquisa, PDO::PARAM_STR);
+            $stmt->execute();
+            return (int)$stmt->fetchColumn();
+        } catch (PDOException $e) {
+            error_log(date('[Y-m-d H:i:s] ') . "Erro em contarFornecedoresBuscados: " . $e->getMessage() . PHP_EOL);
+            throw $e;
+        }
+    }
+
 
     //Buscar fornecedor por ID
     public function buscarPorId($id) {

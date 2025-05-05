@@ -61,45 +61,44 @@ class ProdutoDAO {
         }
     }
 
-    //Lista todos os produtos 
-    public function listarTodosProdutos($itensPorPagina, $offset) {
-        try {
-            $sql = "SELECT p.id, p.nome, p.descricao, p.foto, p.fornecedor_id, p.estoque_id, p.usuario_id,
-                           e.quantidade, e.preco,
-                           f.nome AS fornecedor_nome
-                    FROM produtos p
-                    LEFT JOIN estoques e ON p.estoque_id = e.id
-                    LEFT JOIN fornecedores f ON p.fornecedor_id = f.id
-                    ORDER BY p.id DESC
-                    LIMIT :itensPorPagina OFFSET :offset";
-            $stmt = $this->pdo->prepare($sql);
-            $stmt->bindValue(':itensPorPagina', $itensPorPagina, PDO::PARAM_INT);
-            $stmt->bindValue(':offset', $offset, PDO::PARAM_INT);
-            $stmt->execute();
-    
-            $produtos = [];
-            while ($linha = $stmt->fetch(PDO::FETCH_ASSOC)) {
-                $produto = new Produto(
-                    $linha['nome'],
-                    $linha['descricao'],
-                    $linha['foto'],
-                    $linha['fornecedor_id'],
-                    $linha['usuario_id']
-                );
-                $produto->setId($linha['id']);
-                $produto->setEstoqueId($linha['estoque_id']);
-                $produto->setQuantidade($linha['quantidade']);
-                $produto->setPreco($linha['preco']);
-                $produto->fornecedor_nome = $linha['fornecedor_nome'] ?? 'Sem fornecedor';
-                $produtos[] = $produto;
-            }
-            return $produtos;
-        } catch (PDOException $e) {
-            error_log(date('[Y-m-d H:i:s] ') . "Erro em listarTodosProdutos: " . $e->getMessage() . PHP_EOL);
-            throw $e;
-        }
-    }
+// Lista todos os produtos 
+public function listarTodosProdutos($itensPorPagina, $offset) {
+    try {
+        $sql = "SELECT p.id, p.nome, p.descricao, p.foto, p.fornecedor_id, p.estoque_id, p.usuario_id,
+                       e.quantidade, e.preco,
+                       f.nome AS fornecedor_nome
+                FROM produtos p
+                LEFT JOIN estoques e ON p.estoque_id = e.id
+                LEFT JOIN fornecedores f ON p.fornecedor_id = f.id
+                ORDER BY p.id DESC
+                LIMIT :itensPorPagina OFFSET :offset";
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->bindValue(':itensPorPagina', $itensPorPagina, PDO::PARAM_INT);
+        $stmt->bindValue(':offset', $offset, PDO::PARAM_INT);
+        $stmt->execute();
 
+        $produtos = [];
+        while ($linha = $stmt->fetch(PDO::FETCH_ASSOC)) {
+            $produto = new Produto(
+                $linha['nome'],
+                $linha['descricao'],
+                $linha['foto'],
+                $linha['fornecedor_id'],
+                $linha['usuario_id']
+            );
+            $produto->setId($linha['id']);
+            $produto->setEstoqueId($linha['estoque_id']);
+            $produto->setQuantidade($linha['quantidade']);
+            $produto->setPreco($linha['preco']);
+            $produto->fornecedor_nome = $linha['fornecedor_nome'] ?? 'Sem fornecedor';
+            $produtos[] = $produto;
+        }
+        return $produtos;
+    } catch (PDOException $e) {
+        error_log(date('[Y-m-d H:i:s] ') . "Erro em listarTodosProdutos: " . $e->getMessage() . PHP_EOL);
+        throw $e;
+    }
+}
     //Verifica se o nome do produto já existe
     public function nomeExiste($nome, $excludeId = null) {
         try {
@@ -158,18 +157,16 @@ class ProdutoDAO {
             throw $e;
         }
     }
-
-    //Contar Produtos totais
-    public function contarTodosProdutos() {
-        try {
-            $sql = "SELECT COUNT(*) FROM produtos";
-            $stmt = $this->pdo->query($sql);
-            return (int)$stmt->fetchColumn();
-        } catch (PDOException $e) {
-            throw $e;
-        }
+// Conta todos os produtos
+public function contarTodosProdutos() {
+    try {
+        $sql = "SELECT COUNT(*) FROM produtos";
+        $stmt = $this->pdo->query($sql);
+        return (int)$stmt->fetchColumn();
+    } catch (PDOException $e) {
+        throw $e;
     }
-
+}
 
     //Excluir produto
     public function excluir($id) {
@@ -184,6 +181,65 @@ class ProdutoDAO {
         }
     }
 
+    public function buscarProdutosDinamicos($termo, $itensPorPagina, $offset) {
+        try {
+            $termoPesquisa = '%' . strtolower($termo) . '%'; // Adiciona os % para o LIKE
+            $sql = "SELECT p.id, p.nome, p.descricao, p.foto, p.fornecedor_id, p.estoque_id, p.usuario_id,
+                           e.quantidade, e.preco,
+                           f.nome AS fornecedor_nome
+                    FROM produtos p
+                    LEFT JOIN estoques e ON p.estoque_id = e.id
+                    LEFT JOIN fornecedores f ON p.fornecedor_id = f.id
+                    WHERE LOWER(p.nome) LIKE :termo OR LOWER(p.descricao) LIKE :termo
+                    ORDER BY p.id DESC
+                    LIMIT :itensPorPagina OFFSET :offset";
+            $stmt = $this->pdo->prepare($sql);
+            $stmt->bindValue(':termo', $termoPesquisa, PDO::PARAM_STR);
+            $stmt->bindValue(':itensPorPagina', $itensPorPagina, PDO::PARAM_INT);
+            $stmt->bindValue(':offset', $offset, PDO::PARAM_INT);
+            $stmt->execute();
+
+            $produtos = [];
+            while ($linha = $stmt->fetch(PDO::FETCH_ASSOC)) {
+                $produto = new Produto(
+                    $linha['nome'],
+                    $linha['descricao'],
+                    $linha['foto'],
+                    $linha['fornecedor_id'],
+                    $linha['usuario_id']
+                );
+                $produto->setId($linha['id']);
+                $produto->setEstoqueId($linha['estoque_id']);
+                $produto->setQuantidade($linha['quantidade']);
+                $produto->setPreco($linha['preco']);
+                $produto->fornecedor_nome = $linha['fornecedor_nome'] ?? 'Sem fornecedor';
+                $produtos[] = $produto;
+            }
+            return $produtos;
+        } catch (PDOException $e) {
+            error_log(date('[Y-m-d H:i:s] ') . "Erro em buscarProdutosDinamicos: " . $e->getMessage() . PHP_EOL);
+            throw $e;
+        }
+    }
+
+// Conta produtos encontrados com base no termo
+public function contarProdutosBuscados($termo) {
+    try {
+        $termoPesquisa = '%' . strtolower($termo) . '%'; // Adiciona os % para o LIKE
+        $sql = "SELECT COUNT(*) 
+                FROM produtos p
+                LEFT JOIN estoques e ON p.estoque_id = e.id
+                LEFT JOIN fornecedores f ON p.fornecedor_id = f.id
+                WHERE LOWER(p.nome) LIKE :termo OR LOWER(p.descricao) LIKE :termo";
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->bindValue(':termo', $termoPesquisa, PDO::PARAM_STR);
+        $stmt->execute();
+        return (int)$stmt->fetchColumn();
+    } catch (PDOException $e) {
+        error_log(date('[Y-m-d H:i:s] ') . "Erro em contarProdutosBuscados: " . $e->getMessage() . PHP_EOL);
+        throw $e;
+    }
+}
     //Contar produtos por usuario
     public function contarProdutosPorUsuario($usuario_id) {
         try {
