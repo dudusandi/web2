@@ -87,7 +87,6 @@ class ClienteDAO {
         return null;
     }
 
-
     // Método para cadastrar cliente
     public function cadastrarCliente(Cliente $cliente, string $senhaHash) {
         try {
@@ -132,41 +131,126 @@ class ClienteDAO {
         }
     }
 
-
     // Método para listar todos os clientes
-    public function listarTodos() {
-        $sql = "SELECT c.id, c.nome, c.telefone, c.email, c.cartao_credito, 
-                       e.rua, e.numero, e.bairro, e.cep, e.cidade, e.estado, e.complemento
-                FROM clientes c
-                JOIN enderecos e ON c.endereco_id = e.id";
-        $stmt = $this->pdo->prepare($sql);
-        $stmt->execute();
+    public function listarTodos($limit = null, $offset = null) {
+        try {
+            $sql = "SELECT c.id, c.nome, c.telefone, c.email, c.cartao_credito, 
+                           e.rua, e.numero, e.bairro, e.cep, e.cidade, e.estado, e.complemento
+                    FROM clientes c
+                    JOIN enderecos e ON c.endereco_id = e.id";
+            if ($limit !== null && $offset !== null) {
+                $sql .= " LIMIT :limit OFFSET :offset";
+            }
+            $stmt = $this->pdo->prepare($sql);
+            if ($limit !== null && $offset !== null) {
+                $stmt->bindValue(':limit', $limit, PDO::PARAM_INT);
+                $stmt->bindValue(':offset', $offset, PDO::PARAM_INT);
+            }
+            $stmt->execute();
 
-        $clientes = array();
+            $clientes = [];
+            while ($linha = $stmt->fetch(PDO::FETCH_ASSOC)) {
+                $endereco = new Endereco(
+                    $linha['rua'],
+                    $linha['numero'],
+                    $linha['bairro'],
+                    $linha['cep'],
+                    $linha['cidade'],
+                    $linha['estado'],
+                    $linha['complemento']
+                );
 
-        while ($linha = $stmt->fetch(PDO::FETCH_ASSOC)) {
-            $endereco = new Endereco(
-                $linha['rua'],
-                $linha['numero'],
-                $linha['bairro'],
-                $linha['cep'],
-                $linha['cidade'],
-                $linha['estado'],
-                $linha['complemento']
-            );
-
-            $cliente = new Cliente(
-                $linha['nome'],
-                $linha['telefone'],
-                $linha['email'],
-                $linha['cartao_credito'],
-                $endereco
-            );
-            $cliente->setId($linha['id']);
-            $clientes[] = $cliente;
+                $cliente = new Cliente(
+                    $linha['nome'],
+                    $linha['telefone'],
+                    $linha['email'],
+                    $linha['cartao_credito'],
+                    $endereco
+                );
+                $cliente->setId($linha['id']);
+                $clientes[] = $cliente;
+            }
+            return $clientes;
+        } catch (PDOException $e) {
+            error_log(date('[Y-m-d H:i:s] ') . "Erro em listarTodos: " . $e->getMessage() . PHP_EOL);
+            throw $e;
         }
+    }
 
-        return $clientes;
+    // Método para contar todos os clientes
+    public function contarTodos() {
+        try {
+            $sql = "SELECT COUNT(*) FROM clientes";
+            $stmt = $this->pdo->query($sql);
+            return (int)$stmt->fetchColumn();
+        } catch (PDOException $e) {
+            error_log(date('[Y-m-d H:i:s] ') . "Erro em contarTodos: " . $e->getMessage() . PHP_EOL);
+            throw $e;
+        }
+    }
+
+    // Método para buscar clientes dinamicamente com base em um termo
+    public function buscarClientesDinamicos($termo, $itensPorPagina, $offset) {
+        try {
+            $termoPesquisa = '%' . strtolower($termo) . '%';
+            $sql = "SELECT c.id, c.nome, c.telefone, c.email, c.cartao_credito, 
+                           e.rua, e.numero, e.bairro, e.cep, e.cidade, e.estado, e.complemento
+                    FROM clientes c
+                    JOIN enderecos e ON c.endereco_id = e.id
+                    WHERE LOWER(c.nome) LIKE :termo OR LOWER(c.email) LIKE :termo OR LOWER(c.telefone) LIKE :termo
+                    ORDER BY c.id DESC
+                    LIMIT :itensPorPagina OFFSET :offset";
+            $stmt = $this->pdo->prepare($sql);
+            $stmt->bindValue(':termo', $termoPesquisa, PDO::PARAM_STR);
+            $stmt->bindValue(':itensPorPagina', $itensPorPagina, PDO::PARAM_INT);
+            $stmt->bindValue(':offset', $offset, PDO::PARAM_INT);
+            $stmt->execute();
+
+            $clientes = [];
+            while ($linha = $stmt->fetch(PDO::FETCH_ASSOC)) {
+                $endereco = new Endereco(
+                    $linha['rua'],
+                    $linha['numero'],
+                    $linha['bairro'],
+                    $linha['cep'],
+                    $linha['cidade'],
+                    $linha['estado'],
+                    $linha['complemento']
+                );
+
+                $cliente = new Cliente(
+                    $linha['nome'],
+                    $linha['telefone'],
+                    $linha['email'],
+                    $linha['cartao_credito'],
+                    $endereco
+                );
+                $cliente->setId($linha['id']);
+                $clientes[] = $cliente;
+            }
+            return $clientes;
+        } catch (PDOException $e) {
+            error_log(date('[Y-m-d H:i:s] ') . "Erro em buscarClientesDinamicos: " . $e->getMessage() . PHP_EOL);
+            throw $e;
+        }
+    }
+
+    // Método para contar clientes encontrados com base no termo
+    public function contarClientesBuscados($termo) {
+        try {
+            $termoPesquisa = '%' . strtolower($termo) . '%';
+            $sql = "SELECT COUNT(*) 
+                    FROM clientes c
+                    JOIN enderecos e ON c.endereco_id = e.id
+                    WHERE LOWER(c.nome) LIKE :termo OR LOWER(c.email) LIKE :termo OR LOWER(c.telefone) LIKE :termo";
+            $stmt = $this->pdo->prepare($sql);
+            $stmt->bindValue(':termo', $termoPesquisa, PDO::PARAM_STR);
+            $stmt->execute();
+            return (int)$stmt->fetchColumn();
+        } catch (PDOException $e) {
+            error_log(date('[Y-m-d H:i:s] ') . "Erro em contarClientesBuscados: " . $e->getMessage() . PHP_EOL);
+            throw $e;
+        }
     }
 
     // Método para buscar cliente por ID
@@ -256,8 +340,7 @@ class ClienteDAO {
     }
 
     // Método para remover cliente
-      // Método para remover cliente
-      public function removerCliente($id) {
+    public function removerCliente($id) {
         try {
             $this->pdo->beginTransaction();
 
