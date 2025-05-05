@@ -4,42 +4,39 @@ class Produto {
     private $nome;
     private $descricao;
     private $foto;
-    private $fornecedorId;
-    private $estoqueId;
-    private $usuarioId;
-    private $quantidade; 
-    private $preco;      
+    private $fornecedor_id;
+    private $estoque_id;
+    private $usuario_id;
+    private $quantidade;
+    private $preco;
+    public $fornecedor_nome; // Adiciona explicitamente
 
-    public function __construct($nome, $fornecedorId, $usuarioId, $quantidade = '', $preco = '', $descricao = '', $foto = '') {
+    public function __construct($nome, $descricao, $foto, $fornecedor_id, $usuario_id) {
         $this->nome = $nome;
         $this->descricao = $descricao;
         $this->foto = $foto;
-        $this->fornecedorId = $fornecedorId;
-        $this->usuarioId = $usuarioId;
-        $this->quantidade = $quantidade;
-        $this->preco = $preco;
+        $this->fornecedor_id = $fornecedor_id;
+        $this->usuario_id = $usuario_id;
     }
 
-    // Getters
+    // Getters e setters existentes
     public function getId() { return $this->id; }
+    public function setId($id) { $this->id = $id; }
     public function getNome() { return $this->nome; }
     public function getDescricao() { return $this->descricao; }
     public function getFoto() { return $this->foto; }
-    public function getFornecedorId() { return $this->fornecedorId; }
-    public function getEstoqueId() { return $this->estoqueId; }
-    public function getUsuarioId() { return $this->usuarioId; }
-    public function getQuantidade() { return $this->quantidade; } // Novo getter
-    public function getPreco() { return $this->preco; }           // Novo getter
+    public function getFornecedorId() { return $this->fornecedor_id; }
+    public function getEstoqueId() { return $this->estoque_id; }
+    public function setEstoqueId($estoque_id) { $this->estoque_id = $estoque_id; }
+    public function getUsuarioId() { return $this->usuario_id; }
+    public function getQuantidade() { return $this->quantidade; }
+    public function setQuantidade($quantidade) { $this->quantidade = $quantidade; }
+    public function getPreco() { return $this->preco; }
+    public function setPreco($preco) { $this->preco = $preco; }
 
-    // Setters
-    public function setId($id) { $this->id = $id; }
-    public function setNome($nome) { $this->nome = $nome; }
-    public function setDescricao($descricao) { $this->descricao = $descricao; }
-    public function setFoto($foto) { $this->foto = $foto; }
-    public function setFornecedorId($fornecedorId) { $this->fornecedorId = $fornecedorId; }
-    public function setEstoqueId($estoqueId) { $this->estoqueId = $estoqueId; }
-    public function setUsuarioId($usuarioId) { $this->usuarioId = $usuarioId; }
-    public function setQuantidade($quantidade) { $this->quantidade = $quantidade; } // Novo setter
-    public function setPreco($preco) { $this->preco = $preco; }                     // Novo setter
+    // Getter para fornecedor_nome (opcional, já que é público)
+    public function getFornecedorNome() {
+        return $this->fornecedor_nome ?? 'Sem fornecedor';
+    }
 }
 ?>

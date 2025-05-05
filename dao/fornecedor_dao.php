@@ -140,6 +140,18 @@ class FornecedorDAO {
         return null;
     }
 
+    public function listarFornecedores() {
+        try {
+            $sql = "SELECT id, nome FROM fornecedores ORDER BY nome ASC";
+            $stmt = $this->pdo->prepare($sql);
+            $stmt->execute();
+            return $stmt->fetchAll(PDO::FETCH_ASSOC);
+        } catch (PDOException $e) {
+            error_log(date('[Y-m-d H:i:s] ') . "Erro em listarFornecedores: " . $e->getMessage() . PHP_EOL);
+            throw $e;
+        }
+    }
+
 
     public function atualizarFornecedor(Fornecedor $fornecedor) {
         try {

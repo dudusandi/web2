@@ -8,10 +8,12 @@ if (!isset($_SESSION['usuario_id'])) {
 require_once __DIR__ . '/../config/database.php';
 require_once __DIR__ . '/../dao/produto_dao.php';
 require_once __DIR__ . '/../model/produto.php';
+require_once __DIR__ . '/../dao/fornecedor_dao.php'; // Inclui o novo DAO
 
 try {
     $pdo = Database::getConnection();
     $produtoDao = new ProdutoDAO($pdo);
+    $fornecedorDao = new FornecedorDAO($pdo); // Instancia o FornecedorDAO
 
     // Filtros e paginação
     $pagina = isset($_GET['pagina']) ? (int)$_GET['pagina'] : 1;
@@ -22,6 +24,16 @@ try {
     error_log("Listando produtos do usuário {$_SESSION['usuario_id']}, página: $pagina, offset: $offset");
     $produtos = $produtoDao->listarProdutosPorUsuario($_SESSION['usuario_id'], $itensPorPagina, $offset);
     $totalProdutos = $produtoDao->contarProdutosPorUsuario($_SESSION['usuario_id']);
+
+    // Busca lista de fornecedores
+    $fornecedores = [];
+    try {
+        $fornecedores = $fornecedorDao->listarFornecedores();
+    } catch (Exception $e) {
+        error_log("Erro ao listar fornecedores: " . $e->getMessage());
+        $mensagem = "Erro ao carregar fornecedores: " . $e->getMessage();
+        $tipoMensagem = 'erro';
+    }
 
     // Mensagens
     $mensagem = $_GET['mensagem'] ?? '';
@@ -98,10 +110,11 @@ try {
                             <div class="card-body">
                                 <h5 class="card-title"><?= htmlspecialchars($produto->getNome(), ENT_QUOTES, 'UTF-8') ?></h5>
                                 <p class="card-text text-muted">
-                                    Estoque: <?= $produto->getQuantidade() ?? 0 ?><br>
-                                    Preço: R$ <?= number_format($produto->getPreco() ?? 0, 2, ',', '.') ?><br>
-                                    Fornecedor: <?= htmlspecialchars($produto->getFornecedorId(), ENT_QUOTES, 'UTF-8') ?>
-                                </p>
+                                Estoque: <?= $produto->getQuantidade() ?? 0 ?><br>
+                                Preço: R$ <?= number_format($produto->getPreco() ?? 0, 2, ',', '.') ?><br>
+                                Fornecedor: <?= htmlspecialchars($produto->fornecedor_nome ?? 'Sem fornecedor', ENT_QUOTES, 'UTF-8') ?>
+                                <?php error_log("Produto: {$produto->getNome()}, Fornecedor: {$produto->fornecedor_nome}, Descrição: {$produto->getDescricao()}"); ?>
+                            </p>
                             </div>
                         </div>
                     </div>
@@ -176,7 +189,7 @@ try {
                                 </div>
                                 <div class="mb-3">
                                     <label for="produtoFornecedorInput" class="form-label">Fornecedor *</label>
-                                    <input type="text" class="form-control" id="produtoFornecedorInput" name="fornecedor" required>
+                                    <select class="form-control" id="produtoFornecedorInput" name="fornecedor" required></select>
                                 </div>
                                 <div class="mb-3">
                                     <label for="produtoEstoqueInput" class="form-label">Estoque *</label>
@@ -229,6 +242,7 @@ try {
     <script>
         let currentProdutoId = null;
         let isEditando = false;
+        let fornecedores = <?php echo json_encode($fornecedores); ?>;
 
         function mostrarDetalhes(id, nome) {
             currentProdutoId = id;
@@ -241,6 +255,7 @@ try {
                     }
                     document.getElementById('produtoNome').textContent = data.nome;
                     document.getElementById('produtoDescricao').textContent = data.descricao || 'Nenhuma';
+                    
                     document.getElementById('produtoFornecedor').textContent = data.fornecedor;
                     document.getElementById('produtoEstoque').textContent = data.estoque;
                     document.getElementById('produtoPreco').textContent = `R$ ${number_format(data.preco ?? 0, 2, ',', '.')}`;
@@ -251,9 +266,21 @@ try {
                     document.getElementById('produtoId').value = id;
                     document.getElementById('produtoNomeInput').value = data.nome;
                     document.getElementById('produtoDescricaoInput').value = data.descricao || '';
-                    document.getElementById('produtoFornecedorInput').value = data.fornecedor;
                     document.getElementById('produtoEstoqueInput').value = data.estoque;
                     document.getElementById('produtoPrecoInput').value = data.preco ?? 0;
+
+                    // Preencher o select de fornecedores
+                    const fornecedorSelect = document.getElementById('produtoFornecedorInput');
+                    fornecedorSelect.innerHTML = '';
+                    fornecedores.forEach(fornecedor => {
+                        const option = document.createElement('option');
+                        option.value = fornecedor.id;
+                        option.text = fornecedor.nome;
+                        if (fornecedor.id == data.fornecedor) {
+                            option.selected = true;
+                        }
+                        fornecedorSelect.appendChild(option);
+                    });
 
                     // Resetar estado
                     isEditando = false;

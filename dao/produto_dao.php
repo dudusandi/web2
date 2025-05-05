@@ -138,9 +138,11 @@ class ProdutoDAO {
     public function listarProdutosPorUsuario($usuario_id, $limit = null, $offset = null) {
         try {
             $sql = "SELECT p.id, p.nome, p.descricao, p.foto, p.fornecedor_id, p.estoque_id, p.usuario_id,
-                           e.quantidade, e.preco
+                           e.quantidade, e.preco,
+                           f.nome AS fornecedor_nome
                     FROM produtos p
                     LEFT JOIN estoques e ON p.estoque_id = e.id
+                    LEFT JOIN fornecedores f ON p.fornecedor_id = f.id
                     WHERE p.usuario_id = :usuario_id";
             if ($limit !== null && $offset !== null) {
                 $sql .= " LIMIT :limit OFFSET :offset";
@@ -152,7 +154,7 @@ class ProdutoDAO {
                 $stmt->bindValue(':offset', $offset, PDO::PARAM_INT);
             }
             $stmt->execute();
-
+    
             $produtos = [];
             while ($linha = $stmt->fetch(PDO::FETCH_ASSOC)) {
                 $produto = new Produto(
@@ -164,8 +166,9 @@ class ProdutoDAO {
                 );
                 $produto->setId($linha['id']);
                 $produto->setEstoqueId($linha['estoque_id']);
-                $produto->setQuantidade($linha['quantidade']); // Preenche os novos atributos
+                $produto->setQuantidade($linha['quantidade']);
                 $produto->setPreco($linha['preco']);
+                $produto->fornecedor_nome = $linha['fornecedor_nome'] ?? 'Sem fornecedor';
                 $produtos[] = $produto;
             }
             return $produtos;
