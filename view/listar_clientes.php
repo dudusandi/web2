@@ -38,6 +38,9 @@ $tipoMensagem = $_GET['tipo_mensagem'] ?? '';
     <!-- Cabeçalho -->
     <div class="header">
         <div class="logo">UCS<span>express</span></div>
+        <div class="search-bar">
+            <input type="text" id="searchInput" placeholder="Pesquisar clientes..." autocomplete="off">
+        </div>
     </div>
 
     <div class="container">
