@@ -34,7 +34,7 @@ $preco = htmlspecialchars($_POST['preco'] ?? '0.00', ENT_QUOTES, 'UTF-8');
     <div class="container form-container">
         <h2 class="mb-4">Cadastro de Produto</h2>
 
-        <!-- Mensagens de feedback -->
+        <!-- Mensagens -->
         <?php if ($sucesso): ?>
             <div class="alert alert-success success-message">
                 Produto cadastrado com sucesso!

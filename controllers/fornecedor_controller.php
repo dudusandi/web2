@@ -49,14 +49,14 @@ class FornecedorController {
                 $fornecedorExistente->setEmail($email);
                 $fornecedorExistente->setEndereco($endereco);
                 $this->fornecedorDAO->atualizarFornecedor($fornecedorExistente);
-                header('Location: ../view/listar_fornecedores.php?mensagem=Edição realizada com sucesso');
+                header('Location: ../view/listar_fornecedor.php?mensagem=Edição realizada com sucesso');
                 exit;
             } else {
-                header('Location: ../view/listar_fornecedores.php?mensagem=Fornecedor não encontrado');
+                header('Location: ../view/listar_fornecedor.php?mensagem=Fornecedor não encontrado');
                 exit;
             }
         } catch (Exception $e) {
-            header('Location: ../view/listar_fornecedores.php?mensagem=Erro ao editar: ' . urlencode($e->getMessage()));
+            header('Location: ../view/listar_fornecedor.php?mensagem=Erro ao editar: ' . urlencode($e->getMessage()));
             exit;
         }
     }

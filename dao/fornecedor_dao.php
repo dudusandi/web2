@@ -53,6 +53,16 @@ class FornecedorDAO {
         }
     }
 
+    public function excluir($id) {
+        try {
+            $sql = "DELETE FROM fornecedores WHERE id = :id";
+            $stmt = $this->pdo->prepare($sql);
+            $stmt->execute(['id' => $id]);
+        } catch (PDOException $e) {
+            throw new Exception("Erro ao excluir fornecedor: " . $e->getMessage());
+        }
+    }
+
     public function buscarNomePorId($fornecedorId) {
         try {
             $sql = "SELECT nome FROM fornecedores WHERE id = :id";
