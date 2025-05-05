@@ -53,6 +53,20 @@ class FornecedorDAO {
         }
     }
 
+    public function buscarNomePorId($fornecedorId) {
+        try {
+            $sql = "SELECT nome FROM fornecedores WHERE id = :id";
+            $stmt = $this->pdo->prepare($sql);
+            $stmt->bindValue(':id', $fornecedorId, PDO::PARAM_INT);
+            $stmt->execute();
+            $result = $stmt->fetch(PDO::FETCH_ASSOC);
+            return $result ? $result['nome'] : 'Desconhecido';
+        } catch (PDOException $e) {
+            error_log("Erro ao buscar fornecedor: " . $e->getMessage());
+            throw $e;
+        }
+    }
+
     public function listarTodos() {
         $sql = "SELECT f.id, f.nome, f.descricao, f.telefone, f.email, 
                        e.rua, e.numero, e.bairro, e.cep, e.cidade, e.estado, e.complemento

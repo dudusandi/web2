@@ -1,6 +1,6 @@
 <?php
-require_once '../config/database.php';
-require_once '../model/estoque.php';
+require_once __DIR__ . '/../config/database.php';
+require_once __DIR__ . '/../model/estoque.php';
 
 class EstoqueDAO {
     private $pdo;
@@ -11,8 +11,6 @@ class EstoqueDAO {
 
     public function inserir(Estoque $estoque) {
         try {
-            $this->pdo->beginTransaction();
-
             $sql = "INSERT INTO estoques (quantidade, preco) 
                     VALUES (:quantidade, :preco) 
                     RETURNING id";
@@ -25,11 +23,36 @@ class EstoqueDAO {
             $estoqueId = $stmt->fetch(PDO::FETCH_ASSOC)['id'];
             $estoque->setId($estoqueId);
 
-            $this->pdo->commit();
             return $estoqueId;
         } catch (PDOException $e) {
-            $this->pdo->rollBack();
             throw new Exception("Erro ao inserir estoque: " . $e->getMessage());
+        }
+    }
+
+    public function buscarQuantidadePorId($estoqueId) {
+        try {
+            $sql = "SELECT quantidade FROM estoques WHERE id = :id";
+            $stmt = $this->pdo->prepare($sql);
+            $stmt->bindValue(':id', $estoqueId, PDO::PARAM_INT);
+            $stmt->execute();
+            $result = $stmt->fetch(PDO::FETCH_ASSOC);
+            return $result ? $result['quantidade'] : 0;
+        } catch (PDOException $e) {
+            error_log("Erro ao buscar estoque: " . $e->getMessage());
+            throw $e;
+        }
+    }
+
+    public function atualizarQuantidade($estoqueId, $quantidade) {
+        try {
+            $sql = "UPDATE estoques SET quantidade = :quantidade WHERE id = :id";
+            $stmt = $this->pdo->prepare($sql);
+            $stmt->bindValue(':quantidade', $quantidade, PDO::PARAM_INT);
+            $stmt->bindValue(':id', $estoqueId, PDO::PARAM_INT);
+            return $stmt->execute();
+        } catch (PDOException $e) {
+            error_log(date('[Y-m-d H:i:s] ') . "Erro ao atualizar estoque: " . $e->getMessage() . PHP_EOL);
+            throw $e;
         }
     }
 

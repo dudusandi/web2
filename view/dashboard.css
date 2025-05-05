@@ -1,0 +1,144 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: Arial, sans-serif;
+}
+
+body {
+    background-color: #f5f5f5;
+}
+
+.header {
+    background-color: #fff;
+    padding: 15px 20px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 1px solid #ddd;
+}
+
+.logo {
+    font-size: 24px;
+    font-weight: bold;
+    color: #000;
+}
+
+.logo span {
+    color: #ff6f00;
+}
+
+.search-bar {
+    flex-grow: 1;
+    margin: 0 20px;
+}
+
+.search-bar input {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 20px;
+    font-size: 16px;
+}
+
+.user-options {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.user-options a {
+    text-decoration: none;
+    color: #333;
+    font-size: 14px;
+}
+
+.user-options a:hover {
+    color: #ff6f00;
+}
+
+.cart {
+    position: relative;
+}
+
+.cart span {
+    position: absolute;
+    top: -5px;
+    right: -10px;
+    background-color: #ff6f00;
+    color: #fff;
+    border-radius: 50%;
+    padding: 2px 6px;
+    font-size: 12px;
+}
+
+.nav-bar {
+    background-color: #fff;
+    padding: 10px 20px;
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    border-bottom: 1px solid #ddd;
+}
+
+.nav-bar a {
+    text-decoration: none;
+    color: #333;
+    font-size: 16px;
+}
+
+.nav-bar a:hover {
+    color: #ff6f00;
+}
+
+.welcome {
+    padding: 20px;
+    font-size: 24px;
+    color: #333;
+}
+
+.products-section {
+    padding: 20px;
+}
+
+.card-img-top {
+    height: 200px;
+    object-fit: contain;
+    background-color: #f8f9fa;
+}
+
+.card {
+    transition: transform 0.2s;
+}
+
+.card:hover {
+    transform: scale(1.05);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+}
+
+.empty-state {
+    text-align: center;
+    padding: 50px 20px;
+    color: #6c757d;
+}
+
+.pagination {
+    justify-content: center;
+}
+
+.modal-body .form-control {
+    margin-bottom: 1rem;
+}
+
+#mensagemErro {
+    display: none;
+}
+
+@media (max-width: 768px) {
+    .card-img-top {
+        height: 150px;
+    }
+    .card-title {
+        font-size: 1.1rem;
+    }
+}

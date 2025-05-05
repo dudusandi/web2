@@ -41,152 +41,7 @@ try {
     <title>UcsExpress</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            font-family: Arial, sans-serif;
-        }
-
-        body {
-            background-color: #f5f5f5;
-        }
-
-        .header {
-            background-color: #fff;
-            padding: 15px 20px;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            border-bottom: 1px solid #ddd;
-        }
-
-        .logo {
-            font-size: 24px;
-            font-weight: bold;
-            color: #000;
-        }
-
-        .logo span {
-            color: #ff6f00;
-        }
-
-        .search-bar {
-            flex-grow: 1;
-            margin: 0 20px;
-        }
-
-        .search-bar input {
-            width: 100%;
-            padding: 10px;
-            border: 1px solid #ddd;
-            border-radius: 20px;
-            font-size: 16px;
-        }
-
-        .user-options {
-            display: flex;
-            align-items: center;
-            gap: 15px;
-        }
-
-        .user-options a {
-            text-decoration: none;
-            color: #333;
-            font-size: 14px;
-        }
-
-        .user-options a:hover {
-            color: #ff6f00;
-        }
-
-        .cart {
-            position: relative;
-        }
-
-        .cart span {
-            position: absolute;
-            top: -5px;
-            right: -10px;
-            background-color: #ff6f00;
-            color: #fff;
-            border-radius: 50%;
-            padding: 2px 6px;
-            font-size: 12px;
-        }
-
-        .nav-bar {
-            background-color: #fff;
-            padding: 10px 20px;
-            display: flex;
-            align-items: center;
-            gap: 20px;
-            border-bottom: 1px solid #ddd;
-        }
-
-        .nav-bar a {
-            text-decoration: none;
-            color: #333;
-            font-size: 16px;
-        }
-
-        .nav-bar a:hover {
-            color: #ff6f00;
-        }
-
-        .welcome {
-            padding: 20px;
-            font-size: 24px;
-            color: #333;
-        }
-
-        .products-section {
-            padding: 20px;
-        }
-
-        .card-img-top {
-            height: 200px;
-            object-fit: contain;
-            background-color: #f8f9fa;
-        }
-
-        .card {
-            transition: transform 0.2s;
-        }
-
-        .card:hover {
-            transform: scale(1.05);
-            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
-        }
-
-        .empty-state {
-            text-align: center;
-            padding: 50px 20px;
-            color: #6c757d;
-        }
-
-        .pagination {
-            justify-content: center;
-        }
-
-        .modal-body .form-control {
-            margin-bottom: 1rem;
-        }
-
-        #mensagemErro {
-            display: none;
-        }
-
-        @media (max-width: 768px) {
-            .card-img-top {
-                height: 150px;
-            }
-            .card-title {
-                font-size: 1.1rem;
-            }
-        }
-    </style>
+    <link rel="stylesheet" href="dashboard.css">
 </head>
 <body>
     <div class="header">
@@ -204,10 +59,8 @@ try {
         </div>
     </div>
     <div class="nav-bar">
-        <a href="../view/listar_produtos.php">Meus Produtos</a> 
+        <a href="../view/cadastro_produto.php">Cadastrar Produto</a> 
         <a href="../view/cadastro_fornecedor.php">Cadastrar Fornecedor</a> 
-
-
     </div>
     <div class="welcome">
     </div>
@@ -227,16 +80,15 @@ try {
             <div class="empty-state">
                 <i class="bi bi-box-seam" style="font-size: 3rem;"></i>
                 <h3 class="mt-3">Nenhum produto cadastrado</h3>
-                </a>
             </div>
         <?php else: ?>
             <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
-                <?php foreach ($produtos as $produto): ?>
+                <?php foreach ($produtos as $index => $produto): ?>
                     <div class="col">
                         <div class="card h-100" style="cursor: pointer;" 
                              onclick="mostrarDetalhes(<?= $produto->getId() ?>, '<?= htmlspecialchars($produto->getNome(), ENT_QUOTES, 'UTF-8') ?>')">
                             <?php if ($produto->getFoto()): ?>
-                                <img src="<?= htmlspecialchars($produto->getFoto(), ENT_QUOTES, 'UTF-8') ?>" 
+                                <img src="<?= htmlspecialchars('../public/uploads/imagens/' . $produto->getFoto(), ENT_QUOTES, 'UTF-8') ?>" 
                                      class="card-img-top" alt="Foto do produto">
                             <?php else: ?>
                                 <div class="card-img-top d-flex align-items-center justify-content-center text-muted">
@@ -246,8 +98,9 @@ try {
                             <div class="card-body">
                                 <h5 class="card-title"><?= htmlspecialchars($produto->getNome(), ENT_QUOTES, 'UTF-8') ?></h5>
                                 <p class="card-text text-muted">
-                                    Estoque: <?= $produto->getEstoque() ?><br>
-                                    Fornecedor: <?= htmlspecialchars($produto->getFornecedor(), ENT_QUOTES, 'UTF-8') ?>
+                                    Estoque: <?= $produtos[$index]->quantidade ?? 0 ?><br>
+                                    Preço: R$ <?= number_format($produtos[$index]->preco ?? 0, 2, ',', '.') ?><br>
+                                    Fornecedor: <?= htmlspecialchars($produto->getFornecedorId(), ENT_QUOTES, 'UTF-8') ?>
                                 </p>
                             </div>
                         </div>
@@ -309,6 +162,7 @@ try {
                                 <p><strong>Descrição:</strong> <span id="produtoDescricao"></span></p>
                                 <p><strong>Fornecedor:</strong> <span id="produtoFornecedor"></span></p>
                                 <p><strong>Estoque:</strong> <span id="produtoEstoque"></span></p>
+                                <p><strong>Preço:</strong> <span id="produtoPreco"></span></p>
                             </div>
                             <form id="editarForm" class="d-none">
                                 <input type="hidden" id="produtoId" name="id">
@@ -327,6 +181,10 @@ try {
                                 <div class="mb-3">
                                     <label for="produtoEstoqueInput" class="form-label">Estoque *</label>
                                     <input type="number" class="form-control" id="produtoEstoqueInput" name="estoque" min="0" required>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="produtoPrecoInput" class="form-label">Preço *</label>
+                                    <input type="number" step="0.01" class="form-control" id="produtoPrecoInput" name="preco" required>
                                 </div>
                             </form>
                         </div>
@@ -374,7 +232,7 @@ try {
 
         function mostrarDetalhes(id, nome) {
             currentProdutoId = id;
-            fetch('../controllers/get_produto.php?id=${id}')
+            fetch(`../controllers/get_produto.php?id=${id}`)
                 .then(response => response.json())
                 .then(data => {
                     if (data.error) {
@@ -385,7 +243,8 @@ try {
                     document.getElementById('produtoDescricao').textContent = data.descricao || 'Nenhuma';
                     document.getElementById('produtoFornecedor').textContent = data.fornecedor;
                     document.getElementById('produtoEstoque').textContent = data.estoque;
-                    document.getElementById('produtoFoto').src = data.foto || 'https://via.placeholder.com/200';
+                    document.getElementById('produtoPreco').textContent = `R$ ${number_format(data.preco, 2, ',', '.')}`;
+                    document.getElementById('produtoFoto').src = data.foto ? `../public/uploads/imagens/${data.foto}` : 'https://via.placeholder.com/200';
                     document.getElementById('btnConfirmarExclusao').href = `../controllers/excluir_produto.php?id=${id}`;
 
                     // Preencher campos do formulário
@@ -394,6 +253,7 @@ try {
                     document.getElementById('produtoDescricaoInput').value = data.descricao || '';
                     document.getElementById('produtoFornecedorInput').value = data.fornecedor;
                     document.getElementById('produtoEstoqueInput').value = data.estoque;
+                    document.getElementById('produtoPrecoInput').value = data.preco;
 
                     // Resetar estado
                     isEditando = false;
@@ -452,8 +312,9 @@ try {
                         document.getElementById('produtoDescricao').textContent = formData.get('descricao') || 'Nenhuma';
                         document.getElementById('produtoFornecedor').textContent = formData.get('fornecedor');
                         document.getElementById('produtoEstoque').textContent = formData.get('estoque');
+                        document.getElementById('produtoPreco').textContent = `R$ ${number_format(formData.get('preco'), 2, ',', '.')}`;
                         if (data.foto) {
-                            document.getElementById('produtoFoto').src = data.foto;
+                            document.getElementById('produtoFoto').src = `../public/uploads/imagens/${data.foto}`;
                         }
                         alternarEdicao();
                     } else {
@@ -464,7 +325,7 @@ try {
                 })
                 .catch(error => {
                     console.error('Erro ao salvar:', error);
-                    document.getElement Alerts('mensagemErroTexto').textContent = 'Erro ao salvar o produto';
+                    document.getElementById('mensagemErroTexto').textContent = 'Erro ao salvar o produto';
                     document.getElementById('mensagemErro').style.display = 'block';
                     document.getElementById('mensagemSucesso').style.display = 'none';
                 });
@@ -476,6 +337,29 @@ try {
             detalhesModal.hide();
             const confirmModal = new bootstrap.Modal(document.getElementById('confirmModal'));
             confirmModal.show();
+        }
+
+        // Função number_format para JavaScript (já que não está definida nativamente)
+        function number_format(number, decimals, dec_point, thousands_sep) {
+            number = (number + '').replace(/[^0-9+\-Ee.]/g, '');
+            var n = !isFinite(+number) ? 0 : +number,
+                prec = !isFinite(+decimals) ? 0 : Math.abs(decimals),
+                sep = (typeof thousands_sep === 'undefined') ? ',' : thousands_sep,
+                dec = (typeof dec_point === 'undefined') ? '.' : dec_point,
+                s = '',
+                toFixedFix = function (n, prec) {
+                    var k = Math.pow(10, prec);
+                    return '' + Math.round(n * k) / k;
+                };
+            s = (prec ? toFixedFix(n, prec) : '' + Math.round(n)).split('.');
+            if (s[0].length > 3) {
+                s[0] = s[0].replace(/\B(?=(?:\d{3})+(?!\d))/g, sep);
+            }
+            if ((s[1] || '').length < prec) {
+                s[1] = s[1] || '';
+                s[1] += new Array(prec - s[1].length + 1).join('0');
+            }
+            return s.join(dec);
         }
     </script>
 </body>

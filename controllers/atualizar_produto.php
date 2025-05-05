@@ -15,7 +15,7 @@ require_once __DIR__ . '/../model/produto.php';
 try {
     $pdo = Database::getConnection();
     $produtoDao = new ProdutoDAO($pdo);
-
+    $estoqueDao = new EstoqueDAO($pdo);
     // Verifica ID do produto
     $id = (int)($_POST['id'] ?? 0);
     if ($id <= 0) {
@@ -23,11 +23,6 @@ try {
         exit;
     }
 
-    $produto = $produtoDao->buscarPorId($id);
-    if (!$produto) {
-        echo json_encode(['error' => 'Produto não encontrado']);
-        exit;
-    }
 
 
     $nome = trim(htmlspecialchars($_POST['nome'] ?? '', ENT_QUOTES, 'UTF-8'));
@@ -76,12 +71,16 @@ try {
         }
     }
 
-    $produtoAtualizado = new Produto($nome, $descricao, $foto, $fornecedor, $usuario_id);
-    $produtoAtualizado->setEstoque($estoque);
+    $produtoAtualizado = new Produto($nome, $descricao, $foto, $fornecedor, usuario_id: $usuario_id);
     $produtoAtualizado->setId($id);
-
-    if ($produtoDao->atualizarProduto($produtoAtualizado, $id)) {
-        echo json_encode(['success' => true, 'foto' => $foto]);
+    $produtoAtualizado->setEstoqueId($produtoExistente->getEstoqueId());
+    if ($produtoDao->atualizarProduto($produtoAtualizado)) {
+        $estoqueId = $produtoExistente->getEstoqueId();
+        if ($estoqueDao->atualizarQuantidade($estoqueId, $quantidade)) {
+            echo json_encode(['success' => true, 'foto' => $foto]);
+        } else {
+            echo json_encode(['error' => 'Erro ao atualizar o estoque']);
+        }
     } else {
         echo json_encode(['error' => 'Erro ao atualizar o produto']);
     }

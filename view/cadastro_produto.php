@@ -24,6 +24,7 @@ $preco = htmlspecialchars($_POST['preco'] ?? '0.00', ENT_QUOTES, 'UTF-8');
     <title>Cadastro de Produto</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <style>
+        body { background-color:rgb(235, 235, 235); }
         .error-message { color: red; }
         .success-message { color: green; }
         .form-container { max-width: 600px; margin: 50px auto; }
@@ -115,7 +116,7 @@ $preco = htmlspecialchars($_POST['preco'] ?? '0.00', ENT_QUOTES, 'UTF-8');
             <input type="hidden" name="usuario_id" value="<?= $_SESSION['usuario_id'] ?>">
 
             <button type="submit" class="btn btn-primary">Cadastrar</button>
-            <a href="../view/listar_produtos.php" class="btn btn-secondary">Voltar</a>
+            <a href="../view/dashboard.php" class="btn btn-secondary">Voltar</a>
         </form>
     </div>
 

@@ -55,10 +55,10 @@ class ProdutoDAO {
             $this->pdo->commit();
             error_log(date('[Y-m-d H:i:s] ') . "Produto inserido com sucesso, ID: $produtoId" . PHP_EOL);
             return true;
-        } catch (PDOException $e) {
+        } catch (Exception $e) {
             $this->pdo->rollBack();
-            error_log(date('[Y-m-d H:i:s] ') . "Erro ao cadastrar produto: SQLSTATE[{$e->getCode()}]: " . $e->getMessage() . PHP_EOL);
-            throw new Exception("Erro ao cadastrar produto: " . $e->getMessage());
+            error_log(date('[Y-m-d H:i:s] ') . "Erro ao cadastrar produto: " . $e->getMessage() . PHP_EOL);
+            throw $e;
         }
     }
 
@@ -242,56 +242,26 @@ class ProdutoDAO {
         }
     }
 
-    public function atualizarProduto(Produto $produto, $quantidade, $preco) {
+    public function atualizarProduto(Produto $produto) {
         try {
-            $this->pdo->beginTransaction();
-
-            if (empty($produto->getNome()) || $produto->getFornecedorId() <= 0) {
-                throw new Exception("Nome e fornecedor são obrigatórios");
-            }
-
-            // Atualiza o estoque associado
-            $estoqueId = $produto->getEstoqueId();
-            $estoque = $this->estoqueDAO->buscarPorId($estoqueId);
-            if ($estoque) {
-                $estoque->setQuantidade($quantidade);
-                $estoque->setPreco($preco);
-                $this->estoqueDAO->atualizar($estoque);
-            } else {
-                throw new Exception("Estoque não encontrado para o produto");
-            }
-
-            // Atualiza o produto
-            $sql = "UPDATE produtos SET 
-                    nome = :nome, 
-                    descricao = :descricao, 
-                    foto = :foto, 
-                    fornecedor_id = :fornecedor_id, 
-                    usuario_id = :usuario_id
-                    WHERE id = :id";
+            $sql = "UPDATE produtos SET nome = :nome, descricao = :descricao, foto = :foto, fornecedor_id = :fornecedor_id 
+                    WHERE id = :id AND usuario_id = :usuario_id";
             $stmt = $this->pdo->prepare($sql);
-            $stmt->execute([
-                ':nome' => $produto->getNome(),
-                ':descricao' => $produto->getDescricao(),
-                ':foto' => $produto->getFoto(),
-                ':fornecedor_id' => $produto->getFornecedorId(),
-                ':usuario_id' => $produto->getUsuarioId(),
-                ':id' => $produto->getId()
-            ]);
-
-            $this->pdo->commit();
-            return true;
+            $stmt->bindValue(':nome', $produto->getNome(), PDO::PARAM_STR);
+            $stmt->bindValue(':descricao', $produto->getDescricao() ?? '', PDO::PARAM_STR);
+            $stmt->bindValue(':foto', $produto->getFoto() ?? '', PDO::PARAM_STR);
+            $stmt->bindValue(':fornecedor_id', $produto->getFornecedorId(), PDO::PARAM_INT);
+            $stmt->bindValue(':id', $produto->getId(), PDO::PARAM_INT);
+            $stmt->bindValue(':usuario_id', $produto->getUsuarioId(), PDO::PARAM_INT);
+            return $stmt->execute();
         } catch (PDOException $e) {
-            $this->pdo->rollBack();
-            error_log(date('[Y-m-d H:i:s] ') . "Erro em atualizarProduto: SQLSTATE[{$e->getCode()}]: " . $e->getMessage() . PHP_EOL);
-            throw new Exception("Erro ao atualizar produto: " . $e->getMessage());
+            error_log(date('[Y-m-d H:i:s] ') . "Erro ao atualizar produto: " . $e->getMessage() . PHP_EOL);
+            throw $e;
         }
     }
 
     public function removerProduto($id) {
         try {
-            $this->pdo->beginTransaction();
-
             $produto = $this->buscarPorId($id);
             if ($produto) {
                 // Remove a foto, se existir
@@ -302,27 +272,25 @@ class ProdutoDAO {
                         error_log(date('[Y-m-d H:i:s] ') . "Foto removida: $caminhoFoto" . PHP_EOL);
                     }
                 }
-
+    
                 // Remove o estoque associado
                 $estoqueId = $produto->getEstoqueId();
                 if ($estoqueId) {
                     $this->estoqueDAO->remover($estoqueId);
                 }
-
+    
                 // Remove o produto
                 $sql = "DELETE FROM produtos WHERE id = :id";
                 $stmt = $this->pdo->prepare($sql);
                 $stmt->bindValue(':id', $id, PDO::PARAM_INT);
                 $stmt->execute();
-
-                $this->pdo->commit();
+    
                 return true;
             }
             throw new Exception("Produto não encontrado");
-        } catch (PDOException $e) {
-            $this->pdo->rollBack();
+        } catch (Exception $e) {
             error_log(date('[Y-m-d H:i:s] ') . "Erro em removerProduto: " . $e->getMessage() . PHP_EOL);
-            throw new Exception("Erro ao remover produto: " . $e->getMessage());
+            throw $e;
         }
     }
 }
