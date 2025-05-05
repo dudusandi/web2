@@ -4,6 +4,13 @@ if (!isset($_SESSION['usuario_id'])) {
     header('Location: ./login.php');
     exit;
 }
+
+require_once '../config/database.php';
+require_once '../dao/fornecedor_dao.php'; // Adicionado para consistência, caso necessário
+require_once '../model/fornecedor.php';
+require_once '../model/produto.php'; // Adicionado para consistência, caso necessário
+
+// Inicialização de variáveis para mensagens
 $erro = $_GET['erro'] ?? '';
 $campo = $_GET['campo'] ?? '';
 $sucesso = isset($_GET['sucesso']) && $_GET['sucesso'] == '1';
@@ -21,28 +28,27 @@ $preco = htmlspecialchars($_POST['preco'] ?? '0.00', ENT_QUOTES, 'UTF-8');
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Cadastro de Produto</title>
+    <title>Cadastro de Produto - UcsExpress</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <style>
-        body { background-color:rgb(235, 235, 235); }
-        .error-message { color: red; }
-        .success-message { color: green; }
-        .form-container { max-width: 600px; margin: 50px auto; }
-    </style>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+    <link rel="stylesheet" href="cadastro.css">
 </head>
 <body>
-    <div class="container form-container">
-        <h2 class="mb-4">Cadastro de Produto</h2>
+    <!-- Cabeçalho -->
+    <div class="header">
+        <div class="logo">UCS<span>express</span></div>
+    </div>
 
+    <div class="container">
         <!-- Mensagens -->
         <?php if ($sucesso): ?>
-            <div class="alert alert-success success-message">
+            <div class="mensagem sucesso">
                 Produto cadastrado com sucesso!
             </div>
         <?php endif; ?>
 
         <?php if ($erro): ?>
-            <div class="alert alert-danger error-message">
+            <div class="mensagem erro">
                 <?php
                 switch ($erro) {
                     case 'campos_obrigatorios':
@@ -67,57 +73,83 @@ $preco = htmlspecialchars($_POST['preco'] ?? '0.00', ENT_QUOTES, 'UTF-8');
             </div>
         <?php endif; ?>
 
-        <!-- Formulário de cadastro -->
-        <form action="../controllers/cadastrar_produto.php" method="POST" enctype="multipart/form-data">
-            <div class="mb-3">
-                <label for="nome" class="form-label">Nome do Produto *</label>
-                <input type="text" class="form-control" id="nome" name="nome" required value="<?= $nome ?>">
-            </div>
+        <!-- Formulário -->
+        <div class="form-section">
+            <h2>Cadastro de Produto</h2>
 
-            <div class="mb-3">
-                <label for="descricao" class="form-label">Descrição</label>
-                <textarea class="form-control" id="descricao" name="descricao" rows="4"><?= $descricao ?></textarea>
-            </div>
+            <form action="../controllers/cadastrar_produto.php" method="POST" enctype="multipart/form-data">
+                <input type="hidden" name="usuario_id" value="<?= $_SESSION['usuario_id'] ?>">
 
-            <div class="mb-3">
-                <label for="foto" class="form-label">Foto do Produto</label>
-                <input type="file" class="form-control" id="foto" name="foto" accept="image/jpeg,image/png,image/gif">
-                <small class="form-text text-muted">Formatos aceitos: JPEG, PNG, GIF. Tamanho máximo: 2MB.</small>
-            </div>
+                <div class="form-group">
+                    <label for="nome">Nome do Produto *</label>
+                    <input type="text" id="nome" name="nome" value="<?= $nome ?>" required>
+                    <?php if ($erro === 'campos_obrigatorios' && $campo === 'nome'): ?>
+                        <div class="error-message">Campo obrigatório</div>
+                    <?php endif; ?>
+                </div>
 
-            <div class="mb-3">
-                <label for="fornecedor_id" class="form-label">Fornecedor *</label>
-                <?php
-                require_once '../config/database.php';
-                $pdo = Database::getConnection();
-                $stmt = $pdo->query("SELECT id, nome FROM fornecedores ORDER BY nome");
-                $fornecedores = $stmt->fetchAll(PDO::FETCH_ASSOC);
-                ?>
-                <select class="form-control" id="fornecedor_id" name="fornecedor_id" required>
-                    <option value="">Selecione um fornecedor</option>
-                    <?php foreach ($fornecedores as $fornecedor): ?>
-                        <option value="<?= $fornecedor['id'] ?>" <?= $fornecedorId == $fornecedor['id'] ? 'selected' : '' ?>>
-                            <?= htmlspecialchars($fornecedor['nome']) ?>
-                        </option>
-                    <?php endforeach; ?>
-                </select>
-            </div>
+                <div class="form-group">
+                    <label for="descricao">Descrição</label>
+                    <textarea id="descricao" name="descricao" rows="4"><?= $descricao ?></textarea>
+                </div>
 
-            <div class="mb-3">
-                <label for="quantidade" class="form-label">Quantidade em Estoque *</label>
-                <input type="number" class="form-control" id="quantidade" name="quantidade" required min="0" value="<?= $quantidade ?>">
-            </div>
+                <div class="form-group">
+                    <label for="foto">Foto do Produto</label>
+                    <input type="file" id="foto" name="foto" accept="image/jpeg,image/png,image/gif">
+                    <?php if ($erro === 'foto_invalida'): ?>
+                        <div class="error-message">A foto deve ser uma imagem válida (JPEG, PNG, GIF) e menor que 2MB.</div>
+                    <?php endif; ?>
+                </div>
 
-            <div class="mb-3">
-                <label for="preco" class="form-label">Preço Unitário (R$) *</label>
-                <input type="number" step="0.01" class="form-control" id="preco" name="preco" required min="0" value="<?= $preco ?>">
-            </div>
+                <div class="form-group">
+                    <label for="fornecedor_id">Fornecedor *</label>
+                    <?php
+                    $pdo = Database::getConnection();
+                    $stmt = $pdo->query("SELECT id, nome FROM fornecedores ORDER BY nome");
+                    $fornecedores = $stmt->fetchAll(PDO::FETCH_ASSOC);
+                    ?>
+                    <select class="form-control" id="fornecedor_id" name="fornecedor_id" required>
+                        <option value="">Selecione um fornecedor</option>
+                        <?php foreach ($fornecedores as $fornecedor): ?>
+                            <option value="<?= $fornecedor['id'] ?>" <?= $fornecedorId == $fornecedor['id'] ? 'selected' : '' ?>>
+                                <?= htmlspecialchars($fornecedor['nome']) ?>
+                            </option>
+                        <?php endforeach; ?>
+                    </select>
+                    <?php if ($erro === 'campos_obrigatorios' && $campo === 'fornecedor_id'): ?>
+                        <div class="error-message">Campo obrigatório</div>
+                    <?php endif; ?>
+                </div>
 
-            <input type="hidden" name="usuario_id" value="<?= $_SESSION['usuario_id'] ?>">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="quantidade">Quantidade em Estoque *</label>
+                        <input type="number" id="quantidade" name="quantidade" value="<?= $quantidade ?>" required min="0">
+                        <?php if ($erro === 'campos_obrigatorios' && $campo === 'quantidade'): ?>
+                            <div class="error-message">Campo obrigatório</div>
+                        <?php endif; ?>
+                        <?php if ($erro === 'estoque_invalido'): ?>
+                            <div class="error-message">A quantidade deve ser um número não negativo.</div>
+                        <?php endif; ?>
+                    </div>
+                    <div class="form-group">
+                        <label for="preco">Preço Unitário (R$) *</label>
+                        <input type="number" step="0.01" id="preco" name="preco" value="<?= $preco ?>" required min="0">
+                        <?php if ($erro === 'campos_obrigatorios' && $campo === 'preco'): ?>
+                            <div class="error-message">Campo obrigatório</div>
+                        <?php endif; ?>
+                        <?php if ($erro === 'estoque_invalido'): ?>
+                            <div class="error-message">O preço deve ser um número não negativo.</div>
+                        <?php endif; ?>
+                    </div>
+                </div>
 
-            <button type="submit" class="btn btn-primary">Cadastrar</button>
-            <a href="../view/dashboard.php" class="btn btn-secondary">Voltar</a>
-        </form>
+                <button type="submit">Cadastrar</button>
+                <div class="mt-3">
+                    <a href="../view/dashboard.php" class="btn btn-secondary">Voltar</a>
+                </div>
+            </form>
+        </div>
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>

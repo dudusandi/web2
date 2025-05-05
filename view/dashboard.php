@@ -74,6 +74,7 @@ try {
     <?php if (isset($_SESSION['is_admin']) && $_SESSION['is_admin']): ?>
         <a href="../view/cadastro_produto.php">Cadastrar Produto</a> 
         <a href="../view/listar_fornecedor.php">Editar Fornecedores</a> 
+        <a href="../view/listar_clientes.php">Editar Clientes</a> 
     <?php endif; ?>
 </div>
     <div class="welcome">

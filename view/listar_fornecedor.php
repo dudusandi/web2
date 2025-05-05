@@ -32,6 +32,7 @@ $tipoMensagem = $_GET['tipo_mensagem'] ?? '';
     <title>Gerenciar Fornecedores - UcsExpress</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+
     <style>
         body {
             background-color: #f8f9fa;
@@ -84,10 +85,14 @@ $tipoMensagem = $_GET['tipo_mensagem'] ?? '';
         <!-- Botão para Adicionar Novo Fornecedor -->
         <div class="d-flex justify-content-between mb-4">
             <h2>Gerenciar Fornecedores</h2>
-            <a href="cadastro_fornecedor.php" class="btn btn-primary">
-                <i class="bi bi-plus"></i> Adicionar Fornecedor
-            </a>
+            <div>
+                <a href="cadastro_fornecedor.php" class="btn btn-primary">
+                    <i class="bi bi-plus"></i> Adicionar Fornecedor
+                </a>
+                <a href="dashboard.php" class="btn btn-secondary">Voltar ao Dashboard</a>
+            </div>
         </div>
+
 
         <!-- Listagem de Fornecedores -->
         <?php if (empty($fornecedores)): ?>
@@ -125,11 +130,6 @@ $tipoMensagem = $_GET['tipo_mensagem'] ?? '';
             </div>
         <?php endif; ?>
 
-        <!-- Botão Voltar -->
-        <div class="mt-4">
-            <a href="dashboard.php" class="btn btn-secondary">Voltar ao Dashboard</a>
-        </div>
-    </div>
 
     <!-- Modal de Confirmação de Exclusão -->
     <div class="modal fade" id="confirmModal" tabindex="-1" aria-hidden="true">
