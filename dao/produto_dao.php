@@ -51,6 +51,8 @@ class ProdutoDAO {
             $produtoId = $stmt->fetch(PDO::FETCH_ASSOC)['id'];
             $produto->setId($produtoId);
             $produto->setEstoqueId($estoqueId);
+            $produto->setQuantidade($quantidade); // Preenche os novos atributos
+            $produto->setPreco($preco);
 
             $this->pdo->commit();
             error_log(date('[Y-m-d H:i:s] ') . "Produto inserido com sucesso, ID: $produtoId" . PHP_EOL);
@@ -110,6 +112,8 @@ class ProdutoDAO {
                 );
                 $produto->setId($linha['id']);
                 $produto->setEstoqueId($linha['estoque_id']);
+                $produto->setQuantidade($linha['quantidade']); // Preenche os novos atributos
+                $produto->setPreco($linha['preco']);
                 $produtos[] = $produto;
             }
             return $produtos;
@@ -160,6 +164,8 @@ class ProdutoDAO {
                 );
                 $produto->setId($linha['id']);
                 $produto->setEstoqueId($linha['estoque_id']);
+                $produto->setQuantidade($linha['quantidade']); // Preenche os novos atributos
+                $produto->setPreco($linha['preco']);
                 $produtos[] = $produto;
             }
             return $produtos;
@@ -202,6 +208,8 @@ class ProdutoDAO {
                 );
                 $produto->setId($linha['id']);
                 $produto->setEstoqueId($linha['estoque_id']);
+                $produto->setQuantidade($linha['quantidade']); // Preenche os novos atributos
+                $produto->setPreco($linha['preco']);
                 return $produto;
             }
             return null;
@@ -233,6 +241,8 @@ class ProdutoDAO {
                 );
                 $produto->setId($linha['id']);
                 $produto->setEstoqueId($linha['estoque_id']);
+                $produto->setQuantidade($linha['quantidade']); // Preenche os novos atributos
+                $produto->setPreco($linha['preco']);
                 return $produto;
             }
             return null;
@@ -244,6 +254,17 @@ class ProdutoDAO {
 
     public function atualizarProduto(Produto $produto) {
         try {
+            $this->pdo->beginTransaction();
+
+            // Atualiza o estoque associado
+            $estoqueId = $produto->getEstoqueId();
+            if ($estoqueId) {
+                $estoque = new Estoque($produto->getQuantidade(), $produto->getPreco());
+                $estoque->setId($estoqueId);
+                $this->estoqueDAO->atualizar($estoque);
+            }
+
+            // Atualiza o produto
             $sql = "UPDATE produtos SET nome = :nome, descricao = :descricao, foto = :foto, fornecedor_id = :fornecedor_id 
                     WHERE id = :id AND usuario_id = :usuario_id";
             $stmt = $this->pdo->prepare($sql);
@@ -253,8 +274,12 @@ class ProdutoDAO {
             $stmt->bindValue(':fornecedor_id', $produto->getFornecedorId(), PDO::PARAM_INT);
             $stmt->bindValue(':id', $produto->getId(), PDO::PARAM_INT);
             $stmt->bindValue(':usuario_id', $produto->getUsuarioId(), PDO::PARAM_INT);
-            return $stmt->execute();
+            $success = $stmt->execute();
+
+            $this->pdo->commit();
+            return $success;
         } catch (PDOException $e) {
+            $this->pdo->rollBack();
             error_log(date('[Y-m-d H:i:s] ') . "Erro ao atualizar produto: " . $e->getMessage() . PHP_EOL);
             throw $e;
         }

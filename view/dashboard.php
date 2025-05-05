@@ -83,7 +83,7 @@ try {
             </div>
         <?php else: ?>
             <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
-                <?php foreach ($produtos as $index => $produto): ?>
+                <?php foreach ($produtos as $produto): ?>
                     <div class="col">
                         <div class="card h-100" style="cursor: pointer;" 
                              onclick="mostrarDetalhes(<?= $produto->getId() ?>, '<?= htmlspecialchars($produto->getNome(), ENT_QUOTES, 'UTF-8') ?>')">
@@ -98,8 +98,8 @@ try {
                             <div class="card-body">
                                 <h5 class="card-title"><?= htmlspecialchars($produto->getNome(), ENT_QUOTES, 'UTF-8') ?></h5>
                                 <p class="card-text text-muted">
-                                    Estoque: <?= $produtos[$index]->quantidade ?? 0 ?><br>
-                                    Preço: R$ <?= number_format($produtos[$index]->preco ?? 0, 2, ',', '.') ?><br>
+                                    Estoque: <?= $produto->getQuantidade() ?? 0 ?><br>
+                                    Preço: R$ <?= number_format($produto->getPreco() ?? 0, 2, ',', '.') ?><br>
                                     Fornecedor: <?= htmlspecialchars($produto->getFornecedorId(), ENT_QUOTES, 'UTF-8') ?>
                                 </p>
                             </div>
@@ -243,7 +243,7 @@ try {
                     document.getElementById('produtoDescricao').textContent = data.descricao || 'Nenhuma';
                     document.getElementById('produtoFornecedor').textContent = data.fornecedor;
                     document.getElementById('produtoEstoque').textContent = data.estoque;
-                    document.getElementById('produtoPreco').textContent = `R$ ${number_format(data.preco, 2, ',', '.')}`;
+                    document.getElementById('produtoPreco').textContent = `R$ ${number_format(data.preco ?? 0, 2, ',', '.')}`;
                     document.getElementById('produtoFoto').src = data.foto ? `../public/uploads/imagens/${data.foto}` : 'https://via.placeholder.com/200';
                     document.getElementById('btnConfirmarExclusao').href = `../controllers/excluir_produto.php?id=${id}`;
 
@@ -253,7 +253,7 @@ try {
                     document.getElementById('produtoDescricaoInput').value = data.descricao || '';
                     document.getElementById('produtoFornecedorInput').value = data.fornecedor;
                     document.getElementById('produtoEstoqueInput').value = data.estoque;
-                    document.getElementById('produtoPrecoInput').value = data.preco;
+                    document.getElementById('produtoPrecoInput').value = data.preco ?? 0;
 
                     // Resetar estado
                     isEditando = false;
