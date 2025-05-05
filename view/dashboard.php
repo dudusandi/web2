@@ -207,7 +207,7 @@ try {
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>
-                    <button id="btnEditar" class="btn btn-primary" onclick="alternarEdicao()">
+                    <button id="btnEditar" class="btn btn-primary d-none" onclick="alternarEdicao()">
                         <i class="bi bi-pencil"></i> Editar
                     </button>
                     <button id="btnSalvar" class="btn btn-primary d-none" onclick="salvarProduto()">
@@ -299,7 +299,6 @@ try {
             isEditando = false;
             document.getElementById('visualizacao').classList.remove('d-none');
             document.getElementById('editarForm').classList.add('d-none');
-            document.getElementById('btnEditar').classList.remove('d-none');
             document.getElementById('btnSalvar').classList.add('d-none');
             document.getElementById('produtoFotoInput').classList.add('d-none');
             document.getElementById('mensagemErro').style.display = 'none';

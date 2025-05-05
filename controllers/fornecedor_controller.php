@@ -2,17 +2,17 @@
 require_once '../model/fornecedor.php';
 require_once '../model/endereco.php';
 require_once '../dao/fornecedor_dao.php';
-require_once '../config/database.php'; // Inclui a classe Database
+require_once '../config/database.php'; 
 
 class FornecedorController {
     private $fornecedorDAO;
 
     public function __construct() {
-        // Obtém a conexão PDO da classe Database
+
         $this->fornecedorDAO = new FornecedorDAO(Database::getConnection());
     }
 
-    // Cadastra um novo fornecedor
+
     public function cadastrarFornecedor($nome, $descricao, $telefone, $email, $rua, $numero, $complemento, $bairro, $cep, $cidade, $estado) {
         try {
             $endereco = new Endereco($rua, $numero, $bairro, $cep, $cidade, $estado, $complemento);
@@ -62,7 +62,7 @@ class FornecedorController {
     }
 }
 
-// Exemplo de uso (pode ser chamado via requisição ou rota)
+
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $controller = new FornecedorController();
     if (isset($_POST['acao']) && $_POST['acao'] === 'cadastrar') {

@@ -7,17 +7,16 @@ if (!isset($_SESSION['usuario_id'])) {
 
 require_once __DIR__ . '/../config/database.php';
 require_once __DIR__ . '/../dao/produto_dao.php';
-require_once __DIR__ . '/../dao/estoque_dao.php'; // Inclua o DAO para estoques, se existir
+require_once __DIR__ . '/../dao/estoque_dao.php'; 
 
 try {
     $pdo = Database::getConnection();
     $produtoDao = new ProdutoDAO($pdo);
-    $estoqueDao = new EstoqueDAO($pdo); // Instancia o EstoqueDAO, se necessário
+    $estoqueDao = new EstoqueDAO($pdo); 
 
     $id = $_GET['id'] ?? null;
 
     if ($id) {
-        // Inicia uma transação
         $pdo->beginTransaction();
 
         // Busca o produto para obter o estoque_id
@@ -25,10 +24,8 @@ try {
         if ($produto) {
             $estoqueId = $produto->getEstoqueId();
 
-            // Exclui o produto primeiro
             $produtoDao->excluir((int)$id);
 
-            // Se o estoque_id existe e não é mais referenciado, exclui o estoque
             if ($estoqueId) {
                 $contagemReferencias = $pdo->query("SELECT COUNT(*) FROM produtos WHERE estoque_id = $estoqueId")->fetchColumn();
                 if ($contagemReferencias == 0) {
