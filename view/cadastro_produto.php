@@ -10,7 +10,7 @@ require_once '../dao/fornecedor_dao.php';
 require_once '../model/fornecedor.php';
 require_once '../model/produto.php';
 
-// Inicialização de variáveis para mensagens
+// Inicialização de variaveis
 $erro = $_GET['erro'] ?? '';
 $campo = $_GET['campo'] ?? '';
 $sucesso = isset($_GET['sucesso']) && $_GET['sucesso'] == '1';
@@ -90,7 +90,7 @@ $preco = htmlspecialchars($_POST['preco'] ?? '0.00', ENT_QUOTES, 'UTF-8');
 
                 <div class="form-group">
                     <label for="descricao">Descrição</label>
-                    <textarea id="descricao" name="descricao" rows="4"><?= $descricao ?></textarea>
+                    <textarea id="descricao" name="descricao" rows="3"><?= $descricao ?></textarea>
                 </div>
 
                 <div class="form-group">

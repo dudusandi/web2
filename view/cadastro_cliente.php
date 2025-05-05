@@ -30,6 +30,7 @@ try {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="editar.css">
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 </head>
 <body>
 
@@ -72,9 +73,17 @@ try {
                 </div>
             </div>
 
-            <div class="mb-3">
-                <label for="cartao_credito" class="form-label">Cartão de Crédito</label>
-                <input type="text" class="form-control" id="cartao_credito" name="cartao_credito">
+
+            <div class="row mb-3">
+            <div class="col">
+                    <label for="cep" class="form-label">CEP *</label>
+                    <input type="text" class="form-control <?= $campoErro === 'cep' ? 'is-invalid' : '' ?>" id="cep" name="cep" required>
+                    <small class="text-muted">*Preenchimento Automático</small>
+                </div>
+                <div class="col">
+                    <label for="bairro" class="form-label">Bairro *</label>
+                    <input type="text" class="form-control <?= $campoErro === 'bairro' ? 'is-invalid' : '' ?>" id="bairro" name="bairro" required>
+                </div>
             </div>
 
             <div class="row mb-3">
@@ -93,33 +102,83 @@ try {
                 <input type="text" class="form-control" id="complemento" name="complemento">
             </div>
 
-            <div class="row mb-3">
-                <div class="col">
-                    <label for="bairro" class="form-label">Bairro *</label>
-                    <input type="text" class="form-control <?= $campoErro === 'bairro' ? 'is-invalid' : '' ?>" id="bairro" name="bairro" required>
-                </div>
-                <div class="col">
-                    <label for="cep" class="form-label">CEP *</label>
-                    <input type="text" class="form-control <?= $campoErro === 'cep' ? 'is-invalid' : '' ?>" id="cep" name="cep" required>
-                </div>
-            </div>
+
 
             <div class="row mb-4">
                 <div class="col">
-                    <label for="cidade" class="form-label">Cidade *</label>
-                    <input type="text" class="form-control <?= $campoErro === 'cidade' ? 'is-invalid' : '' ?>" id="cidade" name="cidade" required>
+                    <label for="estado" class="form-label">Estado *</label>
+                    <select class="form-control <?= $campoErro === 'estado' ? 'is-invalid' : '' ?>" id="estado" name="estado" required>
+                        <option value="">Selecione um estado</option>
+                    </select>
                 </div>
                 <div class="col">
-                    <label for="estado" class="form-label">Estado *</label>
-                    <input type="text" class="form-control <?= $campoErro === 'estado' ? 'is-invalid' : '' ?>" id="estado" name="estado" required>
+                    <label for="cidade" class="form-label">Cidade *</label>
+                    <select class="form-control <?= $campoErro === 'cidade' ? 'is-invalid' : '' ?>" id="cidade" name="cidade" required disabled>
+                        <option value="">Selecione um estado primeiro</option>
+                    </select>
                 </div>
             </div>
 
-            <button type="submit" class="btn btn-primary w-100">Cadastrar Cliente</button>
+
+            <div class="d-flex justify-content-between mt-4">
+                    <button type="submit" class="btn btn-primary">Cadastrar Cliente</button>
+                    <a href="dashboard.php" class="btn btn-secondary">Voltar</a>
+                </div>
+
         </form>
     </div>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+<script>
+$(document).ready(function() {
+    // Carrega os estados ao carregar a página
+    $.getJSON('https://servicodados.ibge.gov.br/api/v1/localidades/estados', function(data) {
+        var items = [];
+        $.each(data, function(key, val) {
+            items.push('<option value="' + val.sigla + '">' + val.nome + '</option>');
+        });
+        $('#estado').html(items.join(''));
+    });
+
+    // Quando o estado é selecionado, carrega as cidades correspondentes
+    $('#estado').change(function() {
+        var uf = $(this).val();
+        if (uf) {
+            $('#cidade').prop('disabled', false);
+            $.getJSON('https://servicodados.ibge.gov.br/api/v1/localidades/estados/' + uf + '/municipios', function(data) {
+                var items = [];
+                $.each(data, function(key, val) {
+                    items.push('<option value="' + val.nome + '">' + val.nome + '</option>');
+                });
+                $('#cidade').html(items.join(''));
+            });
+        } else {
+            $('#cidade').prop('disabled', true).html('<option value="">Selecione um estado primeiro</option>');
+        }
+    });
+
+    // Autocompletar endereço via CEP usando ViaCEP
+    $('#cep').blur(function() {
+        var cep = $(this).val().replace(/\D/g, '');
+        if (cep.length === 8) {
+            $.getJSON('https://viacep.com.br/ws/' + cep + '/json/', function(data) {
+                if (!data.erro) {
+                    $('#rua').val(data.logradouro);
+                    $('#bairro').val(data.bairro);
+                    $('#complemento').val(data.complemento);
+                    $('#cidade').val(data.localidade);
+                    $('#estado').val(data.uf).trigger('change');
+                } else {
+                    alert('CEP não encontrado');
+                }
+            }).fail(function() {
+                alert('Erro ao consultar CEP');
+            });
+        }
+    });
+});
+</script>
 </body>
 </html>
