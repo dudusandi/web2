@@ -7,6 +7,11 @@
 
 body {
     background-color: #f5f5f5;
+    /* Define altura total da viewport e evita rolagem no body */
+    height: 100vh;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
 }
 
 .header {
@@ -16,6 +21,12 @@ body {
     align-items: center;
     justify-content: space-between;
     border-bottom: 1px solid #ddd;
+    /* Garante que o header não role */
+    flex-shrink: 0;
+}
+
+#loading {
+    color: #ff6f00; /* Cor do spinner */
 }
 
 .logo {
@@ -57,7 +68,7 @@ body {
     color: #ff6f00;
 }
 
-.user-options span{
+.user-options span {
     color: #dcdcdc;
 }
 
@@ -83,6 +94,8 @@ body {
     align-items: center;
     gap: 20px;
     border-bottom: 1px solid #ddd;
+    /* Garante que a nav-bar não role */
+    flex-shrink: 0;
 }
 
 .nav-bar a {
@@ -99,10 +112,21 @@ body {
     padding: 20px;
     font-size: 24px;
     color: #d5d5d5;
+    /* Garante que a seção welcome não role */
+    flex-shrink: 0;
 }
 
 .products-section {
     padding: 20px;
+    /* Faz a seção ocupar o espaço restante e permite rolagem */
+    flex-grow: 1;
+    overflow-y: auto;
+    /* Opcional: define uma altura mínima para evitar colapso */
+    min-height: 200px;
+}
+
+#produtosContainer {
+    min-height: 100%; /* Faz o container ocupar a altura da products-section */
 }
 
 .card-img-top {
