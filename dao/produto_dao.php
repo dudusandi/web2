@@ -99,7 +99,6 @@ class ProdutoDAO {
             }
             return $produtos;
         } catch (PDOException $e) {
-            error_log(date('[Y-m-d H:i:s] ') . "Erro em listarTodosProdutos: " . $e->getMessage() . PHP_EOL);
             throw $e;
         }
     }
@@ -143,7 +142,6 @@ class ProdutoDAO {
             $stmt->bindValue(':id', $id, PDO::PARAM_INT);
             return $stmt->execute();
         } catch (PDOException $e) {
-            error_log(date('[Y-m-d H:i:s] ') . "Erro ao excluir produto: " . $e->getMessage() . PHP_EOL);
             throw $e;
         }
     }
@@ -193,7 +191,6 @@ class ProdutoDAO {
             }
             return $produtos;
         } catch (PDOException $e) {
-            error_log(date('[Y-m-d H:i:s] ') . "Erro em buscarProdutosDinamicos: " . $e->getMessage() . PHP_EOL);
             throw $e;
         }
     }
@@ -213,56 +210,6 @@ class ProdutoDAO {
             return (int)$stmt->fetchColumn();
         } catch (PDOException $e) {
             error_log(date('[Y-m-d H:i:s] ') . "Erro em contarProdutosBuscados: " . $e->getMessage() . PHP_EOL);
-            throw $e;
-        }
-    }
-
-    // Contar produtos por usuário
-    public function contarProdutosPorUsuario($usuario_id) {
-        try {
-            $stmt = $this->pdo->prepare("SELECT COUNT(*) FROM produtos WHERE usuario_id = :usuario_id");
-            $stmt->bindValue(':usuario_id', $usuario_id, PDO::PARAM_INT);
-            $stmt->execute();
-            return (int)$stmt->fetchColumn();
-        } catch (PDOException $e) {
-            error_log(date('[Y-m-d H:i:s] ') . "Erro em contarProdutosPorUsuario: " . $e->getMessage() . PHP_EOL);
-            throw $e;
-        }
-    }
-
-    // Lista produtos por usuário sem paginação
-    public function listarProdutosPorUsuario($usuario_id) {
-        try {
-            $sql = "SELECT p.id, p.nome, p.descricao, p.foto, p.fornecedor_id, p.estoque_id, p.usuario_id,
-                           e.quantidade, e.preco,
-                           f.nome AS fornecedor_nome
-                    FROM produtos p
-                    LEFT JOIN estoques e ON p.estoque_id = e.id
-                    LEFT JOIN fornecedores f ON p.fornecedor_id = f.id
-                    WHERE p.usuario_id = :usuario_id";
-            $stmt = $this->pdo->prepare($sql);
-            $stmt->bindValue(':usuario_id', $usuario_id, PDO::PARAM_INT);
-            $stmt->execute();
-
-            $produtos = [];
-            while ($linha = $stmt->fetch(PDO::FETCH_ASSOC)) {
-                $produto = new Produto(
-                    $linha['nome'],
-                    $linha['descricao'],
-                    $linha['foto'],
-                    $linha['fornecedor_id'],
-                    $linha['usuario_id']
-                );
-                $produto->setId($linha['id']);
-                $produto->setEstoqueId($linha['estoque_id']);
-                $produto->setQuantidade($linha['quantidade']);
-                $produto->setPreco($linha['preco']);
-                $produto->fornecedor_nome = $linha['fornecedor_nome'] ?? 'Sem fornecedor';
-                $produtos[] = $produto;
-            }
-            return $produtos;
-        } catch (PDOException $e) {
-            error_log(date('[Y-m-d H:i:s] ') . "Erro em listarProdutosPorUsuario: " . $e->getMessage() . PHP_EOL);
             throw $e;
         }
     }
@@ -337,7 +284,6 @@ class ProdutoDAO {
             }
             return null;
         } catch (PDOException $e) {
-            error_log(date('[Y-m-d H:i:s] ') . "Erro em buscarPorNome: " . $e->getMessage() . PHP_EOL);
             throw $e;
         }
     }

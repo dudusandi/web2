@@ -188,8 +188,7 @@ try {
     window.fornecedores = <?php echo json_encode($fornecedores); ?>;
     window.usuarioLogadoId = <?php echo json_encode($_SESSION['usuario_id']); ?>;
     window.isAdmin = <?php echo json_encode(isset($_SESSION['is_admin']) && $_SESSION['is_admin']); ?>;
-</script>
-
-<script src="./dashboard.js"></script>
+    </script>
+    <script src="./dashboard.js"></script>
 </body>
 </html>

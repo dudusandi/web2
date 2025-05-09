@@ -5,11 +5,6 @@ if (!isset($_SESSION['usuario_id'])) {
     exit;
 }
 
-// Verifica se o usuário é administrador
-if (!isset($_SESSION['tipo_usuario']) || $_SESSION['tipo_usuario'] !== 'admin') {
-    header('Location: dashboard.php');
-    exit;
-}
 
 require_once '../config/database.php';
 require_once '../dao/fornecedor_dao.php';
