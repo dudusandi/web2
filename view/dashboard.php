@@ -63,7 +63,9 @@ try {
     <!-- Menu com visualização apenas para o admin -->
     <div class="nav-bar">
         <?php if (isset($_SESSION['is_admin']) && $_SESSION['is_admin']): ?>
-            <a href="../view/cadastro_produto.php">Cadastrar Produto</a> 
+            <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#cadastroProdutoModal">
+                <i class="bi bi-plus-circle"></i> Cadastrar Produto
+            </button>
             <a href="../view/listar_fornecedor.php">Editar Fornecedores</a> 
             <a href="../view/listar_clientes.php">Editar Clientes</a> 
         <?php endif; ?>
@@ -183,6 +185,72 @@ try {
         </div>
     </div>
 
+    <!-- Modal de Cadastro de Produto -->
+    <div class="modal fade" id="cadastroProdutoModal" tabindex="-1" aria-labelledby="cadastroProdutoModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="cadastroProdutoModalLabel">Cadastro de Produto</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="formCadastroProduto" enctype="multipart/form-data">
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="nome" class="form-label">Nome do Produto</label>
+                                <input type="text" class="form-control" id="nome" name="nome" required>
+                                <div class="invalid-feedback">
+                                    Por favor, informe o nome do produto.
+                                </div>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="fornecedor" class="form-label">Fornecedor</label>
+                                <select class="form-select" id="fornecedor" name="fornecedor_id" required>
+                                    <option value="">Selecione um fornecedor</option>
+                                </select>
+                                <div class="invalid-feedback">
+                                    Por favor, selecione um fornecedor.
+                                </div>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label for="descricao" class="form-label">Descrição</label>
+                            <textarea class="form-control" id="descricao" name="descricao" rows="3"></textarea>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="quantidade" class="form-label">Quantidade</label>
+                                <input type="number" class="form-control" id="quantidade" name="quantidade" min="0" required>
+                                <div class="invalid-feedback">
+                                    Por favor, informe a quantidade.
+                                </div>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="preco" class="form-label">Preço</label>
+                                <div class="input-group">
+                                    <span class="input-group-text">R$</span>
+                                    <input type="number" class="form-control" id="preco" name="preco" min="0" step="0.01" required>
+                                </div>
+                                <div class="invalid-feedback">
+                                    Por favor, informe o preço.
+                                </div>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label for="foto" class="form-label">Foto do Produto</label>
+                            <input type="file" class="form-control" id="foto" name="foto" accept="image/*">
+                            <div class="form-text">Formatos aceitos: JPG, PNG, GIF. Tamanho máximo: 2MB</div>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" form="formCadastroProduto" class="btn btn-primary">Cadastrar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
     window.fornecedores = <?php echo json_encode($fornecedores); ?>;
@@ -190,5 +258,19 @@ try {
     window.isAdmin = <?php echo json_encode(isset($_SESSION['is_admin']) && $_SESSION['is_admin']); ?>;
     </script>
     <script src="./dashboard.js"></script>
+    <script>
+        // Preencher select de fornecedores
+        document.addEventListener('DOMContentLoaded', function() {
+            const fornecedorSelect = document.getElementById('fornecedor');
+            if (window.fornecedores && window.fornecedores.length > 0) {
+                window.fornecedores.forEach(fornecedor => {
+                    const option = document.createElement('option');
+                    option.value = fornecedor.id;
+                    option.text = fornecedor.nome;
+                    fornecedorSelect.appendChild(option);
+                });
+            }
+        });
+    </script>
 </body>
 </html>

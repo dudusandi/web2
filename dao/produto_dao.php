@@ -349,5 +349,53 @@ class ProdutoDAO {
             throw $e;
         }
     }
+
+    public function buscarProdutos($termo = '', $pagina = 1, $itensPorPagina = 12) {
+        $offset = ($pagina - 1) * $itensPorPagina;
+        
+        try {
+            $sql = "SELECT p.*, f.nome as fornecedor_nome 
+                    FROM produtos p 
+                    LEFT JOIN fornecedores f ON p.fornecedor_id = f.id 
+                    WHERE 1=1";
+            $params = [];
+            
+            if (!empty($termo)) {
+                $sql .= " AND (p.nome LIKE ? OR p.descricao LIKE ?)";
+                $params[] = "%$termo%";
+                $params[] = "%$termo%";
+            }
+            
+            $sql .= " ORDER BY p.nome LIMIT ? OFFSET ?";
+            $params[] = $itensPorPagina;
+            $params[] = $offset;
+            
+            $stmt = $this->pdo->prepare($sql);
+            $stmt->execute($params);
+            $produtos = $stmt->fetchAll(PDO::FETCH_ASSOC);
+            
+            // Busca total de registros
+            $sqlCount = "SELECT COUNT(*) FROM produtos p WHERE 1=1";
+            if (!empty($termo)) {
+                $sqlCount .= " AND (p.nome LIKE ? OR p.descricao LIKE ?)";
+            }
+            $stmtCount = $this->pdo->prepare($sqlCount);
+            if (!empty($termo)) {
+                $stmtCount->execute(["%$termo%", "%$termo%"]);
+            } else {
+                $stmtCount->execute();
+            }
+            $total = $stmtCount->fetchColumn();
+            
+            return [
+                'produtos' => $produtos,
+                'total' => $total
+            ];
+            
+        } catch (PDOException $e) {
+            error_log("Erro ao buscar produtos: " . $e->getMessage());
+            throw new Exception("Erro ao buscar produtos");
+        }
+    }
 }
 ?>

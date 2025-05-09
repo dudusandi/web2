@@ -1,85 +1,85 @@
 <?php
 session_start();
-if (!isset($_SESSION['usuario_id'])) {
-    header('Location: ../view/login.php');
-    exit;
-}
-
-require_once '../model/produto.php';
-require_once '../dao/produto_dao.php';
 require_once '../config/database.php';
+require_once '../dao/produto_dao.php';
+require_once '../models/produto.php';
 
-$produtoDAO = new ProdutoDAO(Database::getConnection());
+header('Content-Type: application/json');
 
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $nome = trim($_POST['nome'] ?? '');
-    $descricao = trim($_POST['descricao'] ?? '');
-    $fornecedorId = (int)($_POST['fornecedor_id'] ?? 0);
-    $quantidade = (int)($_POST['quantidade'] ?? 0);
-    $preco = floatval($_POST['preco'] ?? 0.00);
-    $usuarioId = (int)($_SESSION['usuario_id']);
-    $foto = $_FILES['foto'] ?? null;
-
-    // Log dos dados 
-    error_log("Dados recebidos: nome=$nome, fornecedorId=$fornecedorId, quantidade=$quantidade, preco=$preco, usuarioId=$usuarioId");
-
-    // Validações
-    if (empty($nome) || $fornecedorId <= 0 || $quantidade < 0 || $preco < 0) {
-        $campo = empty($nome) ? 'nome' : ($fornecedorId <= 0 ? 'fornecedor' : 'estoque');
-        $erro = empty($nome) || $fornecedorId <= 0 ? 'campos_obrigatorios' : 'estoque_invalido';
-        error_log("Validação falhou: campo=$campo, erro=$erro");
-        header("Location: ../view/cadastro_produto.php?erro=$erro&campo=$campo");
-        exit;
+try {
+    // Validar dados recebidos
+    if (!isset($_POST['nome']) || empty($_POST['nome'])) {
+        throw new Exception('Nome do produto é obrigatório');
     }
 
-    // Validar se o fornecedor existe
-    $pdo = Database::getConnection();
-    $stmt = $pdo->prepare("SELECT COUNT(*) FROM fornecedores WHERE id = :fornecedor_id");
-    $stmt->execute([':fornecedor_id' => $fornecedorId]);
-    if ($stmt->fetchColumn() == 0) {
-        header("Location: ../view/cadastro_produto.php?erro=fornecedor_invalido");
-        exit;
+    if (!isset($_POST['fornecedor_id']) || empty($_POST['fornecedor_id'])) {
+        throw new Exception('Fornecedor é obrigatório');
     }
 
-    // Envio da Foto
-    $fotoNome = null;
-    if ($foto && $foto['error'] === UPLOAD_ERR_OK) {
+    if (!isset($_POST['quantidade']) || !is_numeric($_POST['quantidade']) || $_POST['quantidade'] < 0) {
+        throw new Exception('Quantidade inválida');
+    }
+
+    if (!isset($_POST['preco']) || !is_numeric($_POST['preco']) || $_POST['preco'] < 0) {
+        throw new Exception('Preço inválido');
+    }
+
+    // Processar upload da foto
+    $foto = null;
+    if (isset($_FILES['foto']) && $_FILES['foto']['error'] === UPLOAD_ERR_OK) {
         $allowedTypes = ['image/jpeg', 'image/png', 'image/gif'];
-        $maxSize = 16 * 1024 * 1024; // 16MB 
-        if (!in_array($foto['type'], $allowedTypes) || $foto['size'] > $maxSize) {
-            error_log("Foto inválida: tipo={$foto['type']}, tamanho={$foto['size']}");
-            header("Location: ../view/cadastro_produto.php?erro=foto_invalida");
-            exit;
+        $maxSize = 2 * 1024 * 1024; // 2MB
+
+        if (!in_array($_FILES['foto']['type'], $allowedTypes)) {
+            throw new Exception('Tipo de arquivo não permitido. Use apenas JPG, PNG ou GIF.');
         }
 
-        $extensao = pathinfo($foto['name'], PATHINFO_EXTENSION);
-        $fotoNome = uniqid() . '.' . $extensao;
-        $caminhoDestino = realpath(__DIR__ . '/../public/uploads/imagens/') . '/' . $fotoNome;
-        if (!move_uploaded_file($foto['tmp_name'], $caminhoDestino)) {
-            error_log("Erro ao mover arquivo: caminho=$caminhoDestino, erro={$foto['error']}");
-            header("Location: ../view/cadastro_produto.php?erro=erro_foto");
-            exit;
+        if ($_FILES['foto']['size'] > $maxSize) {
+            throw new Exception('Arquivo muito grande. Tamanho máximo: 2MB');
         }
-        error_log("Foto salva com sucesso: $fotoNome");
-    } else {
-        error_log("Nenhum arquivo enviado ou erro no upload: " . ($foto['error'] ?? 'N/A'));
+
+        $uploadDir = '../public/uploads/imagens/';
+        if (!file_exists($uploadDir)) {
+            mkdir($uploadDir, 0777, true);
+        }
+
+        $extension = pathinfo($_FILES['foto']['name'], PATHINFO_EXTENSION);
+        $foto = uniqid() . '.' . $extension;
+        $uploadFile = $uploadDir . $foto;
+
+        if (!move_uploaded_file($_FILES['foto']['tmp_name'], $uploadFile)) {
+            throw new Exception('Erro ao fazer upload da imagem');
+        }
     }
 
-    // Novo Produto
-    $produto = new Produto($nome, $descricao, $fotoNome ?? '', $fornecedorId, $usuarioId);
-    try {
-        error_log("Tentando cadastrar produto: nome=$nome, fornecedorId=$fornecedorId, usuarioId=$usuarioId");
-        $produtoDAO->cadastrarProduto($produto, $quantidade, $preco);
-        error_log("Produto cadastrado com sucesso");
-        header('Location: ../view/cadastro_produto.php?sucesso=1');
-        exit;
-    } catch (Exception $e) {
-        error_log("Erro ao cadastrar produto: " . $e->getMessage() . " in " . $e->getFile() . " on line " . $e->getLine());
-        header("Location: ../view/cadastro_produto.php?erro=erro_sistema&mensagem=" . urlencode($e->getMessage()));
-        exit;
-    }
-} else {
-    header("Location: ../view/cadastro_produto.php?erro=metodo_invalido");
-    exit;
+    // Criar objeto Produto
+    $produto = new Produto(
+        $_POST['nome'],
+        $_POST['descricao'] ?? null,
+        $foto,
+        $_POST['fornecedor_id'],
+        $_SESSION['usuario_id']
+    );
+
+    // Definir quantidade e preço
+    $produto->setQuantidade($_POST['quantidade']);
+    $produto->setPreco($_POST['preco']);
+
+    // Inserir no banco de dados
+    $pdo = Database::getConnection();
+    $produtoDAO = new ProdutoDAO($pdo);
+    $produtoDAO->cadastrarProduto($produto, $_POST['quantidade'], $_POST['preco']);
+
+    echo json_encode([
+        'success' => true,
+        'message' => 'Produto cadastrado com sucesso'
+    ]);
+
+} catch (Exception $e) {
+    http_response_code(400);
+    echo json_encode([
+        'success' => false,
+        'error' => $e->getMessage()
+    ]);
 }
 ?>

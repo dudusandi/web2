@@ -27,7 +27,7 @@ $tipoMensagem = $_GET['tipo_mensagem'] ?? '';
 <body>
     <!-- Cabeçalho -->
     <div class="header">
-        <div class="logo">UCS<span>express</span></div>
+        <a href="dashboard.php" class="logo">UCS<span>express</span></a>
         <div class="search-bar">
             <input type="text" id="searchInput" placeholder="Pesquisar fornecedores..." autocomplete="off">
         </div>
@@ -49,7 +49,6 @@ $tipoMensagem = $_GET['tipo_mensagem'] ?? '';
                 <a href="cadastro_fornecedor.php" class="btn btn-primary">
                     <i class="bi bi-plus"></i> Adicionar Fornecedor
                 </a>
-                <a href="dashboard.php" class="btn btn-secondary">Voltar ao Dashboard</a>
             </div>
         </div>
 

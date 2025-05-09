@@ -250,3 +250,12 @@ body {
         font-size: 1.1rem;
     }
 }
+
+.input-group-text {
+    width: 45px;
+    justify-content: center;
+    height: 38px; /* Altura padrão do input do Bootstrap */
+    padding: 0.375rem 0.75rem;
+    font-size: 1rem;
+    line-height: 1.5;
+}

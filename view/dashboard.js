@@ -288,3 +288,142 @@ function confirmarExclusao() {
     const confirmModal = new bootstrap.Modal(document.getElementById('confirmModal'));
     confirmModal.show();
 }
+
+// Função para mostrar detalhes do produto
+function mostrarDetalhes(id) {
+    currentProdutoId = id;
+    fetch(`../controllers/get_produto.php?id=${id}`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.error) {
+                alert(data.error);
+                return;
+            }
+
+            // Preencher dados do produto
+            document.getElementById('produtoNome').textContent = data.nome;
+            document.getElementById('produtoDescricao').textContent = data.descricao || 'Nenhuma';
+            document.getElementById('produtoFornecedor').textContent = data.fornecedor_nome || 'Sem fornecedor';
+            document.getElementById('produtoEstoque').textContent = data.estoque;
+            document.getElementById('produtoPreco').textContent = `R$ ${(data.preco ?? 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+            document.getElementById('produtoFoto').src = data.foto ? `../public/uploads/imagens/${data.foto}` : 'https://via.placeholder.com/200';
+            document.getElementById('btnConfirmarExclusao').href = `../controllers/excluir_produto.php?id=${id}`;
+
+            // Preencher formulário de edição
+            document.getElementById('produtoId').value = id;
+            document.getElementById('produtoNomeInput').value = data.nome;
+            document.getElementById('produtoDescricaoInput').value = data.descricao || '';
+            document.getElementById('produtoEstoqueInput').value = data.estoque;
+            document.getElementById('produtoPrecoInput').value = data.preco ?? 0;
+
+            // Preencher select de fornecedores
+            const fornecedorSelect = document.getElementById('produtoFornecedorInput');
+            fornecedorSelect.innerHTML = '<option value="">Selecione um fornecedor</option>';
+            
+            if (window.fornecedores && window.fornecedores.length > 0) {
+                window.fornecedores.forEach(fornecedor => {
+                    const option = document.createElement('option');
+                    option.value = fornecedor.id;
+                    option.text = fornecedor.nome;
+                    if (fornecedor.id == data.fornecedor) {
+                        option.selected = true;
+                    }
+                    fornecedorSelect.appendChild(option);
+                });
+            }
+
+            // Mostrar botões de ação
+            document.getElementById('btnEditar').classList.remove('d-none');
+            document.getElementById('btnExcluir').classList.remove('d-none');
+
+            // Resetar estado do modal
+            isEditando = false;
+            document.getElementById('visualizacao').classList.remove('d-none');
+            document.getElementById('editarForm').classList.add('d-none');
+            document.getElementById('btnSalvar').classList.add('d-none');
+            document.getElementById('produtoFotoInput').classList.add('d-none');
+            document.getElementById('mensagemErro').style.display = 'none';
+            document.getElementById('mensagemSucesso').style.display = 'none';
+
+            // Mostrar modal
+            const modal = new bootstrap.Modal(document.getElementById('detalhesModal'));
+            modal.show();
+        })
+        .catch(error => {
+            console.error('Erro ao buscar detalhes:', error);
+            alert('Erro ao carregar detalhes do produto');
+        });
+}
+
+// Função para confirmar exclusão
+function confirmarExclusao(id, nome) {
+    document.getElementById('confirmProdutoNome').textContent = nome;
+    document.getElementById('btnConfirmarExclusao').href = `../controllers/excluir_produto.php?id=${id}`;
+    const modal = new bootstrap.Modal(document.getElementById('confirmModal'));
+    modal.show();
+}
+
+// Configurar eventos
+document.addEventListener('DOMContentLoaded', () => {
+    // Carregar produtos iniciais
+    carregarProdutos();
+
+    // Configurar busca
+    const searchInput = document.getElementById('searchInput');
+    searchInput.addEventListener('input', () => {
+        clearTimeout(debounceTimer);
+        debounceTimer = setTimeout(() => {
+            termoBusca = searchInput.value.trim();
+            paginaAtual = 1;
+            carregarProdutos(termoBusca, 1, false);
+        }, 500);
+    });
+
+    // Configurar scroll infinito
+    const sentinela = document.getElementById('sentinela');
+    const observer = new IntersectionObserver(entries => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting && !isCarregando && !todosCarregados) {
+                carregarProdutos(termoBusca, paginaAtual + 1, true);
+                paginaAtual++;
+            }
+        });
+    });
+    observer.observe(sentinela);
+
+    // Configurar formulário de cadastro
+    const formCadastro = document.getElementById('formCadastroProduto');
+    formCadastro.addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        const formData = new FormData(this);
+        
+        fetch('../controllers/cadastrar_produto.php', {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // Fechar modal
+                const modal = bootstrap.Modal.getInstance(document.getElementById('cadastroProdutoModal'));
+                modal.hide();
+                
+                // Limpar formulário
+                formCadastro.reset();
+                
+                // Recarregar produtos
+                carregarProdutos(termoBusca, 1, false);
+                
+                // Mostrar mensagem de sucesso
+                alert('Produto cadastrado com sucesso!');
+            } else {
+                alert(data.error || 'Erro ao cadastrar produto');
+            }
+        })
+        .catch(error => {
+            console.error('Erro:', error);
+            alert('Erro ao cadastrar produto');
+        });
+    });
+});
