@@ -136,32 +136,41 @@ class FornecedorDAO {
         }
     }
 
-    public function buscarFornecedoresDinamicos($termo, $itensPorPagina, $offset) {
+    public function buscarFornecedoresDinamicos($termo, $limite = 6, $offset = 0) {
         try {
-            $termoPesquisa = '%' . strtolower($termo) . '%';
-            $sql = "SELECT f.id, f.nome, f.descricao, f.telefone, f.email,
-                           e.rua, e.numero, e.bairro, e.cidade, e.estado, e.cep
+            $termo = "%{$termo}%";
+            $sql = "SELECT f.id, f.nome, f.descricao, f.telefone, f.email, 
+                           e.rua, e.numero, e.bairro, e.cep, e.cidade, e.estado, e.complemento
                     FROM fornecedores f
-                    LEFT JOIN enderecos e ON f.endereco_id = e.id
-                    WHERE LOWER(f.nome) LIKE :termo OR LOWER(f.descricao) LIKE :termo OR LOWER(f.email) LIKE :termo
-                    ORDER BY f.id DESC
-                    LIMIT :itensPorPagina OFFSET :offset";
+                    JOIN enderecos e ON f.endereco_id = e.id
+                    WHERE LOWER(f.nome) LIKE LOWER(:termo) 
+                    OR LOWER(f.descricao) LIKE LOWER(:termo) 
+                    OR LOWER(f.email) LIKE LOWER(:termo) 
+                    OR LOWER(f.telefone) LIKE LOWER(:termo) 
+                    OR LOWER(e.rua) LIKE LOWER(:termo) 
+                    OR LOWER(e.cidade) LIKE LOWER(:termo) 
+                    OR LOWER(e.estado) LIKE LOWER(:termo) 
+                    ORDER BY f.nome 
+                    LIMIT :limite OFFSET :offset";
+            
             $stmt = $this->pdo->prepare($sql);
-            $stmt->bindValue(':termo', $termoPesquisa, PDO::PARAM_STR);
-            $stmt->bindValue(':itensPorPagina', $itensPorPagina, PDO::PARAM_INT);
+            $stmt->bindValue(':termo', $termo, PDO::PARAM_STR);
+            $stmt->bindValue(':limite', $limite, PDO::PARAM_INT);
             $stmt->bindValue(':offset', $offset, PDO::PARAM_INT);
             $stmt->execute();
-
+            
             $fornecedores = [];
             while ($linha = $stmt->fetch(PDO::FETCH_ASSOC)) {
                 $endereco = new Endereco(
                     $linha['rua'],
                     $linha['numero'],
                     $linha['bairro'],
+                    $linha['cep'],
                     $linha['cidade'],
                     $linha['estado'],
-                    $linha['cep']
+                    $linha['complemento']
                 );
+
                 $fornecedor = new Fornecedor(
                     $linha['nome'],
                     $linha['descricao'],
@@ -172,27 +181,36 @@ class FornecedorDAO {
                 $fornecedor->setId($linha['id']);
                 $fornecedores[] = $fornecedor;
             }
+            
             return $fornecedores;
         } catch (PDOException $e) {
-            error_log(date('[Y-m-d H:i:s] ') . "Erro em buscarFornecedoresDinamicos: " . $e->getMessage() . PHP_EOL);
-            throw $e;
+            error_log("Erro ao buscar fornecedores: " . $e->getMessage());
+            throw new Exception("Erro ao buscar fornecedores");
         }
     }
 
     public function contarFornecedoresBuscados($termo) {
         try {
-            $termoPesquisa = '%' . strtolower($termo) . '%';
+            $termo = "%{$termo}%";
             $sql = "SELECT COUNT(*) 
                     FROM fornecedores f
-                    LEFT JOIN enderecos e ON f.endereco_id = e.id
-                    WHERE LOWER(f.nome) LIKE :termo OR LOWER(f.descricao) LIKE :termo OR LOWER(f.email) LIKE :termo";
+                    JOIN enderecos e ON f.endereco_id = e.id
+                    WHERE LOWER(f.nome) LIKE LOWER(:termo) 
+                    OR LOWER(f.descricao) LIKE LOWER(:termo) 
+                    OR LOWER(f.email) LIKE LOWER(:termo) 
+                    OR LOWER(f.telefone) LIKE LOWER(:termo) 
+                    OR LOWER(e.rua) LIKE LOWER(:termo) 
+                    OR LOWER(e.cidade) LIKE LOWER(:termo) 
+                    OR LOWER(e.estado) LIKE LOWER(:termo)";
+            
             $stmt = $this->pdo->prepare($sql);
-            $stmt->bindValue(':termo', $termoPesquisa, PDO::PARAM_STR);
+            $stmt->bindValue(':termo', $termo, PDO::PARAM_STR);
             $stmt->execute();
-            return (int)$stmt->fetchColumn();
+            
+            return (int) $stmt->fetchColumn();
         } catch (PDOException $e) {
-            error_log(date('[Y-m-d H:i:s] ') . "Erro em contarFornecedoresBuscados: " . $e->getMessage() . PHP_EOL);
-            throw $e;
+            error_log("Erro ao contar fornecedores: " . $e->getMessage());
+            throw new Exception("Erro ao contar fornecedores");
         }
     }
 

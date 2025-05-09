@@ -8,7 +8,6 @@
 </head>
 <body>
     <div class="login-container">
-        <!-- Logo UCSexpress -->
         <div class="logo">UCS<span>express</span></div>
     
         <?php if (isset($_GET['erro'])): ?>

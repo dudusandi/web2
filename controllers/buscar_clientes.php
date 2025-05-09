@@ -7,55 +7,54 @@ if (!isset($_SESSION['usuario_id'])) {
 }
 
 require_once __DIR__ . '/../config/database.php';
-require_once __DIR__ . '/../dao/fornecedor_dao.php';
+require_once __DIR__ . '/../dao/cliente_dao.php';
 
 try {
     $pdo = Database::getConnection();
-    $fornecedorDAO = new FornecedorDAO($pdo);
+    $clienteDAO = new ClienteDAO($pdo);
 
     $termo = $_GET['termo'] ?? '';
     $pagina = isset($_GET['pagina']) ? max(1, (int)$_GET['pagina']) : 1;
     $itensPorPagina = 6;
     $offset = ($pagina - 1) * $itensPorPagina;
 
-    // Buscar fornecedores
+    // Buscar clientes
     if (!empty($termo)) {
-        $fornecedores = $fornecedorDAO->buscarFornecedoresDinamicos($termo, $itensPorPagina, $offset);
-        $total = $fornecedorDAO->contarFornecedoresBuscados($termo);
+        $clientes = $clienteDAO->buscarClientesDinamicos($termo, $itensPorPagina, $offset);
+        $total = $clienteDAO->contarClientesBuscados($termo);
     } else {
-        $fornecedores = $fornecedorDAO->listarTodos($itensPorPagina, $offset);
-        $total = $fornecedorDAO->contarTodos();
+        $clientes = $clienteDAO->listarTodos($itensPorPagina, $offset);
+        $total = $clienteDAO->contarTodos();
     }
 
     // Formatar resposta
-    $fornecedoresFormatados = array_map(function($fornecedor) {
-        $endereco = $fornecedor->getEndereco();
+    $clientesFormatados = array_map(function($cliente) {
+        $endereco = $cliente->getEndereco();
         return [
-            'id' => $fornecedor->getId(),
-            'nome' => $fornecedor->getNome(),
-            'descricao' => $fornecedor->getDescricao(),
-            'telefone' => $fornecedor->getTelefone(),
-            'email' => $fornecedor->getEmail(),
+            'id' => $cliente->getId(),
+            'nome' => $cliente->getNome(),
+            'telefone' => $cliente->getTelefone(),
+            'email' => $cliente->getEmail(),
             'rua' => $endereco->getRua(),
             'numero' => $endereco->getNumero(),
             'bairro' => $endereco->getBairro(),
             'cidade' => $endereco->getCidade(),
             'estado' => $endereco->getEstado()
         ];
-    }, $fornecedores);
+    }, $clientes);
 
     header('Content-Type: application/json');
     echo json_encode([
         'success' => true,
-        'fornecedores' => $fornecedoresFormatados,
+        'clientes' => $clientesFormatados,
         'total' => $total
     ]);
 
 } catch (Exception $e) {
-    error_log("Erro ao buscar fornecedores: " . $e->getMessage());
+    error_log("Erro ao buscar clientes: " . $e->getMessage());
     header('Content-Type: application/json');
     echo json_encode([
         'success' => false,
-        'error' => 'Erro ao buscar fornecedores: ' . $e->getMessage()
+        'error' => 'Erro ao buscar clientes: ' . $e->getMessage()
     ]);
-}
+} 

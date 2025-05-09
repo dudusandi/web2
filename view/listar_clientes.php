@@ -44,6 +44,9 @@ $tipoMensagem = $_GET['tipo_mensagem'] ?? '';
     <!-- Cabeçalho -->
     <div class="header">
         <div class="logo">UCS<span>express</span></div>
+        <div class="search-bar">
+            <input type="text" id="searchInput" placeholder="Pesquisar clientes..." autocomplete="off">
+        </div>
     </div>
 
     <div class="container">
@@ -68,66 +71,19 @@ $tipoMensagem = $_GET['tipo_mensagem'] ?? '';
 
         <!-- Listagem de Clientes -->
         <div id="clientesContainer">
-            <?php if (empty($clientes)): ?>
-                <div class="empty-state">
-                    <i class="bi bi-person" style="font-size: 3rem;"></i>
-                    <h3 class="mt-3">Nenhum cliente cadastrado</h3>
-                </div>
-            <?php else: ?>
-                <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
-                    <?php foreach ($clientes as $cliente): ?>
-                        <?php $endereco = $cliente->getEndereco(); ?>
-                        <div class="col">
-                            <div class="card h-100">
-                                <div class="card-body">
-                                    <h5 class="card-title"><?= $cliente->getNome() ?></h5>
-                                    <p class="card-text text-muted">
-                                        <strong>Telefone:</strong> <?= $cliente->getTelefone() ?><br>
-                                        <strong>Email:</strong> <?= $cliente->getEmail() ?><br>
-                                        <strong>Endereço:</strong> 
-                                        <?= $endereco->getRua() . ', ' . $endereco->getNumero() . ', ' . $endereco->getBairro() . ', ' . $endereco->getCidade() . ' - ' . $endereco->getEstado() ?>
-                                    </p>
-                                </div>
-                                <div class="card-footer d-flex justify-content-between">
-                                    <a href="editar_cliente.php?id=<?= $cliente->getId() ?>" class="btn btn-sm btn-primary">
-                                        <i class="bi bi-pencil"></i> Editar
-                                    </a>
-                                    <a href="../controllers/excluir_cliente.php?id=<?= $cliente->getId() ?>" class="btn btn-sm btn-danger" 
-                                       onclick="return confirm('Tem certeza que deseja excluir o cliente <?= $cliente->getNome() ?>?')">
-                                        <i class="bi bi-trash"></i> Excluir
-                                    </a>
-                                </div>
-                            </div>
-                        </div>
-                    <?php endforeach; ?>
-                </div>
-
-                <!-- Paginação -->
-                <?php if ($totalPaginas > 1): ?>
-                <nav aria-label="Navegação de páginas" class="mt-4">
-                    <ul class="pagination justify-content-center">
-                        <?php if ($pagina > 1): ?>
-                            <li class="page-item">
-                                <a class="page-link" href="?pagina=<?= $pagina - 1 ?>">Anterior</a>
-                            </li>
-                        <?php endif; ?>
-
-                        <?php for ($i = 1; $i <= $totalPaginas; $i++): ?>
-                            <li class="page-item <?= $i === $pagina ? 'active' : '' ?>">
-                                <a class="page-link" href="?pagina=<?= $i ?>"><?= $i ?></a>
-                            </li>
-                        <?php endfor; ?>
-
-                        <?php if ($pagina < $totalPaginas): ?>
-                            <li class="page-item">
-                                <a class="page-link" href="?pagina=<?= $pagina + 1 ?>">Próxima</a>
-                            </li>
-                        <?php endif; ?>
-                    </ul>
-                </nav>
-                <?php endif; ?>
-            <?php endif; ?>
+            <!-- Clientes serão carregados dinamicamente -->
+        </div>
+        <!-- Sentinela para carregamento infinito -->
+        <div id="sentinela" style="height: 20px;"></div>
+        <!-- Indicador de carregamento -->
+        <div id="loading" class="text-center my-3 d-none">
+            <div class="spinner-border" role="status">
+                <span class="visually-hidden">Carregando...</span>
+            </div>
         </div>
     </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="listar_clientes.js"></script>
 </body>
 </html>

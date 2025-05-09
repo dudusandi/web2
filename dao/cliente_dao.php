@@ -189,36 +189,28 @@ class ClienteDAO {
     }
 
     // Método para buscar clientes dinamicamente com base em um termo
-    public function buscarClientesDinamicos($termo, $itensPorPagina, $offset) {
+    public function buscarClientesDinamicos($termo, $limite = 6, $offset = 0) {
         try {
-            $termoPesquisa = '%' . strtolower($termo) . '%';
+            $termo = "%{$termo}%";
             $sql = "SELECT c.id, c.nome, c.telefone, c.email, c.cartao_credito, 
                            e.rua, e.numero, e.bairro, e.cep, e.cidade, e.estado, e.complemento
                     FROM clientes c
                     JOIN enderecos e ON c.endereco_id = e.id
-                    WHERE LOWER(c.nome) LIKE :termo 
-                       OR LOWER(c.email) LIKE :termo 
-                       OR LOWER(c.telefone) LIKE :termo
-                       OR LOWER(e.cidade) LIKE :termo
-                       OR LOWER(e.bairro) LIKE :termo
-                    ORDER BY 
-                        CASE 
-                            WHEN LOWER(c.nome) LIKE :termoExato THEN 1
-                            WHEN LOWER(c.email) LIKE :termoExato THEN 2
-                            WHEN LOWER(c.telefone) LIKE :termoExato THEN 3
-                            ELSE 4
-                        END,
-                        c.nome ASC
-                    LIMIT :itensPorPagina OFFSET :offset";
+                    WHERE LOWER(c.nome) LIKE LOWER(:termo) 
+                    OR LOWER(c.email) LIKE LOWER(:termo) 
+                    OR LOWER(c.telefone) LIKE LOWER(:termo) 
+                    OR LOWER(e.rua) LIKE LOWER(:termo) 
+                    OR LOWER(e.cidade) LIKE LOWER(:termo) 
+                    OR LOWER(e.estado) LIKE LOWER(:termo) 
+                    ORDER BY c.nome 
+                    LIMIT :limite OFFSET :offset";
             
             $stmt = $this->pdo->prepare($sql);
-            $termoExato = strtolower($termo) . '%';
-            $stmt->bindValue(':termo', $termoPesquisa, PDO::PARAM_STR);
-            $stmt->bindValue(':termoExato', $termoExato, PDO::PARAM_STR);
-            $stmt->bindValue(':itensPorPagina', $itensPorPagina, PDO::PARAM_INT);
+            $stmt->bindValue(':termo', $termo, PDO::PARAM_STR);
+            $stmt->bindValue(':limite', $limite, PDO::PARAM_INT);
             $stmt->bindValue(':offset', $offset, PDO::PARAM_INT);
             $stmt->execute();
-
+            
             $clientes = [];
             while ($linha = $stmt->fetch(PDO::FETCH_ASSOC)) {
                 $endereco = new Endereco(
@@ -241,32 +233,36 @@ class ClienteDAO {
                 $cliente->setId($linha['id']);
                 $clientes[] = $cliente;
             }
+            
             return $clientes;
         } catch (PDOException $e) {
-            error_log(date('[Y-m-d H:i:s] ') . "Erro em buscarClientesDinamicos: " . $e->getMessage() . PHP_EOL);
-            throw $e;
+            error_log("Erro ao buscar clientes: " . $e->getMessage());
+            throw new Exception("Erro ao buscar clientes");
         }
     }
 
     // Método para contar clientes encontrados com base no termo
     public function contarClientesBuscados($termo) {
         try {
-            $termoPesquisa = '%' . strtolower($termo) . '%';
+            $termo = "%{$termo}%";
             $sql = "SELECT COUNT(*) 
                     FROM clientes c
                     JOIN enderecos e ON c.endereco_id = e.id
-                    WHERE LOWER(c.nome) LIKE :termo 
-                       OR LOWER(c.email) LIKE :termo 
-                       OR LOWER(c.telefone) LIKE :termo
-                       OR LOWER(e.cidade) LIKE :termo
-                       OR LOWER(e.bairro) LIKE :termo";
+                    WHERE LOWER(c.nome) LIKE LOWER(:termo) 
+                    OR LOWER(c.email) LIKE LOWER(:termo) 
+                    OR LOWER(c.telefone) LIKE LOWER(:termo) 
+                    OR LOWER(e.rua) LIKE LOWER(:termo) 
+                    OR LOWER(e.cidade) LIKE LOWER(:termo) 
+                    OR LOWER(e.estado) LIKE LOWER(:termo)";
+            
             $stmt = $this->pdo->prepare($sql);
-            $stmt->bindValue(':termo', $termoPesquisa, PDO::PARAM_STR);
+            $stmt->bindValue(':termo', $termo, PDO::PARAM_STR);
             $stmt->execute();
-            return (int)$stmt->fetchColumn();
+            
+            return (int) $stmt->fetchColumn();
         } catch (PDOException $e) {
-            error_log(date('[Y-m-d H:i:s] ') . "Erro em contarClientesBuscados: " . $e->getMessage() . PHP_EOL);
-            throw $e;
+            error_log("Erro ao contar clientes: " . $e->getMessage());
+            throw new Exception("Erro ao contar clientes");
         }
     }
 
