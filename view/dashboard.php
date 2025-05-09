@@ -68,9 +68,6 @@ try {
             <a href="../view/listar_clientes.php">Editar Clientes</a> 
         <?php endif; ?>
     </div>
-    <div class="welcome">
-        Bem-vindo à UCS Express!
-    </div>
 
     <!-- Seção de Produtos -->
     <div class="products-section container">

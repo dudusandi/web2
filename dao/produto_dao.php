@@ -124,38 +124,6 @@ class ProdutoDAO {
         }
     }
 
-    // Lista todos os produtos sem paginação
-    public function listarTodos() {
-        try {
-            $sql = "SELECT p.id, p.nome, p.descricao, p.foto, p.fornecedor_id, p.estoque_id, p.usuario_id,
-                           e.quantidade, e.preco
-                    FROM produtos p
-                    LEFT JOIN estoques e ON p.estoque_id = e.id";
-            $stmt = $this->pdo->prepare($sql);
-            $stmt->execute();
-
-            $produtos = [];
-            while ($linha = $stmt->fetch(PDO::FETCH_ASSOC)) {
-                $produto = new Produto(
-                    $linha['nome'],
-                    $linha['descricao'],
-                    $linha['foto'],
-                    $linha['fornecedor_id'],
-                    $linha['usuario_id']
-                );
-                $produto->setId($linha['id']);
-                $produto->setEstoqueId($linha['estoque_id']);
-                $produto->setQuantidade($linha['quantidade']);
-                $produto->setPreco($linha['preco']);
-                $produtos[] = $produto;
-            }
-            return $produtos;
-        } catch (PDOException $e) {
-            error_log(date('[Y-m-d H:i:s] ') . "Erro em listarTodos: " . $e->getMessage() . PHP_EOL);
-            throw $e;
-        }
-    }
-
     // Conta todos os produtos
     public function contarTodosProdutos() {
         try {
@@ -181,7 +149,7 @@ class ProdutoDAO {
     }
 
     // Busca produtos dinamicamente sem paginação
-    public function buscarProdutosDinamicos($termo) {
+    public function buscarProdutosDinamicos($termo, $itensPorPagina = null, $offset = null) {
         try {
             $termoPesquisa = '%' . strtolower($termo) . '%';
             $sql = "SELECT p.id, p.nome, p.descricao, p.foto, p.fornecedor_id, p.estoque_id, p.usuario_id,
@@ -192,8 +160,19 @@ class ProdutoDAO {
                     LEFT JOIN fornecedores f ON p.fornecedor_id = f.id
                     WHERE LOWER(p.nome) LIKE :termo OR LOWER(p.descricao) LIKE :termo
                     ORDER BY p.id DESC";
+            
+            if ($itensPorPagina !== null && $offset !== null) {
+                $sql .= " LIMIT :itensPorPagina OFFSET :offset";
+            }
+            
             $stmt = $this->pdo->prepare($sql);
             $stmt->bindValue(':termo', $termoPesquisa, PDO::PARAM_STR);
+            
+            if ($itensPorPagina !== null && $offset !== null) {
+                $stmt->bindValue(':itensPorPagina', $itensPorPagina, PDO::PARAM_INT);
+                $stmt->bindValue(':offset', $offset, PDO::PARAM_INT);
+            }
+            
             $stmt->execute();
 
             $produtos = [];
@@ -288,17 +267,6 @@ class ProdutoDAO {
         }
     }
 
-    // Contar produtos totais
-    public function contarProdutos() {
-        try {
-            $stmt = $this->pdo->prepare("SELECT COUNT(*) FROM produtos");
-            $stmt->execute();
-            return (int)$stmt->fetchColumn();
-        } catch (PDOException $e) {
-            throw $e;
-        }
-    }
-
     // Buscar produto por ID
     public function buscarPorId($id) {
         try {
@@ -341,9 +309,11 @@ class ProdutoDAO {
     public function buscarPorNome($nome) {
         try {
             $sql = "SELECT p.id, p.nome, p.descricao, p.foto, p.fornecedor_id, p.estoque_id, p.usuario_id,
-                           e.quantidade, e.preco
+                           e.quantidade, e.preco,
+                           f.nome AS fornecedor_nome
                     FROM produtos p
                     LEFT JOIN estoques e ON p.estoque_id = e.id
+                    LEFT JOIN fornecedores f ON p.fornecedor_id = f.id
                     WHERE LOWER(p.nome) = LOWER(:nome)";
             $stmt = $this->pdo->prepare($sql);
             $stmt->bindValue(':nome', $nome, PDO::PARAM_STR);
@@ -362,6 +332,7 @@ class ProdutoDAO {
                 $produto->setEstoqueId($linha['estoque_id']);
                 $produto->setQuantidade($linha['quantidade']);
                 $produto->setPreco($linha['preco']);
+                $produto->fornecedor_nome = $linha['fornecedor_nome'] ?? 'Sem fornecedor';
                 return $produto;
             }
             return null;

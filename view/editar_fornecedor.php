@@ -44,8 +44,8 @@ $mensagem = $_GET['mensagem'] ?? '';
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
     <link rel="stylesheet" href="editar.css">
-    <!-- Adicionando jQuery para facilitar as requisições AJAX -->
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="endereco.js"></script>
 </head>
 <body>
     <!-- Cabeçalho -->
@@ -117,13 +117,13 @@ $mensagem = $_GET['mensagem'] ?? '';
                 <div class="row">
                     <div class="col-md-6 mb-3">
                         <label for="estado" class="form-label">Estado *</label>
-                        <select class="form-control" id="estado" name="estado" required>
+                        <select class="form-control" id="estado" name="estado" required data-selected="<?= htmlspecialchars($endereco->getEstado(), ENT_QUOTES, 'UTF-8') ?>">
                             <option value="">Selecione um estado</option>
                         </select>
                     </div>
                     <div class="col-md-6 mb-3">
                         <label for="cidade" class="form-label">Cidade *</label>
-                        <select class="form-control" id="cidade" name="cidade" required disabled>
+                        <select class="form-control" id="cidade" name="cidade" required disabled data-selected="<?= htmlspecialchars($endereco->getCidade(), ENT_QUOTES, 'UTF-8') ?>">
                             <option value="">Selecione um estado primeiro</option>
                         </select>
                     </div>
@@ -139,122 +139,5 @@ $mensagem = $_GET['mensagem'] ?? '';
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-
-    <script>
-    $(document).ready(function() {
-        // Carrega os estados ao carregar a página
-        $.getJSON('https://servicodados.ibge.gov.br/api/v1/localidades/estados', function(data) {
-            var items = [];
-            items.push('<option value="">Selecione um estado</option>');
-            $.each(data, function(key, val) {
-                var selected = val.sigla === '<?= $endereco->getEstado() ?>' ? 'selected' : '';
-                items.push('<option value="' + val.sigla + '" ' + selected + '>' + val.nome + '</option>');
-            });
-            $('#estado').html(items.join(''));
-            
-            // Se já tiver um estado selecionado, carrega as cidades
-            if ('<?= $endereco->getEstado() ?>') {
-                carregarCidades('<?= $endereco->getEstado() ?>', '<?= $endereco->getCidade() ?>');
-            }
-        });
-
-        // Quando o estado é selecionado, carrega as cidades correspondentes
-        $('#estado').change(function() {
-            var uf = $(this).val();
-            if (uf) {
-                carregarCidades(uf);
-            } else {
-                $('#cidade').prop('disabled', true).html('<option value="">Selecione um estado primeiro</option>');
-            }
-        });
-
-        // Função para carregar cidades
-        function carregarCidades(uf, cidadeSelecionada = null) {
-            $('#cidade').prop('disabled', false);
-            $.getJSON('https://servicodados.ibge.gov.br/api/v1/localidades/estados/' + uf + '/municipios', function(data) {
-                var items = [];
-                items.push('<option value="">Selecione uma cidade</option>');
-                $.each(data, function(key, val) {
-                    var selected = cidadeSelecionada && val.nome === cidadeSelecionada ? 'selected' : '';
-                    items.push('<option value="' + val.nome + '" ' + selected + '>' + val.nome + '</option>');
-                });
-                $('#cidade').html(items.join(''));
-            });
-        }
-
-        // Autocompletar endereço via CEP usando ViaCEP
-        $('#cep').blur(function() {
-            var cep = $(this).val().replace(/\D/g, '');
-            if (cep.length === 8) {
-                $.getJSON('https://viacep.com.br/ws/' + cep + '/json/', function(data) {
-                    if (!data.erro) {
-                        $('#rua').val(data.logradouro);
-                        $('#bairro').val(data.bairro);
-                        $('#complemento').val(data.complemento);
-                        $('#estado').val(data.uf).trigger('change');
-                        
-                        // Aguarda o carregamento das cidades para selecionar a correta
-                        var checkCidade = setInterval(function() {
-                            if ($('#cidade option').length > 1) {
-                                $('#cidade').val(data.localidade);
-                                clearInterval(checkCidade);
-                            }
-                        }, 100);
-                    } else {
-                        alert('CEP não encontrado');
-                    }
-                }).fail(function() {
-                    alert('Erro ao consultar CEP');
-                });
-            }
-        });
-
-        // Validação do formulário
-        $('#formFornecedor').submit(function(e) {
-            const nome = $('#nome').val().trim();
-            const telefone = $('#telefone').val().trim();
-            const email = $('#email').val().trim();
-            const rua = $('#rua').val().trim();
-            const numero = $('#numero').val().trim();
-            const bairro = $('#bairro').val().trim();
-            const cep = $('#cep').val().trim();
-            const cidade = $('#cidade').val();
-            const estado = $('#estado').val();
-
-            // Validação de campos obrigatórios
-            if (!nome || !telefone || !email || !rua || !numero || !bairro || !cep || !cidade || !estado) {
-                e.preventDefault();
-                alert('Por favor, preencha todos os campos obrigatórios (*).');
-                return false;
-            }
-
-            // Validação de email
-            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-            if (!emailRegex.test(email)) {
-                e.preventDefault();
-                alert('Por favor, insira um email válido.');
-                return false;
-            }
-
-            // Validação de telefone (exemplo simples: apenas números e pelo menos 10 dígitos)
-            const telefoneRegex = /^\d{10,}$/;
-            if (!telefoneRegex.test(telefone.replace(/\D/g, ''))) {
-                e.preventDefault();
-                alert('Por favor, insira um telefone válido (mínimo 10 dígitos).');
-                return false;
-            }
-
-            // Validação de CEP (exemplo simples: 8 dígitos)
-            const cepRegex = /^\d{8}$/;
-            if (!cepRegex.test(cep.replace(/\D/g, ''))) {
-                e.preventDefault();
-                alert('Por favor, insira um CEP válido (8 dígitos).');
-                return false;
-            }
-
-            return true;
-        });
-    });
-    </script>
 </body>
 </html>

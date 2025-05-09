@@ -1,8 +1,7 @@
 <?php
-$basePath = realpath(dirname(__DIR__));
-require_once "$basePath/config/database.php";
-require_once "$basePath/model/cliente.php";
-require_once "$basePath/model/endereco.php";
+require_once __DIR__ . '/../config/database.php';
+require_once __DIR__ . '/../model/cliente.php';
+require_once __DIR__ . '/../model/endereco.php';
 
 class ClienteDAO {
     private $pdo;
@@ -197,11 +196,25 @@ class ClienteDAO {
                            e.rua, e.numero, e.bairro, e.cep, e.cidade, e.estado, e.complemento
                     FROM clientes c
                     JOIN enderecos e ON c.endereco_id = e.id
-                    WHERE LOWER(c.nome) LIKE :termo OR LOWER(c.email) LIKE :termo OR LOWER(c.telefone) LIKE :termo
-                    ORDER BY c.id DESC
+                    WHERE LOWER(c.nome) LIKE :termo 
+                       OR LOWER(c.email) LIKE :termo 
+                       OR LOWER(c.telefone) LIKE :termo
+                       OR LOWER(e.cidade) LIKE :termo
+                       OR LOWER(e.bairro) LIKE :termo
+                    ORDER BY 
+                        CASE 
+                            WHEN LOWER(c.nome) LIKE :termoExato THEN 1
+                            WHEN LOWER(c.email) LIKE :termoExato THEN 2
+                            WHEN LOWER(c.telefone) LIKE :termoExato THEN 3
+                            ELSE 4
+                        END,
+                        c.nome ASC
                     LIMIT :itensPorPagina OFFSET :offset";
+            
             $stmt = $this->pdo->prepare($sql);
+            $termoExato = strtolower($termo) . '%';
             $stmt->bindValue(':termo', $termoPesquisa, PDO::PARAM_STR);
+            $stmt->bindValue(':termoExato', $termoExato, PDO::PARAM_STR);
             $stmt->bindValue(':itensPorPagina', $itensPorPagina, PDO::PARAM_INT);
             $stmt->bindValue(':offset', $offset, PDO::PARAM_INT);
             $stmt->execute();
@@ -242,7 +255,11 @@ class ClienteDAO {
             $sql = "SELECT COUNT(*) 
                     FROM clientes c
                     JOIN enderecos e ON c.endereco_id = e.id
-                    WHERE LOWER(c.nome) LIKE :termo OR LOWER(c.email) LIKE :termo OR LOWER(c.telefone) LIKE :termo";
+                    WHERE LOWER(c.nome) LIKE :termo 
+                       OR LOWER(c.email) LIKE :termo 
+                       OR LOWER(c.telefone) LIKE :termo
+                       OR LOWER(e.cidade) LIKE :termo
+                       OR LOWER(e.bairro) LIKE :termo";
             $stmt = $this->pdo->prepare($sql);
             $stmt->bindValue(':termo', $termoPesquisa, PDO::PARAM_STR);
             $stmt->execute();

@@ -20,7 +20,8 @@ class Database {
     }
 }
 
-/* Tabelas SQL
+/* 
+Tabelas SQL
 
 CREATE TABLE produtos (
     id SERIAL PRIMARY KEY,
@@ -65,12 +66,10 @@ CREATE TABLE clientes (
     senha VARCHAR(255) NOT NULL,
     FOREIGN KEY (endereco_id) REFERENCES enderecos(id) ON DELETE RESTRICT
 );
-
-
-
-
-
-
 */
 
+
+
+
+?>
 

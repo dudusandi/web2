@@ -27,7 +27,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $_SESSION['usuario_id'] = $cliente->getId();
             $_SESSION['usuario_email'] = $cliente->getEmail();
             $_SESSION['usuario_nome'] = $cliente->getNome();
-            $_SESSION['is_admin'] = ($cliente->getEmail() === 'dudaesouza@gmail.com');
+            $_SESSION['is_admin'] = ($cliente->getEmail() === 'dudaesouza@gmail.com' || 'admin@admin.com');
             header('Location: ../view/dashboard.php');
             exit();
         } else {

@@ -32,8 +32,8 @@ try {
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
     <link rel="stylesheet" href="editar.css">
-    <!-- Adicionando jQuery para facilitar as requisições AJAX -->
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="endereco.js"></script>
 </head>
 <body>
     <!-- Cabeçalho -->
@@ -164,103 +164,5 @@ try {
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-
-    <script>
-    $(document).ready(function() {
-        // Carrega os estados ao carregar a página
-        $.getJSON('https://servicodados.ibge.gov.br/api/v1/localidades/estados', function(data) {
-            var items = [];
-            items.push('<option value="">Selecione um estado</option>');
-            $.each(data, function(key, val) {
-                items.push('<option value="' + val.sigla + '">' + val.nome + '</option>');
-            });
-            $('#estado').html(items.join(''));
-        });
-
-        // Quando o estado é selecionado, carrega as cidades
-        $('#estado').change(function() {
-            var uf = $(this).val();
-            if (uf) {
-                $('#cidade').prop('disabled', false);
-                $.getJSON('https://servicodados.ibge.gov.br/api/v1/localidades/estados/' + uf + '/municipios', function(data) {
-                    var items = [];
-                    items.push('<option value="">Selecione uma cidade</option>');
-                    $.each(data, function(key, val) {
-                        items.push('<option value="' + val.nome + '">' + val.nome + '</option>');
-                    });
-                    $('#cidade').html(items.join(''));
-                });
-            } else {
-                $('#cidade').prop('disabled', true).html('<option value="">Selecione um estado primeiro</option>');
-            }
-        });
-
-        // CEP usando ViaCEP
-        $('#cep').blur(function() {
-            var cep = $(this).val().replace(/\D/g, '');
-            if (cep.length === 8) {
-                $.getJSON('https://viacep.com.br/ws/' + cep + '/json/', function(data) {
-                    if (!data.erro) {
-                        $('#rua').val(data.logradouro);
-                        $('#bairro').val(data.bairro);
-                        $('#complemento').val(data.complemento);
-                        $('#estado').val(data.uf).trigger('change');
-                        
-                        // Aguarda o carregamento das cidades para selecionar a correta
-                        var checkCidade = setInterval(function() {
-                            if ($('#cidade option').length > 1) {
-                                $('#cidade').val(data.localidade);
-                                clearInterval(checkCidade);
-                            }
-                        }, 100);
-                    } else {
-                        alert('CEP não encontrado');
-                    }
-                }).fail(function() {
-                    alert('Erro ao consultar CEP');
-                });
-            }
-        });
-
-        // Validação do formulário
-        $('#formFornecedor').submit(function(e) {
-            // Validação básica de campos obrigatórios
-            var camposObrigatorios = ['#nome', '#telefone', '#email', '#rua', '#numero', '#bairro', '#cep', '#estado', '#cidade'];
-            var valido = true;
-            
-            camposObrigatorios.forEach(function(campo) {
-                if (!$(campo).val()) {
-                    $(campo).addClass('is-invalid');
-                    valido = false;
-                } else {
-                    $(campo).removeClass('is-invalid');
-                }
-            });
-
-            // Validação de email
-            var email = $('#email').val();
-            var emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-            if (!emailRegex.test(email)) {
-                $('#email').addClass('is-invalid');
-                valido = false;
-            }
-
-            // Validação de CEP (8 dígitos)
-            var cep = $('#cep').val().replace(/\D/g, '');
-            if (cep.length !== 8) {
-                $('#cep').addClass('is-invalid');
-                valido = false;
-            }
-
-            if (!valido) {
-                e.preventDefault();
-                alert('Por favor, preencha todos os campos obrigatórios corretamente.');
-                return false;
-            }
-
-            return true;
-        });
-    });
-    </script>
 </body>
 </html>
