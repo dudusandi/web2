@@ -94,7 +94,7 @@ try {
                 } else {
                     echo '<div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 row-cols-xl-4 g-4">';
                     foreach ($produtos as $produto) {
-                        $fotoUrl = $produto->getFoto() ? 'data:image/jpeg;base64,' . $produto->getFoto() : 'https://via.placeholder.com/200?text=Sem+Imagem';
+                        $fotoUrl = $produto->getFoto() ? 'data:image/jpeg;base64,' . base64_encode(stream_get_contents($produto->getFoto())) : 'https://via.placeholder.com/200?text=Sem+Imagem';
                         $precoFormatado = number_format($produto->getPreco(), 2, ',', '.');
                         echo '<div class="col">
                                 <div class="card h-100 produto-card" onclick="mostrarDetalhes(' . $produto->getId() . ')">

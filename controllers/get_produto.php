@@ -30,7 +30,7 @@ try {
             'id' => $produto->getId(),
             'nome' => $produto->getNome(),
             'descricao' => $produto->getDescricao(),
-            'foto' => $produto->getFoto(),
+            'foto' => $produto->getFoto() ? base64_encode(stream_get_contents($produto->getFoto())) : null,
             'fornecedor_id' => $produto->getFornecedorId(),
             'quantidade' => $produto->getQuantidade(),
             'preco' => $produto->getPreco(),
