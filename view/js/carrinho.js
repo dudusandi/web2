@@ -1,20 +1,43 @@
 class Carrinho {
     constructor() {
+        this.itens = {};
+        this.onChange = null;
+        this.carregando = true;
+        this.carregarCarrinho().then(() => {
+            console.log('Carrinho inicializado com sucesso');
+            this.carregando = false;
+            this.notificarMudanca();
+        }).catch(error => {
+            console.error('Erro ao inicializar carrinho:', error);
+            this.carregando = false;
+        });
+    }
+
+    async carregarCarrinho() {
         try {
-            const carrinhoSalvo = localStorage.getItem('carrinho');
-            this.itens = carrinhoSalvo ? JSON.parse(carrinhoSalvo) : {};
-            if (!this.itens || typeof this.itens !== 'object') {
-                this.itens = {};
+            const response = await fetch('../controllers/carrinho.php?json=1');
+            const data = await response.json();
+            
+            if (!data.success) {
+                throw new Error(data.erro || 'Erro ao carregar carrinho');
             }
+
+            // Converte o array de produtos para o formato esperado pelo carrinho
+            this.itens = {};
+            data.produtos.forEach(produto => {
+                this.itens[produto.id] = produto.quantidade;
+            });
+            
+            console.log('Carrinho carregado:', this.itens);
+            this.atualizarContador();
         } catch (error) {
             console.error('Erro ao carregar carrinho:', error);
             this.itens = {};
+            this.mostrarNotificacao('Erro ao carregar carrinho!', true);
         }
-        this.onChange = null;
-        this.atualizarContador();
     }
 
-    adicionarItem(produtoId, quantidade = 1) {
+    async adicionarItem(produtoId, quantidade = 1) {
         try {
             produtoId = parseInt(produtoId);
             quantidade = parseInt(quantidade);
@@ -23,13 +46,21 @@ class Carrinho {
                 throw new Error('Parâmetros inválidos');
             }
 
-            if (this.itens[produtoId]) {
-                this.itens[produtoId] += quantidade;
-            } else {
-                this.itens[produtoId] = quantidade;
+            const formData = new FormData();
+            formData.append('acao', 'adicionar');
+            formData.append('produto_id', produtoId);
+            formData.append('quantidade', quantidade);
+
+            const response = await fetch('../controllers/carrinho.php', {
+                method: 'POST',
+                body: formData
+            });
+
+            if (!response.ok) {
+                throw new Error('Erro ao adicionar produto');
             }
-            this.salvar();
-            this.atualizarContador();
+
+            await this.carregarCarrinho();
             this.mostrarNotificacao('Produto adicionado ao carrinho!');
             this.notificarMudanca();
         } catch (error) {
@@ -38,16 +69,27 @@ class Carrinho {
         }
     }
 
-    removerItem(produtoId) {
+    async removerItem(produtoId) {
         try {
             produtoId = parseInt(produtoId);
             if (isNaN(produtoId)) {
                 throw new Error('ID do produto inválido');
             }
 
-            delete this.itens[produtoId];
-            this.salvar();
-            this.atualizarContador();
+            const formData = new FormData();
+            formData.append('acao', 'remover');
+            formData.append('produto_id', produtoId);
+
+            const response = await fetch('../controllers/carrinho.php', {
+                method: 'POST',
+                body: formData
+            });
+
+            if (!response.ok) {
+                throw new Error('Erro ao remover produto');
+            }
+
+            await this.carregarCarrinho();
             this.mostrarNotificacao('Produto removido do carrinho!');
             this.notificarMudanca();
         } catch (error) {
@@ -56,7 +98,7 @@ class Carrinho {
         }
     }
 
-    atualizarQuantidade(produtoId, quantidade) {
+    async atualizarQuantidade(produtoId, quantidade) {
         try {
             produtoId = parseInt(produtoId);
             quantidade = parseInt(quantidade);
@@ -65,13 +107,21 @@ class Carrinho {
                 throw new Error('Parâmetros inválidos');
             }
 
-            if (quantidade > 0) {
-                this.itens[produtoId] = quantidade;
-            } else {
-                this.removerItem(produtoId);
+            const formData = new FormData();
+            formData.append('acao', 'atualizar');
+            formData.append('produto_id', produtoId);
+            formData.append('quantidade', quantidade);
+
+            const response = await fetch('../controllers/carrinho.php', {
+                method: 'POST',
+                body: formData
+            });
+
+            if (!response.ok) {
+                throw new Error('Erro ao atualizar quantidade');
             }
-            this.salvar();
-            this.atualizarContador();
+
+            await this.carregarCarrinho();
             this.notificarMudanca();
         } catch (error) {
             console.error('Erro ao atualizar quantidade:', error);
@@ -79,25 +129,26 @@ class Carrinho {
         }
     }
 
-    limpar() {
+    async limpar() {
         try {
-            this.itens = {};
-            this.salvar();
-            this.atualizarContador();
+            const formData = new FormData();
+            formData.append('acao', 'limpar');
+
+            const response = await fetch('../controllers/carrinho.php', {
+                method: 'POST',
+                body: formData
+            });
+
+            if (!response.ok) {
+                throw new Error('Erro ao limpar carrinho');
+            }
+
+            await this.carregarCarrinho();
             this.mostrarNotificacao('Carrinho limpo!');
             this.notificarMudanca();
         } catch (error) {
             console.error('Erro ao limpar carrinho:', error);
             this.mostrarNotificacao('Erro ao limpar carrinho!', true);
-        }
-    }
-
-    salvar() {
-        try {
-            localStorage.setItem('carrinho', JSON.stringify(this.itens));
-        } catch (error) {
-            console.error('Erro ao salvar carrinho:', error);
-            this.mostrarNotificacao('Erro ao salvar carrinho!', true);
         }
     }
 

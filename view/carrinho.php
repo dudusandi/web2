@@ -87,6 +87,52 @@ try {
                 </button>
             </div>
         </div>
+
+        <!-- Modal de confirmação do pedido -->
+        <div class="modal fade" id="modalConfirmacao" tabindex="-1" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">Confirmar Pedido</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+                    </div>
+                    <div class="modal-body">
+                        <p>Deseja finalizar o pedido com <span id="qtd-itens">0</span> produtos?</p>
+                        <p>Total: <strong id="total-modal">R$ 0,00</strong></p>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                        <button type="button" class="btn btn-success" id="btn-confirmar-pedido">
+                            <i class="bi bi-check-circle"></i> Confirmar Pedido
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Modal de sucesso do pedido -->
+        <div class="modal fade" id="modalSucesso" tabindex="-1" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header bg-success text-white">
+                        <h5 class="modal-title">Pedido Realizado com Sucesso!</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="text-center mb-4">
+                            <i class="bi bi-check-circle-fill text-success" style="font-size: 3rem;"></i>
+                        </div>
+                        <p>Seu pedido foi finalizado com sucesso!</p>
+                        <p><strong>Número do pedido:</strong> <span id="numero-pedido"></span></p>
+                        <p><strong>Valor total:</strong> <span id="valor-total"></span></p>
+                    </div>
+                    <div class="modal-footer">
+                        <a href="dashboard.php" class="btn btn-primary">Continuar Comprando</a>
+                        <a href="meus-pedidos.php" class="btn btn-success">Meus Pedidos</a>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
@@ -99,51 +145,72 @@ try {
             const carrinhoVazio = document.getElementById('carrinho-vazio');
             const carrinhoItens = document.getElementById('carrinho-itens');
             
-            if (Object.keys(itens).length === 0) {
-                carrinhoVazio.style.display = 'block';
-                carrinhoItens.style.display = 'none';
-                return;
-            }
-
-            carrinhoVazio.style.display = 'none';
-            carrinhoItens.style.display = 'block';
+            console.log('Atualizando interface do carrinho...');
+            console.log('Itens no carrinho:', itens);
             
-            // Buscar detalhes dos produtos
-            fetch('../controllers/buscar_produtos.php?ids=' + Object.keys(itens).join(','))
+            // Buscar detalhes do carrinho diretamente do controller do carrinho
+            fetch('../controllers/carrinho.php?json=1')
                 .then(response => {
+                    console.log('Resposta recebida do servidor:', response);
+                    
                     if (!response.ok) {
-                        throw new Error('Erro na resposta do servidor: ' + response.status);
+                        throw new Error(`Erro na requisição: ${response.status} ${response.statusText}`);
                     }
-                    return response.json();
+                    
+                    return response.text().then(text => {
+                        console.log('Texto da resposta:', text);
+                        
+                        if (!text || text.trim() === '') {
+                            throw new Error('Resposta vazia recebida do servidor');
+                        }
+                        
+                        try {
+                            // Tentar analisar o JSON
+                            return JSON.parse(text);
+                        } catch (error) {
+                            console.error('Erro ao analisar JSON:', error);
+                            console.error('Texto recebido:', text);
+                            throw new Error('Resposta inválida do servidor: ' + error.message);
+                        }
+                    });
                 })
                 .then(data => {
+                    console.log('Resposta do servidor:', data);
+                    
                     if (!data.success) {
-                        throw new Error(data.error || 'Erro ao buscar produtos');
+                        throw new Error(data.erro || 'Erro ao buscar produtos');
                     }
 
                     const produtos = data.produtos;
                     let html = '';
-                    let total = 0;
+                    let total = data.total || 0;
+
+                    if (!produtos || produtos.length === 0) {
+                        console.log('Nenhum produto no carrinho');
+                        carrinhoVazio.style.display = 'block';
+                        carrinhoItens.style.display = 'none';
+                        return;
+                    }
+
+                    console.log('Exibindo', produtos.length, 'produtos no carrinho');
+                    carrinhoVazio.style.display = 'none';
+                    carrinhoItens.style.display = 'block';
 
                     produtos.forEach(produto => {
-                        const quantidade = itens[produto.id];
-                        const subtotal = produto.preco * quantidade;
-                        total += subtotal;
-
                         html += `
                             <tr>
                                 <td>${produto.nome}</td>
-                                <td>R$ ${produto.preco.toFixed(2)}</td>
+                                <td>R$ ${parseFloat(produto.preco).toFixed(2)}</td>
                                 <td>
                                     <input type="number" 
-                                           value="${quantidade}" 
+                                           value="${produto.quantidade}" 
                                            min="1" 
-                                           max="${produto.quantidade}"
+                                           max="100"
                                            onchange="carrinho.atualizarQuantidade(${produto.id}, this.value)"
                                            class="form-control form-control-sm" 
                                            style="width: 80px;">
                                 </td>
-                                <td>R$ ${subtotal.toFixed(2)}</td>
+                                <td>R$ ${parseFloat(produto.subtotal).toFixed(2)}</td>
                                 <td>
                                     <button onclick="carrinho.removerItem(${produto.id})" 
                                             class="btn btn-danger btn-sm">
@@ -156,7 +223,7 @@ try {
 
                     tbody.innerHTML = html;
                     document.getElementById('total-carrinho').innerHTML = 
-                        `<strong>R$ ${total.toFixed(2)}</strong>`;
+                        `<strong>R$ ${parseFloat(total).toFixed(2)}</strong>`;
                 })
                 .catch(error => {
                     console.error('Erro ao buscar produtos:', error);
@@ -166,16 +233,104 @@ try {
                 });
         }
 
-        // Atualizar interface quando o carrinho mudar
-        carrinho.onChange = atualizarInterfaceCarrinho;
-        
-        // Atualizar interface inicial
-        atualizarInterfaceCarrinho();
+        document.addEventListener('DOMContentLoaded', function() {
+            // Garantir que a interface seja atualizada assim que a página carregar
+            atualizarInterfaceCarrinho();
+            
+            // Atualizar interface quando o carrinho mudar
+            carrinho.onChange = atualizarInterfaceCarrinho;
+            
+            // Configurar o botão de confirmação do pedido
+            document.getElementById('btn-confirmar-pedido').addEventListener('click', function() {
+                const modalConfirmacao = bootstrap.Modal.getInstance(document.getElementById('modalConfirmacao'));
+                modalConfirmacao.hide();
+                
+                // Exibir indicador de carregamento
+                this.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Processando...';
+                this.disabled = true;
+                
+                // Enviar pedido para o servidor
+                fetch('../controllers/finalizar_pedido.php', {
+                    method: 'POST', 
+                    headers: {
+                        'Accept': 'application/json'
+                    }
+                })
+                .then(response => {
+                    console.log('Resposta recebida do servidor:', response);
+                    
+                    if (!response.ok) {
+                        throw new Error(`Erro na requisição: ${response.status} ${response.statusText}`);
+                    }
+                    
+                    return response.text().then(text => {
+                        console.log('Texto da resposta:', text);
+                        
+                        if (!text || text.trim() === '') {
+                            throw new Error('Resposta vazia recebida do servidor');
+                        }
+                        
+                        try {
+                            // Tentar analisar o JSON
+                            return JSON.parse(text);
+                        } catch (error) {
+                            console.error('Erro ao analisar JSON:', error);
+                            console.error('Texto recebido:', text);
+                            throw new Error('Resposta inválida do servidor: ' + error.message);
+                        }
+                    });
+                })
+                .then(data => {
+                    // Resetar o botão
+                    this.innerHTML = '<i class="bi bi-check-circle"></i> Confirmar Pedido';
+                    this.disabled = false;
+                    
+                    if (data.success) {
+                        // Exibir modal de sucesso
+                        document.getElementById('numero-pedido').textContent = data.pedido.numero;
+                        document.getElementById('valor-total').textContent = `R$ ${data.pedido.valor_total}`;
+                        
+                        const modalSucesso = new bootstrap.Modal(document.getElementById('modalSucesso'));
+                        modalSucesso.show();
+                        
+                        // Atualizar interface do carrinho
+                        atualizarInterfaceCarrinho();
+                    } else {
+                        alert(data.mensagem || 'Erro ao finalizar pedido');
+                    }
+                })
+                .catch(error => {
+                    console.error('Erro ao finalizar pedido:', error);
+                    this.innerHTML = '<i class="bi bi-check-circle"></i> Confirmar Pedido';
+                    this.disabled = false;
+                    alert('Erro ao finalizar pedido: ' + error.message);
+                });
+            });
+        });
 
         // Função para finalizar compra
         function finalizarCompra() {
-            // Aqui você pode implementar a lógica de finalização da compra
-            alert('Funcionalidade em desenvolvimento!');
+            // Buscar detalhes do carrinho para o modal
+            fetch('../controllers/carrinho.php?json=1')
+                .then(response => response.json())
+                .then(data => {
+                    if (!data.success || !data.produtos || data.produtos.length === 0) {
+                        alert('Seu carrinho está vazio!');
+                        return;
+                    }
+                    
+                    // Atualizar informações no modal
+                    document.getElementById('qtd-itens').textContent = data.produtos.length;
+                    document.getElementById('total-modal').textContent = `R$ ${parseFloat(data.total).toFixed(2)}`;
+                    
+                    // Exibir modal de confirmação
+                    const modalConfirmacao = new bootstrap.Modal(document.getElementById('modalConfirmacao'));
+                    modalConfirmacao.show();
+                })
+                .catch(error => {
+                    console.error('Erro ao preparar compra:', error);
+                    alert('Erro ao preparar compra. Tente novamente.');
+                });
         }
     </script>
 </body>

@@ -5,6 +5,8 @@ require_once "$basePath/model/cliente.php";
 require_once "$basePath/model/endereco.php";
 require_once "$basePath/dao/cliente_dao.php";
 
+// Iniciar sessão antes de verificar o POST
+session_start();
 
 // Controlador para login de cliente com adição de um admin para acesso a configurações
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -23,11 +25,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $cliente = $clienteDAO->buscarPorEmailSenha($email, $senha);
 
         if ($cliente) {
-            session_start();
-            $_SESSION['usuario_id'] = $cliente->getId();
-            $_SESSION['usuario_email'] = $cliente->getEmail();
-            $_SESSION['usuario_nome'] = $cliente->getNome();
-            $_SESSION['is_admin'] = ($cliente->getEmail() === 'dudaesouza@gmail.com' || $cliente->getEmail() === 'admin@admin.com');
+            // Preservar os carrinhos existentes
+            $carrinhos = isset($_SESSION['carrinhos']) ? $_SESSION['carrinhos'] : [];
+            
+            // Limpar a sessão atual mantendo os carrinhos
+            $_SESSION = [
+                'carrinhos' => $carrinhos,
+                'usuario_id' => $cliente->getId(),
+                'usuario_email' => $cliente->getEmail(),
+                'usuario_nome' => $cliente->getNome(),
+                'is_admin' => ($cliente->getEmail() === 'dudaesouza@gmail.com' || $cliente->getEmail() === 'admin@admin.com')
+            ];
+            
             header('Location: ../view/dashboard.php');
             exit();
         } else {
