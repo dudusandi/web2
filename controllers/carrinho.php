@@ -151,76 +151,78 @@ function calcularTotalCarrinho() {
 }
 
 // Processar ações do carrinho
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    // Verifica se o usuário está logado
-    if (!isset($_SESSION['usuario_id'])) {
-        header('Location: ../view/login.php');
+if (!defined('CARRINHO_LOGIC_ONLY')) {
+    if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+        // Verifica se o usuário está logado
+        if (!isset($_SESSION['usuario_id'])) {
+            header('Location: ../view/login.php');
+            exit;
+        }
+
+        $acao = $_POST['acao'] ?? '';
+        $produtoId = (int)($_POST['produto_id'] ?? 0);
+        $quantidade = (int)($_POST['quantidade'] ?? 1);
+
+        switch ($acao) {
+            case 'adicionar':
+                adicionarAoCarrinho($produtoId, $quantidade);
+                break;
+            case 'remover':
+                removerDoCarrinho($produtoId);
+                break;
+            case 'atualizar':
+                atualizarQuantidade($produtoId, $quantidade);
+                break;
+            case 'limpar':
+                limparCarrinho();
+                break;
+        }
+
+        // Redirecionar de volta para a página anterior ou para o carrinho
+        $redirect = isset($_POST['redirect']) ? $_POST['redirect'] : 'carrinho.php';
+        header('Location: ' . $redirect);
         exit;
     }
 
-    $acao = $_POST['acao'] ?? '';
-    $produtoId = (int)($_POST['produto_id'] ?? 0);
-    $quantidade = (int)($_POST['quantidade'] ?? 1);
+    // Retornar dados do carrinho em JSON
+    if ($_SERVER['REQUEST_METHOD'] === 'GET' && isset($_GET['json'])) {
+        // Verifica se o usuário está logado
+        if (!isset($_SESSION['usuario_id'])) {
+            header('Content-Type: application/json');
+            echo json_encode([
+                'success' => false,
+                'erro' => 'Usuário não está logado',
+                'produtos' => [],
+                'total' => 0
+            ]);
+            exit;
+        }
 
-    switch ($acao) {
-        case 'adicionar':
-            adicionarAoCarrinho($produtoId, $quantidade);
-            break;
-        case 'remover':
-            removerDoCarrinho($produtoId);
-            break;
-        case 'atualizar':
-            atualizarQuantidade($produtoId, $quantidade);
-            break;
-        case 'limpar':
-            limparCarrinho();
-            break;
-    }
-
-    // Redirecionar de volta para a página anterior ou para o carrinho
-    $redirect = isset($_POST['redirect']) ? $_POST['redirect'] : 'carrinho.php';
-    header('Location: ' . $redirect);
-    exit;
-}
-
-// Retornar dados do carrinho em JSON
-if ($_SERVER['REQUEST_METHOD'] === 'GET' && isset($_GET['json'])) {
-    // Verifica se o usuário está logado
-    if (!isset($_SESSION['usuario_id'])) {
-        header('Content-Type: application/json');
-        echo json_encode([
-            'success' => false,
-            'erro' => 'Usuário não está logado',
-            'produtos' => [],
-            'total' => 0
-        ]);
+        try {
+            $produtos = obterProdutosCarrinho();
+            $total = calcularTotalCarrinho();
+            
+            error_log("Produtos do carrinho (JSON): " . print_r($produtos, true));
+            error_log("Total do carrinho (JSON): " . $total);
+            error_log("ID do usuário: " . $_SESSION['usuario_id']);
+            error_log("Carrinho atual: " . print_r($_SESSION['carrinhos'][$_SESSION['usuario_id']], true));
+            
+            header('Content-Type: application/json');
+            echo json_encode([
+                'success' => true,
+                'produtos' => $produtos,
+                'total' => $total
+            ]);
+        } catch (Exception $e) {
+            error_log("Erro ao obter carrinho: " . $e->getMessage());
+            header('Content-Type: application/json');
+            echo json_encode([
+                'success' => false,
+                'erro' => 'Erro ao obter carrinho: ' . $e->getMessage(),
+                'produtos' => [],
+                'total' => 0
+            ]);
+        }
         exit;
     }
-
-    try {
-        $produtos = obterProdutosCarrinho();
-        $total = calcularTotalCarrinho();
-        
-        error_log("Produtos do carrinho (JSON): " . print_r($produtos, true));
-        error_log("Total do carrinho (JSON): " . $total);
-        error_log("ID do usuário: " . $_SESSION['usuario_id']);
-        error_log("Carrinho atual: " . print_r($_SESSION['carrinhos'][$_SESSION['usuario_id']], true));
-        
-        header('Content-Type: application/json');
-        echo json_encode([
-            'success' => true,
-            'produtos' => $produtos,
-            'total' => $total
-        ]);
-    } catch (Exception $e) {
-        error_log("Erro ao obter carrinho: " . $e->getMessage());
-        header('Content-Type: application/json');
-        echo json_encode([
-            'success' => false,
-            'erro' => 'Erro ao obter carrinho: ' . $e->getMessage(),
-            'produtos' => [],
-            'total' => 0
-        ]);
-    }
-    exit;
 }

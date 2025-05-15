@@ -25,10 +25,10 @@ class PedidoDAO {
             if (empty($itensPedido) || !is_array($itensPedido)) {
                 throw new Exception("Nenhum item válido para o pedido");
             }
-
+            
             // Gerar número único para o pedido com no máximo 20 caracteres
             $numero = 'P' . date('ymdHis') . rand(10, 99);
-            
+
             $this->pdo->beginTransaction();
 
             // Inserir o pedido - Versão sem RETURNING

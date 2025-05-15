@@ -67,6 +67,9 @@ try {
     </div>
     <!-- Menu com visualização apenas para o admin -->
     <div class="nav-bar">
+        <a href="meus-pedidos.php" class="btn btn-outline-info">
+            <i class="bi bi-receipt"></i> Meus Pedidos
+        </a>
         <?php if (isset($_SESSION['is_admin']) && $_SESSION['is_admin'] === true): ?>
             <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#cadastroProdutoModal">
                 <i class="bi bi-plus-circle"></i> Cadastrar Produto
