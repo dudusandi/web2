@@ -71,6 +71,9 @@ try {
             <i class="bi bi-receipt"></i> Meus Pedidos
         </a>
         <?php if (isset($_SESSION['is_admin']) && $_SESSION['is_admin'] === true): ?>
+            <a href="admin_listar_pedidos.php" class="btn btn-outline-warning">
+                <i class="bi bi-list-check"></i> Todos os Pedidos
+            </a>
             <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#cadastroProdutoModal">
                 <i class="bi bi-plus-circle"></i> Cadastrar Produto
             </button>

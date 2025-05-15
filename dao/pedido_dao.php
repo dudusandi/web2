@@ -245,5 +245,43 @@ class PedidoDAO {
             throw $e;
         }
     }
+
+    /**
+     * Lista todos os pedidos do sistema (para admin)
+     */
+    public function listarTodosPedidos($pagina = 1, $itensPorPagina = 10) {
+        try {
+            $offset = ($pagina - 1) * $itensPorPagina;
+
+            $sql = "SELECT p.id, p.numero, p.data_pedido, p.situacao, p.valor_total, 
+                           c.nome as nome_cliente, c.email as email_cliente
+                    FROM pedidos p
+                    JOIN clientes c ON p.cliente_id = c.id
+                    ORDER BY p.data_pedido DESC
+                    LIMIT :limit OFFSET :offset";
+            
+            $stmt = $this->pdo->prepare($sql);
+            $stmt->bindValue(':limit', $itensPorPagina, PDO::PARAM_INT);
+            $stmt->bindValue(':offset', $offset, PDO::PARAM_INT);
+            $stmt->execute();
+            
+            $pedidos = $stmt->fetchAll(PDO::FETCH_ASSOC);
+            
+            // Contar o total de pedidos para paginação
+            $sqlTotal = "SELECT COUNT(*) FROM pedidos";
+            $totalPedidos = $this->pdo->query($sqlTotal)->fetchColumn();
+            
+            return [
+                'pedidos' => $pedidos,
+                'total' => (int)$totalPedidos,
+                'pagina' => $pagina,
+                'itensPorPagina' => $itensPorPagina
+            ];
+            
+        } catch (Exception $e) {
+            error_log('Erro ao listar todos os pedidos: ' . $e->getMessage());
+            throw $e;
+        }
+    }
 }
 ?> 
