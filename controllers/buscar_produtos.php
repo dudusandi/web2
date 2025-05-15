@@ -13,15 +13,11 @@ header('Content-Type: application/json; charset=utf-8');
 
 try {
     $termo = $_GET['termo'] ?? '';
-    $pagina = (int)($_GET['pagina'] ?? 1);
-    $itensPorPagina = (int)($_GET['itensPorPagina'] ?? 12);
 
     $pdo = Database::getConnection();
     $produtoDAO = new ProdutoDAO($pdo);
     
-    $resultado = $produtoDAO->buscarProdutos($termo, $pagina, $itensPorPagina);
-    $produtos = $resultado['produtos'];
-    $total = $resultado['total'];
+    $produtos = $produtoDAO->buscarProdutos($termo);
 
     $produtosArray = array_map(function($produto) {
         return [
@@ -38,10 +34,7 @@ try {
 
     $response = [
         'success' => true,
-        'produtos' => $produtosArray,
-        'total' => $total,
-        'pagina' => $pagina,
-        'itensPorPagina' => $itensPorPagina
+        'produtos' => $produtosArray
     ];
 
     // Limpa qualquer saída anterior

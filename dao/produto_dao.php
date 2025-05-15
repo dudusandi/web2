@@ -342,9 +342,8 @@ class ProdutoDAO {
         }
     }
 
-    public function buscarProdutos($termo = '', $pagina = 1, $itensPorPagina = 12) {
+    public function buscarProdutos($termo = '') {
         try {
-            $offset = ($pagina - 1) * $itensPorPagina;
             $termoPesquisa = '%' . strtolower($termo) . '%';
 
             // Busca os produtos
@@ -355,22 +354,25 @@ class ProdutoDAO {
                     LEFT JOIN estoques e ON p.estoque_id = e.id
                     LEFT JOIN fornecedores f ON p.fornecedor_id = f.id
                     WHERE LOWER(p.nome) LIKE :termo OR LOWER(p.descricao) LIKE :termo
-                    ORDER BY p.id DESC
-                    LIMIT :itensPorPagina OFFSET :offset";
+                    ORDER BY p.id DESC";
             
             $stmt = $this->pdo->prepare($sql);
             $stmt->bindValue(':termo', $termoPesquisa, PDO::PARAM_STR);
-            $stmt->bindValue(':itensPorPagina', $itensPorPagina, PDO::PARAM_INT);
-            $stmt->bindValue(':offset', $offset, PDO::PARAM_INT);
             $stmt->execute();
 
             $produtos = [];
             while ($linha = $stmt->fetch(PDO::FETCH_ASSOC)) {
+                // Converte o recurso da foto em string
+                $foto = null;
+                if ($linha['foto']) {
+                    $foto = stream_get_contents($linha['foto']);
+                }
+
                 $produtos[] = [
                     'id' => $linha['id'],
                     'nome' => $linha['nome'],
                     'descricao' => $linha['descricao'],
-                    'foto' => $linha['foto'],
+                    'foto' => $foto,
                     'fornecedor_id' => $linha['fornecedor_id'],
                     'quantidade' => $linha['quantidade'],
                     'preco' => $linha['preco'],
@@ -378,18 +380,7 @@ class ProdutoDAO {
                 ];
             }
 
-            // Conta o total de produtos
-            $sqlCount = "SELECT COUNT(*) FROM produtos p 
-                        WHERE LOWER(p.nome) LIKE :termo OR LOWER(p.descricao) LIKE :termo";
-            $stmtCount = $this->pdo->prepare($sqlCount);
-            $stmtCount->bindValue(':termo', $termoPesquisa, PDO::PARAM_STR);
-            $stmtCount->execute();
-            $total = $stmtCount->fetchColumn();
-
-            return [
-                'produtos' => $produtos,
-                'total' => (int)$total
-            ];
+            return $produtos;
         } catch (PDOException $e) {
             throw $e;
         }

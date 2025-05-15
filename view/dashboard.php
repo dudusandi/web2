@@ -49,7 +49,12 @@ try {
     <div class="header">
         <div class="logo">UCS<span>express</span></div>
         <div class="search-bar">
-            <input type="text" id="searchInput" placeholder="Pesquisar produtos..." autocomplete="off">
+            <form id="searchForm" class="d-flex" method="GET">
+                <input type="text" id="searchInput" name="termo" placeholder="Pesquisar produtos..." value="<?= htmlspecialchars($_GET['termo'] ?? '') ?>">
+                <button type="submit" class="btn btn-primary">
+                    <i class="bi bi-search"></i> Buscar
+                </button>
+            </form>
         </div>
         <div class="user-options">
             <span>Olá, <?= htmlspecialchars($_SESSION['usuario_nome']) ?>!</span>
@@ -85,32 +90,33 @@ try {
         <div id="produtosContainer">
             <?php
             try {
-                $produtos = $produtoDao->listarTodosProdutos();
+                $termo = $_GET['termo'] ?? '';
+                $produtos = $produtoDao->buscarProdutos($termo);
                 if (empty($produtos)) {
                     echo '<div class="empty-state">
                             <i class="bi bi-box-seam" style="font-size: 3rem;"></i>
-                            <h3 class="mt-3">Nenhum produto cadastrado</h3>
+                            <h3 class="mt-3">' . ($termo ? "Nenhum produto encontrado para \"$termo\"" : "Nenhum produto cadastrado") . '</h3>
                           </div>';
                 } else {
                     echo '<div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 row-cols-xl-4 g-4">';
                     foreach ($produtos as $produto) {
-                        $fotoUrl = $produto->getFoto() ? 'data:image/jpeg;base64,' . base64_encode(stream_get_contents($produto->getFoto())) : 'https://via.placeholder.com/200?text=Sem+Imagem';
-                        $precoFormatado = number_format($produto->getPreco(), 2, ',', '.');
+                        $fotoUrl = $produto['foto'] ? 'data:image/jpeg;base64,' . base64_encode($produto['foto']) : 'https://via.placeholder.com/200?text=Sem+Imagem';
+                        $precoFormatado = number_format($produto['preco'], 2, ',', '.');
                         echo '<div class="col">
-                                <div class="card h-100 produto-card" onclick="mostrarDetalhes(' . $produto->getId() . ')">
+                                <div class="card h-100 produto-card" onclick="mostrarDetalhes(' . $produto['id'] . ')">
                                     <div class="card-img-container">
                                         <img src="' . $fotoUrl . '" class="card-img-top" alt="Foto do produto">
                                     </div>
                                     <div class="card-body">
-                                        <h5 class="card-title text-truncate" title="' . htmlspecialchars($produto->getNome()) . '">' . htmlspecialchars($produto->getNome()) . '</h5>
+                                        <h5 class="card-title text-truncate" title="' . htmlspecialchars($produto['nome']) . '">' . htmlspecialchars($produto['nome']) . '</h5>
                                         <p class="card-text">
                                             <span class="preco">R$ ' . $precoFormatado . '</span>
-                                            <span class="estoque ' . ($produto->getQuantidade() <= 5 ? 'estoque-baixo' : '') . '">
-                                                Estoque: ' . $produto->getQuantidade() . '
+                                            <span class="estoque ' . ($produto['quantidade'] <= 5 ? 'estoque-baixo' : '') . '">
+                                                Estoque: ' . $produto['quantidade'] . '
                                             </span>
                                         </p>
-                                        <p class="card-text fornecedor text-truncate" title="' . htmlspecialchars($produto->getFornecedorNome()) . '">
-                                            ' . htmlspecialchars($produto->getFornecedorNome()) . '
+                                        <p class="card-text fornecedor text-truncate" title="' . htmlspecialchars($produto['fornecedor_nome']) . '">
+                                            ' . htmlspecialchars($produto['fornecedor_nome']) . '
                                         </p>
                                     </div>
                                 </div>
