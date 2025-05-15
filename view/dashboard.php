@@ -52,8 +52,8 @@ try {
         <div class="search-bar">
             <form id="searchForm" class="d-flex" method="GET">
                 <input type="text" id="searchInput" name="termo" placeholder="Pesquisar produtos..." value="<?= htmlspecialchars($_GET['termo'] ?? '') ?>">
-                <button type="submit" class="btn btn-primary">
-                    <i class="bi bi-search"></i> Buscar
+                <button type="submit" class="btn-search-custom">
+                    <i class="bi bi-search"></i>
                 </button>
             </form>
         </div>
@@ -201,15 +201,26 @@ try {
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>
-                    <button id="btnEditar" class="btn btn-primary d-none" onclick="alternarEdicao()">
-                        <i class="bi bi-pencil"></i> Editar
-                    </button>
-                    <button id="btnSalvar" class="btn btn-primary d-none" onclick="salvarProduto()">
-                        <i class="bi bi-save"></i> Salvar
-                    </button>
-                    <button id="btnExcluir" class="btn btn-danger" onclick="confirmarExclusao()">
-                        <i class="bi bi-trash"></i> Excluir
-                    </button>
+                    
+                    <!-- Botão Adicionar ao Carrinho (sempre visível) -->
+                    <div class="input-group me-auto" style="max-width: 180px;">
+                        <input type="number" id="quantidadeModalProduto" value="1" min="1" class="form-control form-control-sm">
+                        <button type="button" class="btn btn-success btn-sm" onclick="adicionarProdutoDoModalAoCarrinho()">
+                            <i class="bi bi-cart-plus"></i> Adicionar
+                        </button>
+                    </div>
+
+                    <?php if (isset($_SESSION['is_admin']) && $_SESSION['is_admin'] === true): ?>
+                        <button id="btnEditar" class="btn btn-primary" onclick="alternarEdicao()">
+                            <i class="bi bi-pencil"></i> Editar
+                        </button>
+                        <button id="btnSalvar" class="btn btn-primary d-none" onclick="salvarProduto()">
+                            <i class="bi bi-save"></i> Salvar
+                        </button>
+                        <button id="btnExcluir" class="btn btn-danger" onclick="confirmarExclusao()">
+                            <i class="bi bi-trash"></i> Excluir
+                        </button>
+                    <?php endif; ?>
                 </div>
             </div>
         </div>

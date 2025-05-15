@@ -137,26 +137,23 @@ function mostrarDetalhes(id) {
                 return;
             }
 
-            // Preencher dados do produto
+            // Elementos de visualização (sempre preenchidos)
             document.getElementById('produtoNome').textContent = data.produto.nome;
             document.getElementById('produtoDescricao').textContent = data.produto.descricao || 'Nenhuma';
             document.getElementById('produtoFornecedor').textContent = data.produto.fornecedor_nome || 'Sem fornecedor';
             document.getElementById('produtoEstoque').textContent = data.produto.quantidade;
             document.getElementById('produtoPreco').textContent = `R$ ${(data.produto.preco ?? 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
             document.getElementById('produtoFoto').src = data.produto.foto ? `data:image/jpeg;base64,${data.produto.foto}` : 'https://via.placeholder.com/200';
-            document.getElementById('btnConfirmarExclusao').href = `../controllers/excluir_produto.php?id=${id}`;
 
-            // Preencher formulário de edição
+            // Elementos do formulário de edição (sempre existem no DOM, mesmo que d-none)
             document.getElementById('produtoId').value = id;
             document.getElementById('produtoNomeInput').value = data.produto.nome;
             document.getElementById('produtoDescricaoInput').value = data.produto.descricao || '';
             document.getElementById('produtoEstoqueInput').value = data.produto.quantidade;
             document.getElementById('produtoPrecoInput').value = data.produto.preco ?? 0;
 
-            // Preencher select de fornecedores
             const fornecedorSelect = document.getElementById('produtoFornecedorInput');
             fornecedorSelect.innerHTML = '<option value="">Selecione um fornecedor</option>';
-            
             if (window.fornecedores && window.fornecedores.length > 0) {
                 window.fornecedores.forEach(fornecedor => {
                     const option = document.createElement('option');
@@ -169,24 +166,44 @@ function mostrarDetalhes(id) {
                 });
             }
 
-            // Mostrar botões de ação
-            document.getElementById('btnEditar').classList.remove('d-none');
-            document.getElementById('btnExcluir').classList.remove('d-none');
+            // Link do botão de exclusão no modal de confirmação (sempre existe no DOM)
+            const btnConfirmarExclusao = document.getElementById('btnConfirmarExclusao');
+            if (btnConfirmarExclusao) {
+                btnConfirmarExclusao.href = `../controllers/excluir_produto.php?id=${id}`;
+            }
+
+            // Botões de admin (condicionalmente renderizados no PHP)
+            const btnEditar = document.getElementById('btnEditar');
+            const btnExcluir = document.getElementById('btnExcluir');
+            const btnSalvar = document.getElementById('btnSalvar');
+
+            if (window.isAdmin) {
+                if (btnEditar) btnEditar.classList.remove('d-none');
+                if (btnExcluir) btnExcluir.classList.remove('d-none');
+                // btnSalvar começa escondido, é mostrado por alternarEdicao
+                if (btnSalvar) btnSalvar.classList.add('d-none'); 
+            } else {
+                // Para não-admins, esses botões não estão no DOM ou devem permanecer escondidos
+                // Nenhuma ação necessária aqui se o PHP já os removeu do DOM.
+                // Se estivessem no DOM e precisassem ser escondidos, faríamos:
+                // if (btnEditar) btnEditar.classList.add('d-none');
+                // if (btnExcluir) btnExcluir.classList.add('d-none');
+                // if (btnSalvar) btnSalvar.classList.add('d-none');
+            }
 
             // Resetar estado do modal
             isEditando = false;
             document.getElementById('visualizacao').classList.remove('d-none');
             document.getElementById('editarForm').classList.add('d-none');
-            document.getElementById('btnSalvar').classList.add('d-none');
             document.getElementById('produtoFotoInput').classList.add('d-none');
             document.getElementById('mensagemErro').style.display = 'none';
             document.getElementById('mensagemSucesso').style.display = 'none';
 
-            // Mostrar modal
             const modal = new bootstrap.Modal(document.getElementById('produtoModal'));
             modal.show();
         })
         .catch(error => {
+            console.error('Erro ao carregar detalhes do produto:', error);
             alert('Erro ao carregar detalhes do produto: ' + error.message);
         });
 }
@@ -248,6 +265,21 @@ function confirmarExclusao() {
     detalhesModal.hide();
     const confirmModal = new bootstrap.Modal(document.getElementById('confirmModal'));
     confirmModal.show();
+}
+
+// Função para adicionar produto do modal ao carrinho
+function adicionarProdutoDoModalAoCarrinho() {
+    const quantidadeInput = document.getElementById('quantidadeModalProduto');
+    const quantidade = parseInt(quantidadeInput.value);
+
+    if (currentProdutoId && quantidade > 0) {
+        carrinho.adicionarItem(currentProdutoId, quantidade);
+        // Opcional: fechar o modal após adicionar
+        // const modal = bootstrap.Modal.getInstance(document.getElementById('produtoModal'));
+        // modal.hide();
+    } else {
+        alert('Por favor, insira uma quantidade válida.');
+    }
 }
 
 // Configurar eventos
