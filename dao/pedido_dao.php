@@ -4,16 +4,19 @@ require_once __DIR__ . '/../model/Pedido.php';
 require_once __DIR__ . '/../model/item_pedido.php';
 require_once __DIR__ . '/../dao/cliente_dao.php';
 require_once __DIR__ . '/../dao/produto_dao.php';
+require_once __DIR__ . '/../dao/estoque_dao.php';
 
 class PedidoDAO {
     private $pdo;
     private $clienteDAO;
     private $produtoDAO;
+    private $estoqueDAO;
 
     public function __construct($pdo) {
         $this->pdo = $pdo;
         $this->clienteDAO = new ClienteDAO($pdo);
         $this->produtoDAO = new ProdutoDAO($pdo);
+        $this->estoqueDAO = new EstoqueDAO($pdo);
     }
 
     /**
@@ -66,21 +69,48 @@ class PedidoDAO {
             
             foreach ($itensPedido as $item) {
                 if (!isset($item['id']) || !isset($item['quantidade']) || !isset($item['preco'])) {
+                    error_log("AVISO (PedidoDAO): Item inválido no carrinho, pulando: " . print_r($item, true));
                     continue;
                 }
                 
                 $produtoId = (int)$item['id'];
-                $quantidade = (int)$item['quantidade'];
+                $quantidadePedida = (int)$item['quantidade'];
                 $precoUnitario = (float)$item['preco'];
-                $subtotal = $precoUnitario * $quantidade;
                 
+                // Buscar produto para verificar estoque
+                $produto = $this->produtoDAO->buscarPorId($produtoId);
+                if (!$produto) {
+                    throw new Exception("Produto com ID {$produtoId} não encontrado no estoque.");
+                }
+
+                $estoqueAtual = $produto->getQuantidade();
+                $estoqueId = $produto->getEstoqueId();
+
+                if ($quantidadePedida <= 0) {
+                    throw new Exception("Quantidade inválida para o produto {$produto->getNome()}.");
+                }
+
+                if ($estoqueAtual < $quantidadePedida) {
+                    throw new Exception("Estoque insuficiente para o produto {$produto->getNome()}. Disponível: {$estoqueAtual}, Pedido: {$quantidadePedida}");
+                }
+
+                // Calcular subtotal antes de usar
+                $subtotal = $precoUnitario * $quantidadePedida;
+
+                // Inserir item no pedido
                 $stmtItem->bindParam(':pedido_id', $pedidoId);
                 $stmtItem->bindParam(':produto_id', $produtoId);
-                $stmtItem->bindParam(':quantidade', $quantidade);
+                $stmtItem->bindParam(':quantidade', $quantidadePedida);
                 $stmtItem->bindParam(':preco_unitario', $precoUnitario);
                 $stmtItem->bindParam(':subtotal', $subtotal);
                 $stmtItem->execute();
+                error_log("DEBUG (PedidoDAO): Item inserido: produtoId=$produtoId, quantidade=$quantidadePedida");
                 
+                // Atualizar estoque
+                $novoEstoque = $estoqueAtual - $quantidadePedida;
+                $this->estoqueDAO->atualizarQuantidade($estoqueId, $novoEstoque);
+                error_log("DEBUG (PedidoDAO): Estoque atualizado para produtoId=$produtoId. EstoqueId=$estoqueId. Novo estoque: $novoEstoque");
+
                 $valorTotal += $subtotal;
             }
             
