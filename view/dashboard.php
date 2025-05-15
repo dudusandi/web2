@@ -67,12 +67,16 @@ try {
     </div>
     <!-- Menu com visualização apenas para o admin -->
     <div class="nav-bar">
-        <?php if (isset($_SESSION['is_admin']) && $_SESSION['is_admin']): ?>
+        <?php if (isset($_SESSION['is_admin']) && $_SESSION['is_admin'] === true): ?>
             <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#cadastroProdutoModal">
                 <i class="bi bi-plus-circle"></i> Cadastrar Produto
             </button>
-            <a href="../view/listar_fornecedor.php">Editar Fornecedores</a> 
-            <a href="../view/listar_clientes.php">Editar Clientes</a> 
+            <a href="../view/listar_fornecedor.php" class="btn btn-outline-primary">
+                <i class="bi bi-building"></i> Editar Fornecedores
+            </a> 
+            <a href="../view/listar_clientes.php" class="btn btn-outline-primary">
+                <i class="bi bi-people"></i> Editar Clientes
+            </a> 
         <?php endif; ?>
     </div>
 
