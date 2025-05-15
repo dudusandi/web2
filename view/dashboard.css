@@ -143,7 +143,7 @@ body {
     transition: transform 0.2s, box-shadow 0.2s;
     cursor: pointer;
     border: 1px solid #e0e0e0;
-    background: #fff;
+    background: #f7f7f7;
 }
 
 .produto-card:hover {
@@ -154,7 +154,7 @@ body {
 .card-img-container {
     height: 200px;
     overflow: hidden;
-    background: #f8f9fa;
+    background: #ffffff;
     display: flex;
     align-items: center;
     justify-content: center;
