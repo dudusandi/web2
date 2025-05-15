@@ -83,20 +83,50 @@ try {
 
         <!-- Listagem -->
         <div id="produtosContainer">
-            <!-- Produtos serão carregados dinamicamente -->
-        </div>
-        <!-- Sentinela para carregamento infinito -->
-        <div id="sentinela" style="height: 20px;"></div>
-        <!-- Indicador de carregamento -->
-        <div id="loading" class="text-center my-3 d-none">
-            <div class="spinner-border" role="status">
-                <span class="visually-hidden">Carregando...</span>
-            </div>
+            <?php
+            try {
+                $produtos = $produtoDao->listarTodosProdutos();
+                if (empty($produtos)) {
+                    echo '<div class="empty-state">
+                            <i class="bi bi-box-seam" style="font-size: 3rem;"></i>
+                            <h3 class="mt-3">Nenhum produto cadastrado</h3>
+                          </div>';
+                } else {
+                    echo '<div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 row-cols-xl-4 g-4">';
+                    foreach ($produtos as $produto) {
+                        $fotoUrl = $produto->getFoto() ? 'data:image/jpeg;base64,' . $produto->getFoto() : 'https://via.placeholder.com/200?text=Sem+Imagem';
+                        $precoFormatado = number_format($produto->getPreco(), 2, ',', '.');
+                        echo '<div class="col">
+                                <div class="card h-100 produto-card" onclick="mostrarDetalhes(' . $produto->getId() . ')">
+                                    <div class="card-img-container">
+                                        <img src="' . $fotoUrl . '" class="card-img-top" alt="Foto do produto">
+                                    </div>
+                                    <div class="card-body">
+                                        <h5 class="card-title text-truncate" title="' . htmlspecialchars($produto->getNome()) . '">' . htmlspecialchars($produto->getNome()) . '</h5>
+                                        <p class="card-text">
+                                            <span class="preco">R$ ' . $precoFormatado . '</span>
+                                            <span class="estoque ' . ($produto->getQuantidade() <= 5 ? 'estoque-baixo' : '') . '">
+                                                Estoque: ' . $produto->getQuantidade() . '
+                                            </span>
+                                        </p>
+                                        <p class="card-text fornecedor text-truncate" title="' . htmlspecialchars($produto->getFornecedorNome()) . '">
+                                            ' . htmlspecialchars($produto->getFornecedorNome()) . '
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>';
+                    }
+                    echo '</div>';
+                }
+            } catch (Exception $e) {
+                echo '<div class="alert alert-danger">Erro ao carregar produtos: ' . htmlspecialchars($e->getMessage()) . '</div>';
+            }
+            ?>
         </div>
     </div>
 
     <!-- Modal de Detalhes -->
-    <div class="modal fade" id="detalhesModal" tabindex="-1" aria-hidden="true">
+    <div class="modal fade" id="produtoModal" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-lg">
             <div class="modal-content">
                 <div class="modal-header">
@@ -271,6 +301,15 @@ try {
                 });
             }
         });
+
+        function exibirProduto(produto) {
+            if (produto.foto) {
+                const fotoBase64 = btoa(String.fromCharCode.apply(null, new Uint8Array(produto.foto)));
+                document.getElementById('produtoFoto').src = `data:image/jpeg;base64,${fotoBase64}`;
+            } else {
+                document.getElementById('produtoFoto').src = 'https://via.placeholder.com/200';
+            }
+        }
     </script>
 </body>
 </html>

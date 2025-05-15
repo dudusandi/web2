@@ -1,10 +1,15 @@
 <?php
+// Limpa qualquer saída anterior
+ob_start();
+ob_clean();
+
 session_start();
 require_once '../config/database.php';
 require_once '../dao/produto_dao.php';
-require_once '../models/produto.php';
+require_once '../model/produto.php';
 
-header('Content-Type: application/json');
+// Define o tipo de conteúdo como JSON
+header('Content-Type: application/json; charset=utf-8');
 
 try {
     // Validar dados recebidos
@@ -38,18 +43,8 @@ try {
             throw new Exception('Arquivo muito grande. Tamanho máximo: 2MB');
         }
 
-        $uploadDir = '../public/uploads/imagens/';
-        if (!file_exists($uploadDir)) {
-            mkdir($uploadDir, 0777, true);
-        }
-
-        $extension = pathinfo($_FILES['foto']['name'], PATHINFO_EXTENSION);
-        $foto = uniqid() . '.' . $extension;
-        $uploadFile = $uploadDir . $foto;
-
-        if (!move_uploaded_file($_FILES['foto']['tmp_name'], $uploadFile)) {
-            throw new Exception('Erro ao fazer upload da imagem');
-        }
+        // Ler o conteúdo do arquivo e converter para bytea
+        $foto = file_get_contents($_FILES['foto']['tmp_name']);
     }
 
     // Criar objeto Produto

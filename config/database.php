@@ -27,7 +27,7 @@ CREATE TABLE produtos (
     id SERIAL PRIMARY KEY,
     nome VARCHAR(255) NOT NULL,
     descricao TEXT,
-    foto VARCHAR(255),
+    foto BYTEA,
     fornecedor_id INTEGER NOT NULL,
     estoque_id INTEGER NOT NULL,
     usuario_id INTEGER NOT NULL,

@@ -38,14 +38,14 @@ class ProdutoDAO {
                     RETURNING id";
             $stmt = $this->pdo->prepare($sql);
 
-            $stmt->execute([
-                ':nome' => $produto->getNome(),
-                ':descricao' => $produto->getDescricao(),
-                ':foto' => $produto->getFoto(),
-                ':fornecedor_id' => $fornecedorId,
-                ':estoque_id' => $estoqueId,
-                ':usuario_id' => $usuarioId
-            ]);
+            $stmt->bindValue(':nome', $produto->getNome(), PDO::PARAM_STR);
+            $stmt->bindValue(':descricao', $produto->getDescricao(), PDO::PARAM_STR);
+            $stmt->bindValue(':foto', $produto->getFoto(), PDO::PARAM_LOB);
+            $stmt->bindValue(':fornecedor_id', $fornecedorId, PDO::PARAM_INT);
+            $stmt->bindValue(':estoque_id', $estoqueId, PDO::PARAM_INT);
+            $stmt->bindValue(':usuario_id', $usuarioId, PDO::PARAM_INT);
+
+            $stmt->execute();
 
             $produtoId = $stmt->fetch(PDO::FETCH_ASSOC)['id'];
             $produto->setId($produtoId);
@@ -291,30 +291,22 @@ class ProdutoDAO {
     // Atualizar produto
     public function atualizarProduto(Produto $produto) {
         try {
-            $this->pdo->beginTransaction();
-
-            $estoqueId = $produto->getEstoqueId();
-            if ($estoqueId) {
-                $estoque = new Estoque($produto->getQuantidade(), $produto->getPreco());
-                $estoque->setId($estoqueId);
-                $this->estoqueDAO->atualizar($estoque);
-            }
-
-            $sql = "UPDATE produtos SET nome = :nome, descricao = :descricao, foto = :foto, fornecedor_id = :fornecedor_id 
-                    WHERE id = :id AND usuario_id = :usuario_id";
+            $sql = "UPDATE produtos SET 
+                    nome = :nome, 
+                    descricao = :descricao, 
+                    foto = :foto, 
+                    fornecedor_id = :fornecedor_id
+                    WHERE id = :id";
+            
             $stmt = $this->pdo->prepare($sql);
             $stmt->bindValue(':nome', $produto->getNome(), PDO::PARAM_STR);
-            $stmt->bindValue(':descricao', $produto->getDescricao() ?? '', PDO::PARAM_STR);
-            $stmt->bindValue(':foto', $produto->getFoto() ?? '', PDO::PARAM_STR);
+            $stmt->bindValue(':descricao', $produto->getDescricao(), PDO::PARAM_STR);
+            $stmt->bindValue(':foto', $produto->getFoto(), PDO::PARAM_LOB);
             $stmt->bindValue(':fornecedor_id', $produto->getFornecedorId(), PDO::PARAM_INT);
             $stmt->bindValue(':id', $produto->getId(), PDO::PARAM_INT);
-            $stmt->bindValue(':usuario_id', $produto->getUsuarioId(), PDO::PARAM_INT);
-            $success = $stmt->execute();
-
-            $this->pdo->commit();
-            return $success;
+            
+            return $stmt->execute();
         } catch (PDOException $e) {
-            $this->pdo->rollBack();
             throw $e;
         }
     }
@@ -351,50 +343,55 @@ class ProdutoDAO {
     }
 
     public function buscarProdutos($termo = '', $pagina = 1, $itensPorPagina = 12) {
-        $offset = ($pagina - 1) * $itensPorPagina;
-        
         try {
-            $sql = "SELECT p.*, f.nome as fornecedor_nome 
-                    FROM produtos p 
-                    LEFT JOIN fornecedores f ON p.fornecedor_id = f.id 
-                    WHERE 1=1";
-            $params = [];
-            
-            if (!empty($termo)) {
-                $sql .= " AND (p.nome LIKE ? OR p.descricao LIKE ?)";
-                $params[] = "%$termo%";
-                $params[] = "%$termo%";
-            }
-            
-            $sql .= " ORDER BY p.nome LIMIT ? OFFSET ?";
-            $params[] = $itensPorPagina;
-            $params[] = $offset;
+            $offset = ($pagina - 1) * $itensPorPagina;
+            $termoPesquisa = '%' . strtolower($termo) . '%';
+
+            // Busca os produtos
+            $sql = "SELECT p.id, p.nome, p.descricao, p.foto, p.fornecedor_id, p.estoque_id, p.usuario_id,
+                           e.quantidade, e.preco,
+                           f.nome AS fornecedor_nome
+                    FROM produtos p
+                    LEFT JOIN estoques e ON p.estoque_id = e.id
+                    LEFT JOIN fornecedores f ON p.fornecedor_id = f.id
+                    WHERE LOWER(p.nome) LIKE :termo OR LOWER(p.descricao) LIKE :termo
+                    ORDER BY p.id DESC
+                    LIMIT :itensPorPagina OFFSET :offset";
             
             $stmt = $this->pdo->prepare($sql);
-            $stmt->execute($params);
-            $produtos = $stmt->fetchAll(PDO::FETCH_ASSOC);
-            
-            // Busca total de registros
-            $sqlCount = "SELECT COUNT(*) FROM produtos p WHERE 1=1";
-            if (!empty($termo)) {
-                $sqlCount .= " AND (p.nome LIKE ? OR p.descricao LIKE ?)";
+            $stmt->bindValue(':termo', $termoPesquisa, PDO::PARAM_STR);
+            $stmt->bindValue(':itensPorPagina', $itensPorPagina, PDO::PARAM_INT);
+            $stmt->bindValue(':offset', $offset, PDO::PARAM_INT);
+            $stmt->execute();
+
+            $produtos = [];
+            while ($linha = $stmt->fetch(PDO::FETCH_ASSOC)) {
+                $produtos[] = [
+                    'id' => $linha['id'],
+                    'nome' => $linha['nome'],
+                    'descricao' => $linha['descricao'],
+                    'foto' => $linha['foto'],
+                    'fornecedor_id' => $linha['fornecedor_id'],
+                    'quantidade' => $linha['quantidade'],
+                    'preco' => $linha['preco'],
+                    'fornecedor_nome' => $linha['fornecedor_nome'] ?? 'Sem fornecedor'
+                ];
             }
+
+            // Conta o total de produtos
+            $sqlCount = "SELECT COUNT(*) FROM produtos p 
+                        WHERE LOWER(p.nome) LIKE :termo OR LOWER(p.descricao) LIKE :termo";
             $stmtCount = $this->pdo->prepare($sqlCount);
-            if (!empty($termo)) {
-                $stmtCount->execute(["%$termo%", "%$termo%"]);
-            } else {
-                $stmtCount->execute();
-            }
+            $stmtCount->bindValue(':termo', $termoPesquisa, PDO::PARAM_STR);
+            $stmtCount->execute();
             $total = $stmtCount->fetchColumn();
-            
+
             return [
                 'produtos' => $produtos,
-                'total' => $total
+                'total' => (int)$total
             ];
-            
         } catch (PDOException $e) {
-            error_log("Erro ao buscar produtos: " . $e->getMessage());
-            throw new Exception("Erro ao buscar produtos");
+            throw $e;
         }
     }
 }

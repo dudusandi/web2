@@ -63,31 +63,23 @@ try {
     // Salvar Foto
     if (isset($_FILES['foto']) && $_FILES['foto']['error'] === UPLOAD_ERR_OK) {
         $file = $_FILES['foto'];
+        
+        // Validar tipo de arquivo
         $allowedTypes = ['image/jpeg', 'image/png', 'image/gif'];
-        $maxSize = 16 * 1024 * 1024; //Tamanho Maximo de 16mb pro raspberry não chorar.
-
-        if (!in_array($file['type'], $allowedTypes) || $file['size'] > $maxSize) {
+        if (!in_array($file['type'], $allowedTypes)) {
             echo json_encode(['error' => 'Foto inválida. Use JPEG, PNG ou GIF (máx. 16MB)']);
             exit;
         }
 
-        $ext = pathinfo($file['name'], PATHINFO_EXTENSION);
-        $nomeArquivo = uniqid('produto_') . '.' . strtolower($ext);
-        $caminhoDestino = __DIR__ . '/../public/uploads/imagens/' . $nomeArquivo;
-
-        if (move_uploaded_file($file['tmp_name'], $caminhoDestino)) {
-            if ($foto && file_exists(__DIR__ . '/../public/uploads/imagens/' . basename($foto))) {
-                unlink(__DIR__ . '/../public/uploads/imagens/' . basename($foto));
-                error_log(date('[Y-m-d H:i:s] ') . "Foto antiga removida: $foto" . PHP_EOL);
-            }
-
-            $foto = $nomeArquivo; 
-            error_log(date('[Y-m-d H:i:s] ') . "Nova foto salva: $foto" . PHP_EOL);
-
-        } else {
-            echo json_encode(['error' => 'Erro ao salvar a foto']);
+        // Validar tamanho
+        $maxSize = 16 * 1024 * 1024; // 16MB
+        if ($file['size'] > $maxSize) {
+            echo json_encode(['error' => 'Foto muito grande. Tamanho máximo: 16MB']);
             exit;
         }
+
+        // Ler o conteúdo do arquivo e converter para bytea
+        $foto = file_get_contents($file['tmp_name']);
     }
 
     // Novo Produto
@@ -97,12 +89,11 @@ try {
     $produtoAtualizado->setQuantidade($estoque);
     $produtoAtualizado->setPreco($preco);
 
-
     // Atualiza produto
     if ($produtoDao->atualizarProduto($produtoAtualizado)) {
         $estoqueId = $produtoExistente->getEstoqueId();
         if ($estoqueDao->atualizarQuantidade($estoqueId, $estoque)) {
-            echo json_encode(['success' => true, 'foto' => $foto]);
+            echo json_encode(['success' => true]);
         } else {
             echo json_encode(['error' => 'Erro ao atualizar o estoque']);
         }

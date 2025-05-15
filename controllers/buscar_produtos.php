@@ -1,51 +1,64 @@
 <?php
-require_once __DIR__ . '/../config/database.php';
-require_once __DIR__ . '/../dao/produto_dao.php';
+// Limpa qualquer saída anterior
+ob_start();
+ob_clean();
 
-header('Content-Type: application/json');
+session_start();
+require_once '../config/database.php';
+require_once '../dao/produto_dao.php';
+require_once '../model/produto.php';
+
+// Define o tipo de conteúdo como JSON
+header('Content-Type: application/json; charset=utf-8');
 
 try {
-    $pdo = Database::getConnection();
-    $produtoDao = new ProdutoDAO($pdo);
-    
     $termo = $_GET['termo'] ?? '';
-    $pagina = isset($_GET['pagina']) ? max(1, (int)$_GET['pagina']) : 1;
-    $itensPorPagina = 12;
-    $offset = ($pagina - 1) * $itensPorPagina;
+    $pagina = (int)($_GET['pagina'] ?? 1);
+    $itensPorPagina = (int)($_GET['itensPorPagina'] ?? 12);
 
-    if (empty($termo)) {
-        $produtos = $produtoDao->listarTodosProdutos($itensPorPagina, $offset);
-        $total = $produtoDao->contarTodosProdutos();
-    } else {
-        $produtos = $produtoDao->buscarProdutosDinamicos($termo, $itensPorPagina, $offset);
-        $total = $produtoDao->contarProdutosBuscados($termo);
-    }
+    $pdo = Database::getConnection();
+    $produtoDAO = new ProdutoDAO($pdo);
+    
+    $resultado = $produtoDAO->buscarProdutos($termo, $pagina, $itensPorPagina);
+    $produtos = $resultado['produtos'];
+    $total = $resultado['total'];
+
+    $produtosArray = array_map(function($produto) {
+        return [
+            'id' => $produto['id'],
+            'nome' => $produto['nome'],
+            'descricao' => $produto['descricao'],
+            'foto' => $produto['foto'] ? base64_encode($produto['foto']) : null,
+            'fornecedor_id' => $produto['fornecedor_id'],
+            'quantidade' => $produto['quantidade'],
+            'preco' => $produto['preco'],
+            'fornecedor_nome' => $produto['fornecedor_nome']
+        ];
+    }, $produtos);
 
     $response = [
         'success' => true,
-        'produtos' => array_map(function($produto) {
-            return [
-                'id' => $produto->getId(),
-                'nome' => htmlspecialchars($produto->getNome(), ENT_QUOTES, 'UTF-8'),
-                'descricao' => htmlspecialchars($produto->getDescricao() ?? '', ENT_QUOTES, 'UTF-8'),
-                'foto' => $produto->getFoto(),
-                'quantidade' => $produto->getQuantidade() ?? 0,
-                'preco' => $produto->getPreco() ?? 0,
-                'fornecedor_nome' => htmlspecialchars($produto->fornecedor_nome ?? 'Sem fornecedor', ENT_QUOTES, 'UTF-8'),
-                'usuario_id' => $produto->getUsuarioId()
-            ];
-        }, $produtos),
+        'produtos' => $produtosArray,
         'total' => $total,
         'pagina' => $pagina,
-        'total_paginas' => ceil($total / $itensPorPagina)
+        'itensPorPagina' => $itensPorPagina
     ];
 
+    // Limpa qualquer saída anterior
+    ob_clean();
     echo json_encode($response);
+
 } catch (Exception $e) {
     error_log("Erro em buscar_produtos.php: " . $e->getMessage());
     http_response_code(500);
+    
+    // Limpa qualquer saída anterior
+    ob_clean();
     echo json_encode([
         'success' => false,
         'error' => 'Erro ao buscar produtos: ' . $e->getMessage()
     ]);
-} 
+}
+
+// Envia a saída e limpa o buffer
+ob_end_flush(); 
