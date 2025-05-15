@@ -79,6 +79,12 @@ function criarCardProduto(produto) {
                     <p class="card-text fornecedor text-truncate" title="${produto.fornecedor_nome || 'Sem fornecedor'}">
                         ${produto.fornecedor_nome || 'Sem fornecedor'}
                     </p>
+                    <div class="input-group mb-2">
+                        <input type="number" id="quantidade-${produto.id}" value="1" min="1" max="${produto.quantidade}" class="form-control form-control-sm" style="width: 70px;">
+                        <button type="button" class="btn btn-primary btn-sm" onclick="event.stopPropagation(); carrinho.adicionarItem(${produto.id}, document.getElementById('quantidade-${produto.id}').value)">
+                            <i class="bi bi-cart-plus"></i> Adicionar
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>
@@ -282,3 +288,12 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 });
+
+function exibirProduto(produto) {
+    if (produto.foto) {
+        const fotoBase64 = btoa(String.fromCharCode.apply(null, new Uint8Array(produto.foto)));
+        document.getElementById('produtoFoto').src = `data:image/jpeg;base64,${fotoBase64}`;
+    } else {
+        document.getElementById('produtoFoto').src = 'https://via.placeholder.com/200';
+    }
+}

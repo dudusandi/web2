@@ -9,6 +9,7 @@ require_once __DIR__ . '/../config/database.php';
 require_once __DIR__ . '/../dao/produto_dao.php';
 require_once __DIR__ . '/../model/produto.php';
 require_once __DIR__ . '/../dao/fornecedor_dao.php'; 
+require_once __DIR__ . '/../controllers/carrinho.php';
 
 try {
     $pdo = Database::getConnection();
@@ -59,10 +60,9 @@ try {
         <div class="user-options">
             <span>Olá, <?= htmlspecialchars($_SESSION['usuario_nome']) ?>!</span>
             <a href="../controllers/logout_controller.php">Sair</a>
-            <div class="cart">
-                <span>0</span>
-                🛒
-            </div>
+            <a href="carrinho.php" class="btn btn-outline-primary btn-sm">
+                <i class="bi bi-cart"></i> Carrinho <span id="contador-carrinho" style="display: none;">0</span>
+            </a>
         </div>
     </div>
     <!-- Menu com visualização apenas para o admin -->
@@ -103,12 +103,12 @@ try {
                         $fotoUrl = $produto['foto'] ? 'data:image/jpeg;base64,' . base64_encode($produto['foto']) : 'https://via.placeholder.com/200?text=Sem+Imagem';
                         $precoFormatado = number_format($produto['preco'], 2, ',', '.');
                         echo '<div class="col">
-                                <div class="card h-100 produto-card" onclick="mostrarDetalhes(' . $produto['id'] . ')">
-                                    <div class="card-img-container">
+                                <div class="card h-100 produto-card">
+                                    <div class="card-img-container" onclick="mostrarDetalhes(' . $produto['id'] . ')">
                                         <img src="' . $fotoUrl . '" class="card-img-top" alt="Foto do produto">
                                     </div>
                                     <div class="card-body">
-                                        <h5 class="card-title text-truncate" title="' . htmlspecialchars($produto['nome']) . '">' . htmlspecialchars($produto['nome']) . '</h5>
+                                        <h5 class="card-title text-truncate" title="' . htmlspecialchars($produto['nome']) . '" onclick="mostrarDetalhes(' . $produto['id'] . ')">' . htmlspecialchars($produto['nome']) . '</h5>
                                         <p class="card-text">
                                             <span class="preco">R$ ' . $precoFormatado . '</span>
                                             <span class="estoque ' . ($produto['quantidade'] <= 5 ? 'estoque-baixo' : '') . '">
@@ -118,6 +118,12 @@ try {
                                         <p class="card-text fornecedor text-truncate" title="' . htmlspecialchars($produto['fornecedor_nome']) . '">
                                             ' . htmlspecialchars($produto['fornecedor_nome']) . '
                                         </p>
+                                        <div class="input-group mb-2">
+                                            <input type="number" id="quantidade-' . $produto['id'] . '" value="1" min="1" max="' . $produto['quantidade'] . '" class="form-control form-control-sm" style="width: 70px;">
+                                            <button type="button" class="btn btn-primary btn-sm" onclick="event.stopPropagation(); carrinho.adicionarItem(' . $produto['id'] . ', document.getElementById(\'quantidade-' . $produto['id'] . '\').value)">
+                                                <i class="bi bi-cart-plus"></i> Adicionar
+                                            </button>
+                                        </div>
                                     </div>
                                 </div>
                             </div>';
@@ -294,6 +300,7 @@ try {
     window.isAdmin = <?php echo json_encode(isset($_SESSION['is_admin']) && $_SESSION['is_admin']); ?>;
     </script>
     <script src="./dashboard.js"></script>
+    <script src="js/carrinho.js"></script>
     <script>
         // Preencher select de fornecedores
         document.addEventListener('DOMContentLoaded', function() {
@@ -316,6 +323,18 @@ try {
                 document.getElementById('produtoFoto').src = 'https://via.placeholder.com/200';
             }
         }
+
+        // Debug dos formulários de adicionar ao carrinho
+        document.querySelectorAll('form[action="carrinho.php"]').forEach(form => {
+            form.addEventListener('submit', function(e) {
+                console.log('Formulário enviado:', {
+                    acao: this.querySelector('[name="acao"]').value,
+                    produto_id: this.querySelector('[name="produto_id"]').value,
+                    quantidade: this.querySelector('[name="quantidade"]').value,
+                    redirect: this.querySelector('[name="redirect"]').value
+                });
+            });
+        });
     </script>
 </body>
 </html>

@@ -1,7 +1,13 @@
 <?php
+// Desativa a saída de erros para o navegador
+ini_set('display_errors', 0);
+error_reporting(E_ALL);
+
 // Limpa qualquer saída anterior
+while (ob_get_level()) {
+    ob_end_clean();
+}
 ob_start();
-ob_clean();
 
 session_start();
 require_once '../config/database.php';
@@ -12,25 +18,48 @@ require_once '../model/produto.php';
 header('Content-Type: application/json; charset=utf-8');
 
 try {
-    $termo = $_GET['termo'] ?? '';
-
+    error_log("Iniciando busca de produtos...");
+    
     $pdo = Database::getConnection();
     $produtoDAO = new ProdutoDAO($pdo);
     
-    $produtos = $produtoDAO->buscarProdutos($termo);
+    // Verifica se há IDs específicos na requisição
+    if (isset($_GET['ids'])) {
+        error_log("Buscando produtos por IDs: " . $_GET['ids']);
+        $ids = array_map('intval', explode(',', $_GET['ids']));
+        $produtos = $produtoDAO->buscarProdutosPorIds($ids);
+    } else {
+        $termo = $_GET['termo'] ?? '';
+        error_log("Buscando produtos por termo: " . $termo);
+        $produtos = $produtoDAO->buscarProdutos($termo);
+    }
 
-    $produtosArray = array_map(function($produto) {
-        return [
-            'id' => $produto['id'],
-            'nome' => $produto['nome'],
-            'descricao' => $produto['descricao'],
-            'foto' => $produto['foto'] ? base64_encode($produto['foto']) : null,
-            'fornecedor_id' => $produto['fornecedor_id'],
-            'quantidade' => $produto['quantidade'],
-            'preco' => $produto['preco'],
-            'fornecedor_nome' => $produto['fornecedor_nome']
-        ];
-    }, $produtos);
+    error_log("Produtos encontrados: " . count($produtos));
+
+    $produtosArray = [];
+    foreach ($produtos as $produto) {
+        try {
+            // Converte o recurso da foto em string antes de codificar
+            $foto = $produto->getFoto();
+            if ($foto && is_resource($foto)) {
+                $foto = stream_get_contents($foto);
+            }
+
+            $produtosArray[] = [
+                'id' => $produto->getId(),
+                'nome' => $produto->getNome(),
+                'descricao' => $produto->getDescricao(),
+                'foto' => $foto ? base64_encode($foto) : null,
+                'fornecedor_id' => $produto->getFornecedorId(),
+                'quantidade' => $produto->getQuantidade(),
+                'preco' => $produto->getPreco(),
+                'fornecedor_nome' => $produto->fornecedor_nome
+            ];
+        } catch (Exception $e) {
+            error_log("Erro ao processar produto: " . $e->getMessage());
+            continue;
+        }
+    }
 
     $response = [
         'success' => true,
@@ -43,14 +72,17 @@ try {
 
 } catch (Exception $e) {
     error_log("Erro em buscar_produtos.php: " . $e->getMessage());
-    http_response_code(500);
+    error_log("Stack trace: " . $e->getTraceAsString());
     
     // Limpa qualquer saída anterior
     ob_clean();
-    echo json_encode([
+    
+    $response = [
         'success' => false,
         'error' => 'Erro ao buscar produtos: ' . $e->getMessage()
-    ]);
+    ];
+    
+    echo json_encode($response);
 }
 
 // Envia a saída e limpa o buffer

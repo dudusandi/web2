@@ -217,6 +217,10 @@ class ProdutoDAO {
     // Buscar produto por ID
     public function buscarPorId($id) {
         try {
+            if (!is_numeric($id) || $id <= 0) {
+                throw new Exception("ID inválido");
+            }
+
             $sql = "SELECT p.id, p.nome, p.descricao, p.foto, p.fornecedor_id, p.estoque_id, p.usuario_id,
                            e.quantidade, e.preco,
                            f.nome AS fornecedor_nome
@@ -228,24 +232,25 @@ class ProdutoDAO {
             $stmt->bindValue(':id', $id, PDO::PARAM_INT);
             $stmt->execute();
 
-            if ($stmt->rowCount() > 0) {
-                $linha = $stmt->fetch(PDO::FETCH_ASSOC);
-                $produto = new Produto(
-                    $linha['nome'],
-                    $linha['descricao'],
-                    $linha['foto'],
-                    $linha['fornecedor_id'],
-                    $linha['usuario_id']
-                );
-                $produto->setId($linha['id']);
-                $produto->setEstoqueId($linha['estoque_id']);
-                $produto->setQuantidade($linha['quantidade']);
-                $produto->setPreco($linha['preco']);
-                $produto->fornecedor_nome = $linha['fornecedor_nome'] ?? 'Sem fornecedor';
-                error_log("buscarPorId - Produto ID: {$linha['id']}, Fornecedor Nome: " . ($linha['fornecedor_nome'] ?? 'Sem fornecedor'));
-                return $produto;
+            $linha = $stmt->fetch(PDO::FETCH_ASSOC);
+            if (!$linha) {
+                return null;
             }
-            return null;
+
+            $produto = new Produto(
+                $linha['nome'],
+                $linha['descricao'],
+                $linha['foto'],
+                $linha['fornecedor_id'],
+                $linha['usuario_id']
+            );
+            $produto->setId($linha['id']);
+            $produto->setEstoqueId($linha['estoque_id']);
+            $produto->setQuantidade($linha['quantidade']);
+            $produto->setPreco($linha['preco']);
+            $produto->fornecedor_nome = $linha['fornecedor_nome'] ?? 'Sem fornecedor';
+
+            return $produto;
         } catch (PDOException $e) {
             error_log(date('[Y-m-d H:i:s] ') . "Erro em buscarPorId: " . $e->getMessage() . PHP_EOL);
             throw $e;
@@ -382,6 +387,71 @@ class ProdutoDAO {
 
             return $produtos;
         } catch (PDOException $e) {
+            throw $e;
+        }
+    }
+
+    public function buscarProdutosPorIds($ids) {
+        try {
+            if (empty($ids)) {
+                return [];
+            }
+
+            // Valida e limpa os IDs
+            $ids = array_filter(array_map('intval', $ids), function($id) {
+                return $id > 0;
+            });
+
+            if (empty($ids)) {
+                return [];
+            }
+
+            $placeholders = str_repeat('?,', count($ids) - 1) . '?';
+            $sql = "SELECT p.id, p.nome, p.descricao, p.foto, p.fornecedor_id, p.estoque_id, p.usuario_id,
+                           e.quantidade, e.preco,
+                           f.nome AS fornecedor_nome
+                    FROM produtos p
+                    LEFT JOIN estoques e ON p.estoque_id = e.id
+                    LEFT JOIN fornecedores f ON p.fornecedor_id = f.id
+                    WHERE p.id IN ($placeholders)
+                    ORDER BY p.id DESC";
+            
+            $stmt = $this->pdo->prepare($sql);
+            $stmt->execute($ids);
+
+            $produtos = [];
+            while ($linha = $stmt->fetch(PDO::FETCH_ASSOC)) {
+                try {
+                    // Converte valores nulos para valores padrão
+                    $linha['nome'] = $linha['nome'] ?? '';
+                    $linha['descricao'] = $linha['descricao'] ?? '';
+                    $linha['foto'] = $linha['foto'] ?? null;
+                    $linha['fornecedor_id'] = $linha['fornecedor_id'] ?? 0;
+                    $linha['usuario_id'] = $linha['usuario_id'] ?? 0;
+                    $linha['quantidade'] = $linha['quantidade'] ?? 0;
+                    $linha['preco'] = $linha['preco'] ?? 0;
+
+                    $produto = new Produto(
+                        $linha['nome'],
+                        $linha['descricao'],
+                        $linha['foto'],
+                        $linha['fornecedor_id'],
+                        $linha['usuario_id']
+                    );
+                    $produto->setId($linha['id']);
+                    $produto->setEstoqueId($linha['estoque_id'] ?? 0);
+                    $produto->setQuantidade($linha['quantidade']);
+                    $produto->setPreco($linha['preco']);
+                    $produto->fornecedor_nome = $linha['fornecedor_nome'] ?? 'Sem fornecedor';
+                    $produtos[] = $produto;
+                } catch (Exception $e) {
+                    error_log("Erro ao criar objeto Produto: " . $e->getMessage());
+                    continue;
+                }
+            }
+            return $produtos;
+        } catch (PDOException $e) {
+            error_log(date('[Y-m-d H:i:s] ') . "Erro em buscarProdutosPorIds: " . $e->getMessage() . PHP_EOL);
             throw $e;
         }
     }
