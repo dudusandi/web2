@@ -111,6 +111,7 @@ class PedidoDAO {
      */
     public function buscarPorId($pedidoId) {
         try {
+            error_log("DEBUG (PedidoDAO): Iniciando buscarPorId para pedidoId: " . $pedidoId);
             $sql = "SELECT p.id, p.numero, p.data_pedido, p.data_entrega, p.situacao, 
                            p.cliente_id, p.valor_total
                     FROM pedidos p
@@ -120,21 +121,35 @@ class PedidoDAO {
             $stmt->execute();
             
             if ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
+                error_log("DEBUG (PedidoDAO): Pedido encontrado no banco: " . print_r($row, true));
                 $cliente = $this->clienteDAO->buscarPorId($row['cliente_id']);
                 
+                if(!$cliente){
+                    error_log("AVISO (PedidoDAO): Cliente com ID {$row['cliente_id']} não encontrado para o pedido {$pedidoId}.");
+                    // Decide como lidar: talvez lançar exceção ou retornar pedido sem cliente?
+                    // Por ora, continuaremos, mas isso é um problema potencial.
+                }
+                error_log("DEBUG (PedidoDAO): Cliente associado ao pedido: " . ($cliente ? $cliente->getNome() : 'NÃO ENCONTRADO'));
+
                 $pedido = new Pedido(
                     $row['numero'],
                     $row['data_pedido'],
-                    $cliente,
+                    $cliente, // Pode ser null se o cliente não for encontrado
                     $row['data_entrega'],
                     $row['situacao']
                 );
-                
+                // Definir o ID do pedido no objeto Pedido, se sua classe Pedido tiver um setId().
+                // Se não, você pode precisar adicionar ou apenas usar o ID do $row onde necessário.
+                // Ex: $pedido->setId($row['id']); 
+
+                error_log("DEBUG (PedidoDAO): Objeto Pedido criado. Chamando carregarItensPedido.");
                 $this->carregarItensPedido($pedido, $pedidoId);
+                error_log("DEBUG (PedidoDAO): Itens do pedido após carregarItensPedido (dentro de buscarPorId): " . count($pedido->getItensPedido()) . " itens. Conteúdo: " . print_r($pedido->getItensPedido(), true));
                 
                 return $pedido;
             }
             
+            error_log("DEBUG (PedidoDAO): Pedido com ID {$pedidoId} não encontrado em buscarPorId.");
             return null;
         } catch (Exception $e) {
             error_log('Erro ao buscar pedido: ' . $e->getMessage());
@@ -146,25 +161,39 @@ class PedidoDAO {
      * Carrega os itens de um pedido
      */
     private function carregarItensPedido($pedido, $pedidoId) {
+        error_log("DEBUG (PedidoDAO): Entrando em carregarItensPedido para pedidoId: " . $pedidoId);
         $sql = "SELECT ip.id, ip.produto_id, ip.quantidade, ip.preco_unitario, ip.subtotal
                 FROM itens_pedido ip
                 WHERE ip.pedido_id = :pedido_id";
         $stmt = $this->pdo->prepare($sql);
         $stmt->bindParam(':pedido_id', $pedidoId);
         $stmt->execute();
+        error_log("DEBUG (PedidoDAO): Query de itens executada. RowCount: " . $stmt->rowCount());
         
+        $itensAdicionados = 0;
         while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
+            error_log("DEBUG (PedidoDAO): Processando item do BD: " . print_r($row, true));
             $produto = $this->produtoDAO->buscarPorId($row['produto_id']);
+            error_log("DEBUG (PedidoDAO): Produto buscado para item (Produto ID: {$row['produto_id']}): " . ($produto ? "Encontrado - " . $produto->getNome() : 'NÃO ENCONTRADO'));
             
-            $itemPedido = new ItemPedido(
-                $row['quantidade'],
-                $row['preco_unitario'],
-                $produto,
-                $pedido
-            );
-            
-            $pedido->getItensPedido()[] = $itemPedido;
+            if ($produto) {
+                $itemPedido = new ItemPedido(
+                    $row['quantidade'],
+                    $row['preco_unitario'],
+                    $produto,
+                    $pedido // Passando o objeto Pedido que está sendo construído
+                );
+                // Adicionar item ao pedido. 
+                // Se Pedido::getItensPedido() retorna o array por referência, isso funciona.
+                // Alternativamente, Pedido poderia ter um método addItem(ItemPedido $item).
+                $pedido->getItensPedido()[] = $itemPedido; 
+                $itensAdicionados++;
+                error_log("DEBUG (PedidoDAO): ItemPedido criado e adicionado ao objeto Pedido: " . print_r($itemPedido, true));
+            } else {
+                error_log("AVISO (PedidoDAO): Produto com ID {$row['produto_id']} não encontrado para o item do pedido {$pedidoId}. Item não será adicionado.");
+            }
         }
+        error_log("DEBUG (PedidoDAO): Saindo de carregarItensPedido. Total de itens efetivamente adicionados nesta chamada: " . $itensAdicionados . ". Total no objeto pedido agora: " . count($pedido->getItensPedido()));
     }
     
     /**

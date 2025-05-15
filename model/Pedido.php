@@ -35,7 +35,7 @@ class Pedido {
         return $this->cliente;
     }
     
-    public function getItensPedido() {
+    public function &getItensPedido() {
         return $this->itensPedido;
     }
     
