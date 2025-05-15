@@ -128,12 +128,6 @@ try {
                                         <p class="card-text fornecedor text-truncate" title="' . htmlspecialchars($produto['fornecedor_nome']) . '">
                                             ' . htmlspecialchars($produto['fornecedor_nome']) . '
                                         </p>
-                                        <div class="input-group mb-2">
-                                            <input type="number" id="quantidade-' . $produto['id'] . '" value="1" min="1" max="' . $produto['quantidade'] . '" class="form-control form-control-sm" style="width: 70px;">
-                                            <button type="button" class="btn btn-primary btn-sm" onclick="event.stopPropagation(); carrinho.adicionarItem(' . $produto['id'] . ', document.getElementById(\'quantidade-' . $produto['id'] . '\').value)">
-                                                <i class="bi bi-cart-plus"></i> Adicionar
-                                            </button>
-                                        </div>
                                     </div>
                                 </div>
                             </div>';
