@@ -224,6 +224,7 @@ try {
                                 <p><strong>Fornecedor:</strong> <span id="produtoFornecedor"></span></p>
                                 <p><strong>Estoque:</strong> <span id="produtoEstoque"></span></p>
                                 <p><strong>Preço:</strong> <span id="produtoPreco"></span></p>
+                                <div id="mensagemIndisponivelModal" class="alert alert-warning mt-2" style="display: none;">Produto indisponível no momento.</div>
                             </div>
                             <form id="editarForm" class="d-none">
                                 <input type="hidden" id="produtoId" name="id">
@@ -254,10 +255,9 @@ try {
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>
                     
-                    <!-- Botão Adicionar ao Carrinho (sempre visível) -->
-                    <div class="input-group me-auto" style="max-width: 180px;">
+                    <div id="containerAdicionarAoCarrinhoModal" class="input-group me-auto" style="max-width: 180px;">
                         <input type="number" id="quantidadeModalProduto" value="1" min="1" class="form-control form-control-sm">
-                        <button type="button" class="btn btn-success btn-sm" onclick="adicionarProdutoDoModalAoCarrinho()">
+                        <button type="button" id="btnAdicionarProdutoModal" class="btn btn-success btn-sm" onclick="adicionarProdutoDoModalAoCarrinho()">
                             <i class="bi bi-cart-plus"></i> Adicionar
                         </button>
                     </div>
