@@ -146,56 +146,6 @@ class ProdutoDAO {
         }
     }
 
-    // Busca produtos dinamicamente sem paginação
-    public function buscarProdutosDinamicos($termo, $itensPorPagina = null, $offset = null) {
-        try {
-            $termoPesquisa = '%' . strtolower($termo) . '%';
-            $sql = "SELECT p.id, p.nome, p.descricao, p.foto, p.fornecedor_id, p.estoque_id, p.usuario_id,
-                           e.quantidade, e.preco,
-                           f.nome AS fornecedor_nome
-                    FROM produtos p
-                    LEFT JOIN estoques e ON p.estoque_id = e.id
-                    LEFT JOIN fornecedores f ON p.fornecedor_id = f.id
-                    WHERE LOWER(p.nome) LIKE :termo OR LOWER(p.descricao) LIKE :termo
-                    ORDER BY p.id DESC";
-            
-            if ($itensPorPagina !== null && $offset !== null) {
-                $sql .= " LIMIT :itensPorPagina OFFSET :offset";
-            }
-            
-            $stmt = $this->pdo->prepare($sql);
-            $stmt->bindValue(':termo', $termoPesquisa, PDO::PARAM_STR);
-            
-            if ($itensPorPagina !== null && $offset !== null) {
-                $stmt->bindValue(':itensPorPagina', $itensPorPagina, PDO::PARAM_INT);
-                $stmt->bindValue(':offset', $offset, PDO::PARAM_INT);
-            }
-            
-            $stmt->execute();
-
-            $produtos = [];
-            while ($linha = $stmt->fetch(PDO::FETCH_ASSOC)) {
-                $produto = new Produto(
-                    $linha['nome'],
-                    $linha['descricao'],
-                    $linha['foto'],
-                    $linha['fornecedor_id'],
-                    $linha['usuario_id']
-                );
-                $produto->setId($linha['id']);
-                $produto->setEstoqueId($linha['estoque_id']);
-                $produto->setQuantidade($linha['quantidade']);
-                $produto->setPreco($linha['preco']);
-                $produto->fornecedor_nome = $linha['fornecedor_nome'] ?? 'Sem fornecedor';
-                $produtos[] = $produto;
-            }
-            return $produtos;
-        } catch (PDOException $e) {
-            throw $e;
-        }
-    }
-
-    // Conta produtos encontrados com base no termo
     public function contarProdutosBuscados($termo) {
         try {
             $termoPesquisa = '%' . strtolower($termo) . '%';
@@ -347,11 +297,10 @@ class ProdutoDAO {
         }
     }
 
-    public function buscarProdutos($termo = '') {
+    public function buscarProdutos($termo = '', $limite = null, $offset = null) {
         try {
             $termoPesquisa = '%' . strtolower($termo) . '%';
 
-            // Busca os produtos
             $sql = "SELECT p.id, p.nome, p.descricao, p.foto, p.fornecedor_id, p.estoque_id, p.usuario_id,
                            e.quantidade, e.preco,
                            f.nome AS fornecedor_nome
@@ -361,8 +310,18 @@ class ProdutoDAO {
                     WHERE LOWER(p.nome) LIKE :termo OR LOWER(p.descricao) LIKE :termo
                     ORDER BY p.id DESC";
             
+            if ($limite !== null && $offset !== null) {
+                $sql .= " LIMIT :limite OFFSET :offset";
+            }
+            
             $stmt = $this->pdo->prepare($sql);
             $stmt->bindValue(':termo', $termoPesquisa, PDO::PARAM_STR);
+
+            if ($limite !== null && $offset !== null) {
+                $stmt->bindValue(':limite', (int)$limite, PDO::PARAM_INT);
+                $stmt->bindValue(':offset', (int)$offset, PDO::PARAM_INT);
+            }
+
             $stmt->execute();
 
             $produtos = [];

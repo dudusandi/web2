@@ -2,160 +2,6 @@
 let currentProdutoId = null;
 let isEditando = false;
 let fornecedores = []; // Will be set by dashboard.php
-const itensPorPagina = 12;
-let paginaAtual = 1;
-let termoBusca = '';
-let isCarregando = false;
-let todosCarregados = false;
-let debounceTimer;
-
-// Função para carregar produtos
-function carregarProdutos(termo = '', pagina = 1, append = false) {
-    if (isCarregando || todosCarregados) return;
-    
-    isCarregando = true;
-    const produtosContainer = document.getElementById('produtosContainer');
-    const loading = document.getElementById('loading');
-    
-    loading.classList.remove('d-none');
-
-    fetch(`../controllers/buscar_produtos.php?termo=${encodeURIComponent(termo)}&pagina=${pagina}`)
-        .then(response => response.json())
-        .then(data => {
-            isCarregando = false;
-            loading.classList.add('d-none');
-
-            if (!data.success) {
-                mostrarMensagemErro(data.error || 'Erro ao carregar produtos');
-                return;
-            }
-
-            if (data.total === 0) {
-                mostrarMensagemVazia(termo);
-                return;
-            }
-
-            const produtosHtml = data.produtos.map(produto => criarCardProduto(produto)).join('');
-            
-            if (!append) {
-                produtosContainer.innerHTML = `
-                    <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 row-cols-xl-4 g-4">
-                        ${produtosHtml}
-                    </div>
-                `;
-            } else {
-                const row = produtosContainer.querySelector('.row');
-                row.insertAdjacentHTML('beforeend', produtosHtml);
-            }
-
-            atualizarEstadoPaginacao(data.total, pagina);
-        })
-        .catch(error => {
-            isCarregando = false;
-            loading.classList.add('d-none');
-            mostrarMensagemErro('Erro ao carregar produtos: ' + error.message);
-        });
-}
-
-// Função para criar o card do produto
-function criarCardProduto(produto) {
-    console.log('--- Criando Card para Produto ID:', produto.id, '---');
-    console.log('produto.quantidade recebido:', produto.quantidade);
-    console.log('typeof produto.quantidade:', typeof produto.quantidade);
-
-    const fotoUrl = produto.foto ? `data:image/jpeg;base64,${produto.foto}` : 'https://via.placeholder.com/200?text=Sem+Imagem';
-    const precoFormatado = (produto.preco ?? 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-    
-    const quantidadeProduto = Number(produto.quantidade);
-    console.log('quantidadeProduto (após Number()):', quantidadeProduto);
-
-    const estoqueDisponivel = quantidadeProduto > 0;
-    console.log('estoqueDisponivel (quantidadeProduto > 0):', estoqueDisponivel);
-
-    const textoEstoque = estoqueDisponivel ? `Estoque: ${quantidadeProduto}` : 'Indisponível';
-    console.log('textoEstoque final:', textoEstoque);
-
-    const classeEstoqueBaixo = estoqueDisponivel && quantidadeProduto <= 5 ? 'estoque-baixo' : '';
-    const classeIndisponivel = !estoqueDisponivel ? 'produto-indisponivel' : '';
-
-    let inputQuantidadeEBotaoAdicionar = '';
-    if (estoqueDisponivel) {
-        inputQuantidadeEBotaoAdicionar = `
-            <div class="input-group mb-2">
-                <input type="number" id="quantidade-${produto.id}" value="1" min="1" max="${quantidadeProduto}" class="form-control form-control-sm" style="width: 70px;" onclick="event.stopPropagation();">
-                <button type="button" class="btn btn-primary btn-sm" onclick="event.stopPropagation(); carrinho.adicionarItem(${produto.id}, document.getElementById('quantidade-${produto.id}').value)">
-                    <i class="bi bi-cart-plus"></i> Adicionar
-                </button>
-            </div>
-        `;
-    }
-
-    let cardOnClickAttribute = '';
-    if (estoqueDisponivel) {
-        cardOnClickAttribute = `onclick="mostrarDetalhes(${produto.id})"`;
-    } else {
-        // Para produtos indisponíveis, impedir o clique e a propagação do evento.
-        cardOnClickAttribute = `onclick="try { event.stopPropagation(); } catch(e){} return false;" style="cursor: not-allowed;"`;
-    }
-
-    return `
-        <div class="col">
-            <div class="card h-100 produto-card ${classeIndisponivel}" ${cardOnClickAttribute}>
-                <div class="card-img-container">
-                    <img src="${fotoUrl}" class="card-img-top" alt="Foto do produto" loading="lazy">
-                </div>
-                <div class="card-body">
-                    <h5 class="card-title text-truncate" title="${produto.nome}">${produto.nome}</h5>
-                    <p class="card-text">
-                        <span class="preco">R$ ${precoFormatado}</span>
-                        <span class="estoque ${classeEstoqueBaixo} ${!estoqueDisponivel ? 'text-danger fw-bold' : ''}">
-                            ${textoEstoque}
-                        </span>
-                    </p>
-                    <p class="card-text fornecedor text-truncate" title="${produto.fornecedor_nome || 'Sem fornecedor'}">
-                        ${produto.fornecedor_nome || 'Sem fornecedor'}
-                    </p>
-                    ${inputQuantidadeEBotaoAdicionar}
-                </div>
-            </div>
-        </div>
-    `;
-}
-
-// Função para mostrar mensagem de erro
-function mostrarMensagemErro(mensagem) {
-    document.getElementById('produtosContainer').innerHTML = `
-        <div class="empty-state">
-            <i class="bi bi-exclamation-triangle" style="font-size: 3rem;"></i>
-            <h3 class="mt-3">${mensagem}</h3>
-        </div>
-    `;
-    todosCarregados = true;
-    document.getElementById('sentinela').style.display = 'none';
-}
-
-// Função para mostrar mensagem quando não há produtos
-function mostrarMensagemVazia(termo) {
-    const mensagem = termo 
-        ? `Nenhum produto encontrado para "${termo}"`
-        : 'Nenhum produto cadastrado';
-    
-    document.getElementById('produtosContainer').innerHTML = `
-        <div class="empty-state">
-            <i class="bi bi-box-seam" style="font-size: 3rem;"></i>
-            <h3 class="mt-3">${mensagem}</h3>
-        </div>
-    `;
-    todosCarregados = true;
-    document.getElementById('sentinela').style.display = 'none';
-}
-
-// Função para atualizar estado da paginação
-function atualizarEstadoPaginacao(total, pagina) {
-    todosCarregados = total <= pagina * itensPorPagina;
-    document.getElementById('sentinela').style.display = todosCarregados ? 'none' : 'block';
-    paginaAtual = pagina;
-}
 
 // Função para mostrar detalhes do produto
 function mostrarDetalhes(id) {
@@ -215,11 +61,6 @@ function mostrarDetalhes(id) {
                 if (btnSalvar) btnSalvar.classList.add('d-none'); 
             } else {
                 // Para não-admins, esses botões não estão no DOM ou devem permanecer escondidos
-                // Nenhuma ação necessária aqui se o PHP já os removeu do DOM.
-                // Se estivessem no DOM e precisassem ser escondidos, faríamos:
-                // if (btnEditar) btnEditar.classList.add('d-none');
-                // if (btnExcluir) btnExcluir.classList.add('d-none');
-                // if (btnSalvar) btnSalvar.classList.add('d-none');
             }
 
             // Resetar estado do modal
@@ -264,7 +105,6 @@ function salvarProduto() {
         .then(response => response.json())
         .then(data => {
             if (data.success) {
-                // Fechar o modal e remover o backdrop
                 const modal = bootstrap.Modal.getInstance(document.getElementById('produtoModal'));
                 modal.hide();
                 document.body.classList.remove('modal-open');
@@ -272,8 +112,6 @@ function salvarProduto() {
                 if (backdrop) {
                     backdrop.remove();
                 }
-                
-                // Recarregar a página
                 window.location.reload();
             } else {
                 document.getElementById('mensagemErroTexto').textContent = data.error;
@@ -305,9 +143,6 @@ function adicionarProdutoDoModalAoCarrinho() {
 
     if (currentProdutoId && quantidade > 0) {
         carrinho.adicionarItem(currentProdutoId, quantidade);
-        // Opcional: fechar o modal após adicionar
-        // const modal = bootstrap.Modal.getInstance(document.getElementById('produtoModal'));
-        // modal.hide();
     } else {
         alert('Por favor, insira uma quantidade válida.');
     }
@@ -315,41 +150,35 @@ function adicionarProdutoDoModalAoCarrinho() {
 
 // Configurar eventos
 document.addEventListener('DOMContentLoaded', () => {
-    // Configurar formulário de cadastro
     const formCadastro = document.getElementById('formCadastroProduto');
-    formCadastro.addEventListener('submit', function(e) {
-        e.preventDefault();
-        
-        const formData = new FormData(this);
-        
-        fetch('../controllers/cadastrar_produto.php', {
-            method: 'POST',
-            body: formData
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                // Fechar modal
-                const modal = bootstrap.Modal.getInstance(document.getElementById('cadastroProdutoModal'));
-                modal.hide();
-                
-                // Limpar formulário
-                formCadastro.reset();
-                
-                // Recarregar a página
-                window.location.reload();
-                
-                // Mostrar mensagem de sucesso
-                alert('Produto cadastrado com sucesso!');
-            } else {
-                alert(data.error || 'Erro ao cadastrar produto');
-            }
-        })
-        .catch(error => {
-            console.error('Erro:', error);
-            alert('Erro ao cadastrar produto');
+    // Verificar se o formulário de cadastro existe antes de adicionar o listener
+    if (formCadastro) {
+        formCadastro.addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const formData = new FormData(this);
+            
+            fetch('../controllers/cadastrar_produto.php', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    const modal = bootstrap.Modal.getInstance(document.getElementById('cadastroProdutoModal'));
+                    modal.hide();
+                    formCadastro.reset();
+                    window.location.reload();
+                } else {
+                    alert(data.error || 'Erro ao cadastrar produto');
+                }
+            })
+            .catch(error => {
+                console.error('Erro:', error);
+                alert('Erro ao cadastrar produto');
+            });
         });
-    });
+    }
 });
 
 function exibirProduto(produto) {

@@ -100,15 +100,26 @@ try {
         <div id="produtosContainer">
             <?php
             try {
+                $itensPorPagina = 8;
+                $paginaAtual = isset($_GET['pagina']) ? (int)$_GET['pagina'] : 1;
+                if ($paginaAtual < 1) $paginaAtual = 1;
+                $offset = ($paginaAtual - 1) * $itensPorPagina;
+
                 $termo = $_GET['termo'] ?? '';
-                $produtos = $produtoDao->buscarProdutos($termo);
+                
+                // Buscar produtos paginados
+                $produtos = $produtoDao->buscarProdutos($termo, $itensPorPagina, $offset);
+                // Contar total de produtos para o termo (sem paginação)
+                $totalProdutos = $produtoDao->contarProdutosBuscados($termo);
+                $totalPaginas = ceil($totalProdutos / $itensPorPagina);
+
                 if (empty($produtos)) {
                     echo '<div class="empty-state">
                             <i class="bi bi-box-seam" style="font-size: 3rem;"></i>
                             <h3 class="mt-3">' . ($termo ? "Nenhum produto encontrado para \"$termo\"" : "Nenhum produto cadastrado") . '</h3>
                           </div>';
                 } else {
-                    echo '<div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 row-cols-xl-4 g-4">';
+                    echo '<div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 row-cols-xl-4 g-4">'; // Mantendo 4 colunas para layout responsivo, mas serão no máximo 8 itens.
                     foreach ($produtos as $produto) {
                         $fotoUrl = $produto['foto'] ? 'data:image/jpeg;base64,' . base64_encode($produto['foto']) : 'https://via.placeholder.com/200?text=Sem+Imagem';
                         $precoFormatado = number_format($produto['preco'], 2, ',', '.');
@@ -142,6 +153,41 @@ try {
                             </div>';
                     }
                     echo '</div>';
+
+                    // Renderizar controles de paginação
+                    if ($totalPaginas > 1) {
+                        echo '<nav aria-label="Paginação de produtos" class="mt-4">';
+                        echo '<ul class="pagination justify-content-center">';
+
+                        // Botão Anterior
+                        if ($paginaAtual > 1) {
+                            $linkAnterior = '?pagina=' . ($paginaAtual - 1) . ($termo ? '&termo=' . urlencode($termo) : '');
+                            echo '<li class="page-item"><a class="page-link" href="' . $linkAnterior . '">Anterior</a></li>';
+                        } else {
+                            echo '<li class="page-item disabled"><span class="page-link">Anterior</span></li>';
+                        }
+
+                        // Links das páginas
+                        for ($i = 1; $i <= $totalPaginas; $i++) {
+                            $linkPagina = '?pagina=' . $i . ($termo ? '&termo=' . urlencode($termo) : '');
+                            if ($i == $paginaAtual) {
+                                echo '<li class="page-item active" aria-current="page"><span class="page-link">' . $i . '</span></li>';
+                            } else {
+                                echo '<li class="page-item"><a class="page-link" href="' . $linkPagina . '">' . $i . '</a></li>';
+                            }
+                        }
+
+                        // Botão Próximo
+                        if ($paginaAtual < $totalPaginas) {
+                            $linkProximo = '?pagina=' . ($paginaAtual + 1) . ($termo ? '&termo=' . urlencode($termo) : '');
+                            echo '<li class="page-item"><a class="page-link" href="' . $linkProximo . '">Próximo</a></li>';
+                        } else {
+                            echo '<li class="page-item disabled"><span class="page-link">Próximo</span></li>';
+                        }
+
+                        echo '</ul>';
+                        echo '</nav>';
+                    }
                 }
             } catch (Exception $e) {
                 echo '<div class="alert alert-danger">Erro ao carregar produtos: ' . htmlspecialchars($e->getMessage()) . '</div>';
