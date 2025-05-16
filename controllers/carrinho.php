@@ -246,23 +246,18 @@ if (!defined('CARRINHO_LOGIC_ONLY')) {
                 $resposta = atualizarQuantidade($produtoId, $quantidade);
                 break;
             case 'limpar':
-                limparCarrinho(); // Pode precisar retornar JSON
-                $resposta = ['success' => true, 'mensagem' => 'Carrinho limpo com sucesso.']; // Assumindo sucesso
+                limparCarrinho();
+                $resposta = ['success' => true, 'mensagem' => 'Carrinho limpo com sucesso.'];
                 break;
             default:
-                $resposta = ['success' => false, 'erro' => 'Ação desconhecida.'];
+                // Ação desconhecida ou não especificada
+                http_response_code(400); // Bad Request
+                $resposta = ['success' => false, 'erro' => 'Ação do carrinho desconhecida ou inválida.'];
         }
 
-        // Se a resposta não for nula (ou seja, uma ação que retorna JSON, como 'adicionar')
-        if ($resposta !== null) {
-            header('Content-Type: application/json');
-            echo json_encode($resposta);
-            exit;
-        }
-
-        // Redirecionar de volta para a página anterior ou para o carrinho (comportamento antigo para ações não AJAX)
-        $redirect = isset($_POST['redirect']) ? $_POST['redirect'] : 'carrinho.php';
-        header('Location: ' . $redirect);
+        // Todas as ações POST devem retornar JSON
+        header('Content-Type: application/json');
+        echo json_encode($resposta);
         exit;
     }
 

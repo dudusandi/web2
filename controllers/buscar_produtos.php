@@ -37,27 +37,49 @@ try {
     error_log("Produtos encontrados: " . count($produtos));
 
     $produtosArray = [];
-    foreach ($produtos as $produto) {
-        try {
-            // Converte o recurso da foto em string antes de codificar
-            $foto = $produto->getFoto();
-            if ($foto && is_resource($foto)) {
-                $foto = stream_get_contents($foto);
-            }
+    if (isset($_GET['ids'])) {
+        // Se buscou por IDs, $produtos é um array de OBJETOS Produto
+        foreach ($produtos as $produto) { // $produto é um objeto Produto
+            try {
+                $foto = $produto->getFoto();
+                if ($foto && is_resource($foto)) {
+                    $foto = stream_get_contents($foto);
+                }
 
-            $produtosArray[] = [
-                'id' => $produto->getId(),
-                'nome' => $produto->getNome(),
-                'descricao' => $produto->getDescricao(),
-                'foto' => $foto ? base64_encode($foto) : null,
-                'fornecedor_id' => $produto->getFornecedorId(),
-                'quantidade' => $produto->getQuantidade(),
-                'preco' => $produto->getPreco(),
-                'fornecedor_nome' => $produto->fornecedor_nome
-            ];
-        } catch (Exception $e) {
-            error_log("Erro ao processar produto: " . $e->getMessage());
-            continue;
+                $produtosArray[] = [
+                    'id' => $produto->getId(),
+                    'nome' => $produto->getNome(),
+                    'descricao' => $produto->getDescricao(),
+                    'foto' => $foto ? base64_encode($foto) : null,
+                    'fornecedor_id' => $produto->getFornecedorId(),
+                    'quantidade' => $produto->getQuantidade(),
+                    'preco' => $produto->getPreco(),
+                    'fornecedor_nome' => $produto->fornecedor_nome // Propriedade pública definida no DAO
+                ];
+            } catch (Exception $e) {
+                error_log("Erro ao processar produto (objeto): " . $e->getMessage());
+                continue;
+            }
+        }
+    } else {
+        // Se buscou por termo, $produtos é um array de ARRAYS associativos do ProdutoDAO->buscarProdutos()
+        foreach ($produtos as $produtoData) { // $produtoData é um array
+            try {
+                $produtosArray[] = [
+                    'id' => $produtoData['id'],
+                    'nome' => $produtoData['nome'],
+                    'descricao' => $produtoData['descricao'],
+                    // 'foto' em $produtoData já é uma string (stream_get_contents feito no DAO)
+                    'foto' => $produtoData['foto'] ? base64_encode($produtoData['foto']) : null,
+                    'fornecedor_id' => $produtoData['fornecedor_id'],
+                    'quantidade' => $produtoData['quantidade'],
+                    'preco' => $produtoData['preco'],
+                    'fornecedor_nome' => $produtoData['fornecedor_nome']
+                ];
+            } catch (Exception $e) {
+                error_log("Erro ao processar produto (array): " . $e->getMessage());
+                continue;
+            }
         }
     }
 

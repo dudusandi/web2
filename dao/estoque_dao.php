@@ -111,17 +111,5 @@ class EstoqueDAO {
             throw $e;
         }
     }
-    public function remover($id) {
-        try {
-            $sql = "DELETE FROM estoques WHERE id = :id";
-            $stmt = $this->pdo->prepare($sql);
-            $stmt->bindParam(":id", $id);
-            $stmt->execute();
-
-            return true;
-        } catch (PDOException $e) {
-            throw new Exception("Erro ao remover estoque: " . $e->getMessage());
-        }
-    }
 }
 ?>

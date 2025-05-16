@@ -61,48 +61,6 @@ class ProdutoDAO {
         }
     }
 
-    // Lista todos os produtos sem paginação
-    public function listarTodosProdutos($itensPorPagina = null, $offset = null) {
-        try {
-            $sql = "SELECT p.id, p.nome, p.descricao, p.foto, p.fornecedor_id, p.estoque_id, p.usuario_id,
-                           e.quantidade, e.preco,
-                           f.nome AS fornecedor_nome
-                    FROM produtos p
-                    LEFT JOIN estoques e ON p.estoque_id = e.id
-                    LEFT JOIN fornecedores f ON p.fornecedor_id = f.id
-                    ORDER BY p.id DESC";
-            if ($itensPorPagina !== null && $offset !== null) {
-                $sql .= " LIMIT :itensPorPagina OFFSET :offset";
-            }
-            $stmt = $this->pdo->prepare($sql);
-            if ($itensPorPagina !== null && $offset !== null) {
-                $stmt->bindValue(':itensPorPagina', $itensPorPagina, PDO::PARAM_INT);
-                $stmt->bindValue(':offset', $offset, PDO::PARAM_INT);
-            }
-            $stmt->execute();
-    
-            $produtos = [];
-            while ($linha = $stmt->fetch(PDO::FETCH_ASSOC)) {
-                $produto = new Produto(
-                    $linha['nome'],
-                    $linha['descricao'],
-                    $linha['foto'],
-                    $linha['fornecedor_id'],
-                    $linha['usuario_id']
-                );
-                $produto->setId($linha['id']);
-                $produto->setEstoqueId($linha['estoque_id']);
-                $produto->setQuantidade($linha['quantidade']);
-                $produto->setPreco($linha['preco']);
-                $produto->fornecedor_nome = $linha['fornecedor_nome'] ?? 'Sem fornecedor';
-                $produtos[] = $produto;
-            }
-            return $produtos;
-        } catch (PDOException $e) {
-            throw $e;
-        }
-    }
-
     // Verifica se o nome do produto já existe
     public function nomeExiste($nome, $excludeId = null) {
         try {
@@ -129,18 +87,6 @@ class ProdutoDAO {
             $sql = "SELECT COUNT(*) FROM produtos";
             $stmt = $this->pdo->query($sql);
             return (int)$stmt->fetchColumn();
-        } catch (PDOException $e) {
-            throw $e;
-        }
-    }
-
-    // Excluir produto
-    public function excluir($id) {
-        try {
-            $sql = "DELETE FROM produtos WHERE id = :id";
-            $stmt = $this->pdo->prepare($sql);
-            $stmt->bindValue(':id', $id, PDO::PARAM_INT);
-            return $stmt->execute();
         } catch (PDOException $e) {
             throw $e;
         }
@@ -273,26 +219,44 @@ class ProdutoDAO {
             if ($produto) {
                 // Remove a foto, se existir
                 if ($produto->getFoto()) {
-                    $caminhoFoto = __DIR__ . '/../../public/uploads/imagens/' . $produto->getFoto();
-                    if (file_exists($caminhoFoto)) {
-                        unlink($caminhoFoto);
-                    }
+                    // O caminho da foto pode precisar de ajuste dependendo da estrutura de pastas
+                    // Assumindo que getFoto() retorna apenas o nome do arquivo.
+                    // Se getFoto() retornar um blob, esta parte de unlink não se aplica diretamente.
+                    // O código original tinha: $caminhoFoto = __DIR__ . '/../../public/uploads/imagens/' . $produto->getFoto();
+                    // Se a foto é um blob no banco, não há arquivo físico para deletar assim.
+                    // Vamos manter a lógica de apagar arquivo se getFoto() for um nome de arquivo.
+                    // Contudo, o código atual para 'foto' no método cadastrarProduto e atualizarProduto usa PDO::PARAM_LOB,
+                    // sugerindo que a foto é armazenada como blob. Nesse caso, unlink não é necessário aqui.
                 }
 
                 $estoqueId = $produto->getEstoqueId();
-                if ($estoqueId) {
-                    $this->estoqueDAO->remover($estoqueId);
-                }
 
-                $sql = "DELETE FROM produtos WHERE id = :id";
-                $stmt = $this->pdo->prepare($sql);
-                $stmt->bindValue(':id', $id, PDO::PARAM_INT);
-                $stmt->execute();
+                // Deleta o produto primeiro para liberar a FK se houver ON DELETE RESTRICT
+                // Ou para evitar problemas se a exclusão do estoque falhar por algum motivo.
+                $sqlDeleteProduto = "DELETE FROM produtos WHERE id = :id";
+                $stmtDeleteProduto = $this->pdo->prepare($sqlDeleteProduto);
+                $stmtDeleteProduto->bindValue(':id', $id, PDO::PARAM_INT);
+                $stmtDeleteProduto->execute();
+
+                if ($estoqueId) {
+                    // Verificar se o estoque ainda é referenciado por outros produtos
+                    $sqlCheckEstoque = "SELECT COUNT(*) FROM produtos WHERE estoque_id = :estoque_id";
+                    $stmtCheckEstoque = $this->pdo->prepare($sqlCheckEstoque);
+                    $stmtCheckEstoque->bindValue(':estoque_id', $estoqueId, PDO::PARAM_INT);
+                    $stmtCheckEstoque->execute();
+                    $contagemReferencias = $stmtCheckEstoque->fetchColumn();
+
+                    if ($contagemReferencias == 0) {
+                        $this->estoqueDAO->excluir($estoqueId); 
+                    }
+                }
 
                 return true;
             }
             throw new Exception("Produto não encontrado");
         } catch (Exception $e) {
+            // Se a transação for controlada externamente, não fazer rollback aqui.
+            // O controller excluir_produto.php já controla a transação.
             throw $e;
         }
     }
