@@ -19,6 +19,7 @@ function mostrarDetalhes(id) {
 
             // Elementos de visualização
             document.getElementById('produtoNome').textContent = produto.nome;
+            document.getElementById('produtoCodigo').textContent = produto.id;
             document.getElementById('produtoDescricao').textContent = produto.descricao || 'Nenhuma';
             document.getElementById('produtoFornecedor').textContent = produto.fornecedor_nome || 'Sem fornecedor';
             document.getElementById('produtoEstoque').textContent = estoqueProduto > 0 ? estoqueProduto : 'Indisponível';

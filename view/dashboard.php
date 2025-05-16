@@ -220,6 +220,7 @@ try {
                         </div>
                         <div class="col-md-8">
                             <div id="visualizacao">
+                                <p><strong>Código:</strong> <span id="produtoCodigo"></span></p>
                                 <p><strong>Descrição:</strong> <span id="produtoDescricao"></span></p>
                                 <p><strong>Fornecedor:</strong> <span id="produtoFornecedor"></span></p>
                                 <p><strong>Estoque:</strong> <span id="produtoEstoque"></span></p>
