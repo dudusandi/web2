@@ -26,7 +26,7 @@ class PedidoDAO {
                 throw new Exception("Nenhum item válido para o pedido");
             }
             
-            $numero = 'P' . date('ymdHis') . rand(10, 99);
+            $numero = 'P' . date(format: 'dmyHis');
 
             $this->pdo->beginTransaction();
 
