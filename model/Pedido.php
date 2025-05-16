@@ -6,13 +6,15 @@ class Pedido {
     private $situacao; 
     private $cliente;
     private $itensPedido = array();
+    private $valor_total;
     
-    public function __construct($numero, $dataPedido, $cliente, $dataEntrega = null, $situacao = "NOVO") {
+    public function __construct($numero, $dataPedido, $cliente, $valor_total = 0.0, $dataEntrega = null, $situacao = "NOVO") {
         $this->numero = $numero;
         $this->dataPedido = $dataPedido;
+        $this->cliente = $cliente;
+        $this->valor_total = (float)$valor_total;
         $this->dataEntrega = $dataEntrega;
         $this->situacao = $situacao;
-        $this->cliente = $cliente;
     }
     
     public function getNumero() {
@@ -37,6 +39,10 @@ class Pedido {
     
     public function &getItensPedido() {
         return $this->itensPedido;
+    }
+    
+    public function getValorTotal() {
+        return $this->valor_total;
     }
     
     public function setNumero($numero) {

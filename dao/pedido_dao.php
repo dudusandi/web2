@@ -136,16 +136,19 @@ class PedidoDAO {
                 $cliente = $this->clienteDAO->buscarPorId($row['cliente_id']);
                 
                 if(!$cliente){
+
                 }
 
                 $pedido = new Pedido(
                     $row['numero'],
                     $row['data_pedido'],
                     $cliente, 
+                    $row['valor_total'],      // Passando o valor_total aqui
                     $row['data_entrega'],
                     $row['situacao']
                 );
-                $this->carregarItensPedido($pedido, $pedidoId);
+
+                $this->carregarItensPedido($pedido, $row['id']); // Passar o ID do pedido para carregarItensPedido
                 
                 return $pedido;
             }
@@ -174,11 +177,13 @@ class PedidoDAO {
                     $row['quantidade'],
                     $row['preco_unitario'],
                     $produto,
-                    $pedido 
+                    $pedido,
+                    $row['subtotal']
                 );
                 $pedido->getItensPedido()[] = $itemPedido; 
                 $itensAdicionados++;
             } else {
+                error_log("Produto com ID " . $row['produto_id'] . " não encontrado para o item do pedido " . $row['id'] . " do pedido ID " . $pedidoId);
             }
         }
     }
@@ -228,26 +233,48 @@ class PedidoDAO {
     }
 
 
-    public function listarTodosPedidos($pagina = 1, $itensPorPagina = 10) {
+    public function listarTodosPedidos($pagina = 1, $itensPorPagina = 10, $termoBusca = null) {
         try {
             $offset = ($pagina - 1) * $itensPorPagina;
 
-            $sql = "SELECT p.id, p.numero, p.data_pedido, p.situacao, p.valor_total, 
+            $sqlBase = "FROM pedidos p JOIN clientes c ON p.cliente_id = c.id";
+            $condicoes = [];
+            $params = [];
+
+            if (!empty($termoBusca)) {
+                $condicoes[] = "(LOWER(p.numero) LIKE :termoBusca OR LOWER(c.nome) LIKE :termoBusca)";
+                $params[':termoBusca'] = '%' . strtolower($termoBusca) . '%';
+            }
+
+            $sqlWhere = "";
+            if (count($condicoes) > 0) {
+                $sqlWhere = " WHERE " . implode(" AND ", $condicoes);
+            }
+
+            $sql = "SELECT p.id, p.numero, p.data_pedido, p.situacao, p.valor_total,
                            c.nome as nome_cliente, c.email as email_cliente
-                    FROM pedidos p
-                    JOIN clientes c ON p.cliente_id = c.id
+                    $sqlBase
+                    $sqlWhere
                     ORDER BY p.data_pedido DESC
                     LIMIT :limit OFFSET :offset";
             
             $stmt = $this->pdo->prepare($sql);
             $stmt->bindValue(':limit', $itensPorPagina, PDO::PARAM_INT);
             $stmt->bindValue(':offset', $offset, PDO::PARAM_INT);
+            foreach ($params as $key => $value) {
+                $stmt->bindValue($key, $value);
+            }
             $stmt->execute();
             
             $pedidos = $stmt->fetchAll(PDO::FETCH_ASSOC);
             
-            $sqlTotal = "SELECT COUNT(*) FROM pedidos";
-            $totalPedidos = $this->pdo->query($sqlTotal)->fetchColumn();
+            $sqlTotal = "SELECT COUNT(p.id) $sqlBase $sqlWhere";
+            $stmtTotal = $this->pdo->prepare($sqlTotal);
+            foreach ($params as $key => $value) { 
+                $stmtTotal->bindValue($key, $value);
+            }
+            $stmtTotal->execute();
+            $totalPedidos = $stmtTotal->fetchColumn();
             
             return [
                 'pedidos' => $pedidos,
@@ -257,7 +284,8 @@ class PedidoDAO {
             ];
             
         } catch (Exception $e) {
-            throw $e;
+            error_log("Erro em listarTodosPedidos (DAO): " . $e->getMessage());
+            throw $e; 
         }
     }
 }

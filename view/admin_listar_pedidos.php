@@ -14,14 +14,16 @@ $tipoMensagem = $_GET['tipo_mensagem'] ?? '';
 
 $paginaAtual = isset($_GET['pagina']) ? max(1, (int)$_GET['pagina']) : 1;
 $itensPorPagina = 15; // Pode ajustar conforme necessário
+$termoBusca = $_GET['busca'] ?? ''; // Novo: Captura o termo de busca
 
 $pdo = null;
 try {
     $pdo = Database::getConnection();
     $pedidoDao = new PedidoDAO($pdo);
-    $resultado = $pedidoDao->listarTodosPedidos($paginaAtual, $itensPorPagina);
+    // Modificado: Passar termo de busca para o DAO
+    $resultado = $pedidoDao->listarTodosPedidos($paginaAtual, $itensPorPagina, $termoBusca);
     $pedidos = $resultado['pedidos'];
-    $totalPedidos = $resultado['total'];
+    $totalPedidos = $resultado['total']; // Este total agora reflete a busca
     $totalPaginas = ceil($totalPedidos / $itensPorPagina);
 } catch (Exception $e) {
     error_log("Erro ao buscar todos os pedidos (admin): " . $e->getMessage());
@@ -88,6 +90,17 @@ function badgeSituacao($situacao) {
     <div class="container mt-4">
         <h2>Todos os Pedidos (<?= $totalPedidos ?>)</h2>
 
+        <!-- Formulário de Busca Adicionado -->
+        <form method="GET" action="admin_listar_pedidos.php" class="mb-3">
+            <div class="input-group">
+                <input type="text" name="busca" class="form-control" placeholder="Buscar por Nº Pedido ou Nome do Cliente" value="<?= htmlspecialchars($termoBusca) ?>">
+                <button class="btn btn-primary" type="submit"><i class="bi bi-search"></i> Buscar</button>
+                 <?php if (!empty($termoBusca)): ?>
+                    <a href="admin_listar_pedidos.php" class="btn btn-outline-secondary" title="Limpar busca"><i class="bi bi-x-lg"></i> Limpar</a>
+                <?php endif; ?>
+            </div>
+        </form>
+
         <?php if (!empty($mensagem)): ?>
             <div class="alert alert-<?= $tipoMensagem === 'erro' ? 'danger' : 'success' ?> alert-dismissible fade show" role="alert">
                 <?= htmlspecialchars($mensagem) ?>
@@ -127,7 +140,6 @@ function badgeSituacao($situacao) {
                                     <a href="admin_detalhes_pedido.php?id=<?= $pedido['id'] ?>" class="btn btn-info btn-sm" title="Ver Detalhes">
                                         <i class="bi bi-eye-fill"></i>
                                     </a>
-                                    <!-- Adicionar mais ações se necessário, ex: mudar situação -->
                                 </td>
                             </tr>
                         <?php endforeach; ?>
@@ -141,7 +153,7 @@ function badgeSituacao($situacao) {
                     <ul class="pagination justify-content-center">
                         <?php for ($i = 1; $i <= $totalPaginas; $i++): ?>
                             <li class="page-item <?= ($i == $paginaAtual) ? 'active' : '' ?>">
-                                <a class="page-link" href="?pagina=<?= $i ?>"><?= $i ?></a>
+                                <a class="page-link" href="?pagina=<?= $i ?>&busca=<?= urlencode($termoBusca) ?>"><?= $i ?></a>
                             </li>
                         <?php endfor; ?>
                     </ul>
