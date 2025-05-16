@@ -1,6 +1,6 @@
 <?php
 require_once __DIR__ . '/../config/database.php';
-require_once __DIR__ . '/../model/Pedido.php';
+require_once __DIR__ . '/../model/pedido.php';
 require_once __DIR__ . '/../model/item_pedido.php';
 require_once __DIR__ . '/../dao/cliente_dao.php';
 require_once __DIR__ . '/../dao/produto_dao.php';
