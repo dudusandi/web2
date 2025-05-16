@@ -42,7 +42,8 @@ class Carrinho {
             quantidade = parseInt(quantidade);
 
             if (isNaN(produtoId) || isNaN(quantidade) || quantidade <= 0) {
-                throw new Error('Parâmetros inválidos');
+                this.mostrarNotificacao('Quantidade inválida.', true);
+                return;
             }
 
             const formData = new FormData();
@@ -52,19 +53,30 @@ class Carrinho {
 
             const response = await fetch('../controllers/carrinho.php', {
                 method: 'POST',
-                body: formData
+                body: formData,
+                headers: {
+                    'Accept': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
             });
 
-            if (!response.ok) {
-                throw new Error('Erro ao adicionar produto');
+            const data = await response.json();
+
+            if (data.success) {
+                await this.carregarCarrinho();
+                this.mostrarNotificacao(data.mensagem || 'Produto adicionado ao carrinho!');
+                this.notificarMudanca();
+            } else {
+                if (data.login_requerido) {
+                    this.mostrarNotificacao('Você precisa estar logado para adicionar produtos ao carrinho.', true);
+                } else {
+                    this.mostrarNotificacao(data.erro || 'Erro ao adicionar produto ao carrinho.', true);
+                }
             }
 
-            await this.carregarCarrinho();
-            this.mostrarNotificacao('Produto adicionado ao carrinho!');
-            this.notificarMudanca();
         } catch (error) {
             console.error('Erro ao adicionar item:', error);
-            this.mostrarNotificacao('Erro ao adicionar produto ao carrinho!', true);
+            this.mostrarNotificacao('Ocorreu um erro na comunicação com o servidor ao tentar adicionar o produto.', true);
         }
     }
 
@@ -103,9 +115,10 @@ class Carrinho {
             quantidade = parseInt(quantidade);
 
             if (isNaN(produtoId) || isNaN(quantidade)) {
-                throw new Error('Parâmetros inválidos');
+                this.mostrarNotificacao('Parâmetros inválidos para atualizar quantidade.', true);
+                return;
             }
-
+            
             const formData = new FormData();
             formData.append('acao', 'atualizar');
             formData.append('produto_id', produtoId);
@@ -113,18 +126,30 @@ class Carrinho {
 
             const response = await fetch('../controllers/carrinho.php', {
                 method: 'POST',
-                body: formData
+                body: formData,
+                headers: {
+                    'Accept': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
             });
 
-            if (!response.ok) {
-                throw new Error('Erro ao atualizar quantidade');
+            const data = await response.json();
+
+            if (data.success) {
+                this.mostrarNotificacao(data.mensagem || 'Quantidade atualizada com sucesso!');
+                await this.carregarCarrinho();
+                this.notificarMudanca();
+            } else {
+                this.mostrarNotificacao(data.erro || 'Erro ao atualizar quantidade.', true);
+                await this.carregarCarrinho();
+                this.notificarMudanca();
             }
 
-            await this.carregarCarrinho();
-            this.notificarMudanca();
         } catch (error) {
             console.error('Erro ao atualizar quantidade:', error);
-            this.mostrarNotificacao('Erro ao atualizar quantidade!', true);
+            this.mostrarNotificacao('Erro de comunicação ao tentar atualizar a quantidade.', true);
+            await this.carregarCarrinho();
+            this.notificarMudanca();
         }
     }
 

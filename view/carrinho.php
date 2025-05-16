@@ -205,7 +205,7 @@ try {
                                     <input type="number" 
                                            value="${produto.quantidade}" 
                                            min="1" 
-                                           max="100"
+                                           max="${produto.estoque_disponivel || 1}"
                                            onchange="carrinho.atualizarQuantidade(${produto.id}, this.value)"
                                            class="form-control form-control-sm" 
                                            style="width: 80px;">
