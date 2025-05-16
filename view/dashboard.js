@@ -59,12 +59,48 @@ function carregarProdutos(termo = '', pagina = 1, append = false) {
 
 // Função para criar o card do produto
 function criarCardProduto(produto) {
+    console.log('--- Criando Card para Produto ID:', produto.id, '---');
+    console.log('produto.quantidade recebido:', produto.quantidade);
+    console.log('typeof produto.quantidade:', typeof produto.quantidade);
+
     const fotoUrl = produto.foto ? `data:image/jpeg;base64,${produto.foto}` : 'https://via.placeholder.com/200?text=Sem+Imagem';
     const precoFormatado = (produto.preco ?? 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
     
+    const quantidadeProduto = Number(produto.quantidade);
+    console.log('quantidadeProduto (após Number()):', quantidadeProduto);
+
+    const estoqueDisponivel = quantidadeProduto > 0;
+    console.log('estoqueDisponivel (quantidadeProduto > 0):', estoqueDisponivel);
+
+    const textoEstoque = estoqueDisponivel ? `Estoque: ${quantidadeProduto}` : 'Indisponível';
+    console.log('textoEstoque final:', textoEstoque);
+
+    const classeEstoqueBaixo = estoqueDisponivel && quantidadeProduto <= 5 ? 'estoque-baixo' : '';
+    const classeIndisponivel = !estoqueDisponivel ? 'produto-indisponivel' : '';
+
+    let inputQuantidadeEBotaoAdicionar = '';
+    if (estoqueDisponivel) {
+        inputQuantidadeEBotaoAdicionar = `
+            <div class="input-group mb-2">
+                <input type="number" id="quantidade-${produto.id}" value="1" min="1" max="${quantidadeProduto}" class="form-control form-control-sm" style="width: 70px;" onclick="event.stopPropagation();">
+                <button type="button" class="btn btn-primary btn-sm" onclick="event.stopPropagation(); carrinho.adicionarItem(${produto.id}, document.getElementById('quantidade-${produto.id}').value)">
+                    <i class="bi bi-cart-plus"></i> Adicionar
+                </button>
+            </div>
+        `;
+    }
+
+    let cardOnClickAttribute = '';
+    if (estoqueDisponivel) {
+        cardOnClickAttribute = `onclick="mostrarDetalhes(${produto.id})"`;
+    } else {
+        // Para produtos indisponíveis, impedir o clique e a propagação do evento.
+        cardOnClickAttribute = `onclick="try { event.stopPropagation(); } catch(e){} return false;" style="cursor: not-allowed;"`;
+    }
+
     return `
         <div class="col">
-            <div class="card h-100 produto-card" onclick="mostrarDetalhes(${produto.id})">
+            <div class="card h-100 produto-card ${classeIndisponivel}" ${cardOnClickAttribute}>
                 <div class="card-img-container">
                     <img src="${fotoUrl}" class="card-img-top" alt="Foto do produto" loading="lazy">
                 </div>
@@ -72,19 +108,14 @@ function criarCardProduto(produto) {
                     <h5 class="card-title text-truncate" title="${produto.nome}">${produto.nome}</h5>
                     <p class="card-text">
                         <span class="preco">R$ ${precoFormatado}</span>
-                        <span class="estoque ${produto.quantidade <= 5 ? 'estoque-baixo' : ''}">
-                            Estoque: ${produto.quantidade ?? 0}
+                        <span class="estoque ${classeEstoqueBaixo} ${!estoqueDisponivel ? 'text-danger fw-bold' : ''}">
+                            ${textoEstoque}
                         </span>
                     </p>
                     <p class="card-text fornecedor text-truncate" title="${produto.fornecedor_nome || 'Sem fornecedor'}">
                         ${produto.fornecedor_nome || 'Sem fornecedor'}
                     </p>
-                    <div class="input-group mb-2">
-                        <input type="number" id="quantidade-${produto.id}" value="1" min="1" max="${produto.quantidade}" class="form-control form-control-sm" style="width: 70px;">
-                        <button type="button" class="btn btn-primary btn-sm" onclick="event.stopPropagation(); carrinho.adicionarItem(${produto.id}, document.getElementById('quantidade-${produto.id}').value)">
-                            <i class="bi bi-cart-plus"></i> Adicionar
-                        </button>
-                    </div>
+                    ${inputQuantidadeEBotaoAdicionar}
                 </div>
             </div>
         </div>

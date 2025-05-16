@@ -112,21 +112,30 @@ try {
                     foreach ($produtos as $produto) {
                         $fotoUrl = $produto['foto'] ? 'data:image/jpeg;base64,' . base64_encode($produto['foto']) : 'https://via.placeholder.com/200?text=Sem+Imagem';
                         $precoFormatado = number_format($produto['preco'], 2, ',', '.');
+                        
+                        $quantidadeProduto = (int)$produto['quantidade'];
+                        $estoqueDisponivel = $quantidadeProduto > 0;
+                        $textoEstoque = $estoqueDisponivel ? 'Estoque: ' . $quantidadeProduto : 'Indisponível';
+                        $classeEstoqueBaixo = $estoqueDisponivel && $quantidadeProduto <= 5 ? 'estoque-baixo' : '';
+                        $classeIndisponivel = !$estoqueDisponivel ? 'produto-indisponivel' : '';
+
+                        $onClickCard = 'onclick="mostrarDetalhes(' . $produto['id'] . ')"';
+
                         echo '<div class="col">
-                                <div class="card h-100 produto-card">
-                                    <div class="card-img-container" onclick="mostrarDetalhes(' . $produto['id'] . ')">
+                                <div class="card h-100 produto-card ' . $classeIndisponivel . '" ' . $onClickCard . '>
+                                    <div class="card-img-container">
                                         <img src="' . $fotoUrl . '" class="card-img-top" alt="Foto do produto">
                                     </div>
                                     <div class="card-body">
-                                        <h5 class="card-title text-truncate" title="' . htmlspecialchars($produto['nome']) . '" onclick="mostrarDetalhes(' . $produto['id'] . ')">' . htmlspecialchars($produto['nome']) . '</h5>
+                                        <h5 class="card-title text-truncate" title="' . htmlspecialchars($produto['nome']) . '">' . htmlspecialchars($produto['nome']) . '</h5>
                                         <p class="card-text">
                                             <span class="preco">R$ ' . $precoFormatado . '</span>
-                                            <span class="estoque ' . ($produto['quantidade'] <= 5 ? 'estoque-baixo' : '') . '">
-                                                Estoque: ' . $produto['quantidade'] . '
+                                            <span class="estoque ' . $classeEstoqueBaixo . (!$estoqueDisponivel ? ' text-danger fw-bold' : '') . '">
+                                                ' . $textoEstoque . '
                                             </span>
                                         </p>
-                                        <p class="card-text fornecedor text-truncate" title="' . htmlspecialchars($produto['fornecedor_nome']) . '">
-                                            ' . htmlspecialchars($produto['fornecedor_nome']) . '
+                                        <p class="card-text fornecedor text-truncate" title="' . htmlspecialchars($produto['fornecedor_nome'] ?? 'Sem fornecedor') . '">
+                                            ' . htmlspecialchars($produto['fornecedor_nome'] ?? 'Sem fornecedor') . '
                                         </p>
                                     </div>
                                 </div>
