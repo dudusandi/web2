@@ -1,5 +1,4 @@
 <?php
-// Limpa qualquer saída anterior
 ob_start();
 ob_clean();
 
@@ -8,11 +7,9 @@ require_once '../config/database.php';
 require_once '../dao/produto_dao.php';
 require_once '../model/produto.php';
 
-// Define o tipo de conteúdo como JSON
 header('Content-Type: application/json; charset=utf-8');
 
 try {
-    // Validar dados recebidos
     if (!isset($_POST['nome']) || empty($_POST['nome'])) {
         throw new Exception('Nome do produto é obrigatório');
     }
@@ -29,25 +26,22 @@ try {
         throw new Exception('Preço inválido');
     }
 
-    // Processar upload da foto
     $foto = null;
     if (isset($_FILES['foto']) && $_FILES['foto']['error'] === UPLOAD_ERR_OK) {
         $allowedTypes = ['image/jpeg', 'image/png', 'image/gif'];
-        $maxSize = 2 * 1024 * 1024; // 2MB
+        $maxSize = 16 * 1024 * 1024; 
 
         if (!in_array($_FILES['foto']['type'], $allowedTypes)) {
-            throw new Exception('Tipo de arquivo não permitido. Use apenas JPG, PNG ou GIF.');
+            throw new Exception('Tipo de arquivo não permitido');
         }
 
         if ($_FILES['foto']['size'] > $maxSize) {
-            throw new Exception('Arquivo muito grande. Tamanho máximo: 2MB');
+            throw new Exception('Tamanho máximo: 16MB');
         }
 
-        // Ler o conteúdo do arquivo e converter para bytea
         $foto = file_get_contents($_FILES['foto']['tmp_name']);
     }
 
-    // Criar objeto Produto
     $produto = new Produto(
         $_POST['nome'],
         $_POST['descricao'] ?? null,
@@ -56,11 +50,9 @@ try {
         $_SESSION['usuario_id']
     );
 
-    // Definir quantidade e preço
     $produto->setQuantidade($_POST['quantidade']);
     $produto->setPreco($_POST['preco']);
 
-    // Inserir no banco de dados
     $pdo = Database::getConnection();
     $produtoDAO = new ProdutoDAO($pdo);
     $produtoDAO->cadastrarProduto($produto, $_POST['quantidade'], $_POST['preco']);

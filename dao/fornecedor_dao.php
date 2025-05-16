@@ -11,7 +11,6 @@ class FornecedorDAO {
         $this->pdo = $pdo;
     }
 
-    //Cadastra um novo fornecedor
     public function cadastrarFornecedor(Fornecedor $fornecedor) {
         try {
             $this->pdo->beginTransaction();
@@ -54,7 +53,6 @@ class FornecedorDAO {
         }
     }
 
-    //Buscar fornecedor por ID
     public function buscarNomePorId($fornecedorId) {
         try {
             $sql = "SELECT nome FROM fornecedores WHERE id = :id";
@@ -64,7 +62,7 @@ class FornecedorDAO {
             $result = $stmt->fetch(PDO::FETCH_ASSOC);
             return $result ? $result['nome'] : 'Desconhecido';
         } catch (PDOException $e) {
-            error_log("Erro ao buscar fornecedor: " . $e->getMessage());
+            // error_log("Erro ao buscar fornecedor: " . $e->getMessage());
             throw $e;
         }
     }
@@ -107,12 +105,10 @@ class FornecedorDAO {
             }
             return $fornecedores;
         } catch (PDOException $e) {
-            error_log(date('[Y-m-d H:i:s] ') . "Erro em listarTodos: " . $e->getMessage() . PHP_EOL);
             throw $e;
         }
     }
 
-    // Conta todos os fornecedores
     public function contarTodos() {
         try {
             $sql = "SELECT COUNT(*) FROM fornecedores";
@@ -171,7 +167,6 @@ class FornecedorDAO {
             
             return $fornecedores;
         } catch (PDOException $e) {
-            error_log("Erro ao buscar fornecedores: " . $e->getMessage());
             throw new Exception("Erro ao buscar fornecedores");
         }
     }
@@ -196,12 +191,10 @@ class FornecedorDAO {
             
             return (int) $stmt->fetchColumn();
         } catch (PDOException $e) {
-            error_log("Erro ao contar fornecedores: " . $e->getMessage());
             throw new Exception("Erro ao contar fornecedores");
         }
     }
 
-    //Buscar fornecedor por ID
     public function buscarPorId($id) {
         $sql = "SELECT f.id, f.nome, f.descricao, f.telefone, f.email, 
                        e.rua, e.numero, e.bairro, e.cep, e.cidade, e.estado, e.complemento
@@ -239,7 +232,6 @@ class FornecedorDAO {
         return null;
     }
 
-    // Listar fornecedores para o select
     public function listarFornecedores() {
         try {
             $sql = "SELECT id, nome FROM fornecedores ORDER BY nome ASC";
@@ -251,7 +243,6 @@ class FornecedorDAO {
         }
     }
 
-    //Atualizar fornecedor
     public function atualizarFornecedor(Fornecedor $fornecedor) {
         try {
             $this->pdo->beginTransaction();
@@ -299,7 +290,6 @@ class FornecedorDAO {
         }
     }
 
-    //Remover fornecedor
     public function removerFornecedor($id) {
         try {
             // Verificar se o fornecedor está associado a produtos

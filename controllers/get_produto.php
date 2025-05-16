@@ -5,7 +5,6 @@ require_once '../config/database.php';
 require_once '../dao/produto_dao.php';
 require_once '../model/produto.php';
 
-// Limpa qualquer saída anterior
 ob_clean();
 
 header('Content-Type: application/json; charset=utf-8');
@@ -38,14 +37,12 @@ try {
         ]
     ];
 
-    // Limpa qualquer saída anterior
     ob_clean();
     echo json_encode($response);
 
 } catch (Exception $e) {
     http_response_code(400);
     
-    // Limpa qualquer saída anterior
     ob_clean();
     echo json_encode([
         'success' => false,
@@ -53,6 +50,5 @@ try {
     ]);
 }
 
-// Envia a saída e limpa o buffer
 ob_end_flush();
 ?>

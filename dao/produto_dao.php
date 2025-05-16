@@ -12,12 +12,10 @@ class ProdutoDAO {
         $this->estoqueDAO = new EstoqueDAO($pdo);
     }
 
-    // Cadastra um novo produto
     public function cadastrarProduto(Produto $produto, $quantidade, $preco) {
         try {
             $this->pdo->beginTransaction();
 
-            // Validações
             $nome = $produto->getNome() ?? '';
             $fornecedorId = (int)($produto->getFornecedorId() ?? 0);
             $usuarioId = (int)($produto->getUsuarioId() ?? 0);
@@ -61,7 +59,6 @@ class ProdutoDAO {
         }
     }
 
-    // Verifica se o nome do produto já existe
     public function nomeExiste($nome, $excludeId = null) {
         try {
             $sql = "SELECT COUNT(*) FROM produtos WHERE LOWER(nome) = LOWER(:nome)";
@@ -81,7 +78,6 @@ class ProdutoDAO {
         }
     }
 
-    // Conta todos os produtos
     public function contarTodosProdutos() {
         try {
             $sql = "SELECT COUNT(*) FROM produtos";
@@ -105,12 +101,10 @@ class ProdutoDAO {
             $stmt->execute();
             return (int)$stmt->fetchColumn();
         } catch (PDOException $e) {
-            error_log(date('[Y-m-d H:i:s] ') . "Erro em contarProdutosBuscados: " . $e->getMessage() . PHP_EOL);
             throw $e;
         }
     }
 
-    // Buscar produto por ID
     public function buscarPorId($id) {
         try {
             if (!is_numeric($id) || $id <= 0) {
@@ -148,12 +142,10 @@ class ProdutoDAO {
 
             return $produto;
         } catch (PDOException $e) {
-            error_log(date('[Y-m-d H:i:s] ') . "Erro em buscarPorId: " . $e->getMessage() . PHP_EOL);
             throw $e;
         }
     }
 
-    // Buscar produto por nome
     public function buscarPorNome($nome) {
         try {
             $sql = "SELECT p.id, p.nome, p.descricao, p.foto, p.fornecedor_id, p.estoque_id, p.usuario_id,
@@ -189,7 +181,6 @@ class ProdutoDAO {
         }
     }
 
-    // Atualizar produto
     public function atualizarProduto(Produto $produto) {
         try {
             $sql = "UPDATE produtos SET 
@@ -212,34 +203,20 @@ class ProdutoDAO {
         }
     }
 
-    // Remover produto
     public function removerProduto($id) {
         try {
             $produto = $this->buscarPorId($id);
             if ($produto) {
-                // Remove a foto, se existir
                 if ($produto->getFoto()) {
-                    // O caminho da foto pode precisar de ajuste dependendo da estrutura de pastas
-                    // Assumindo que getFoto() retorna apenas o nome do arquivo.
-                    // Se getFoto() retornar um blob, esta parte de unlink não se aplica diretamente.
-                    // O código original tinha: $caminhoFoto = __DIR__ . '/../../public/uploads/imagens/' . $produto->getFoto();
-                    // Se a foto é um blob no banco, não há arquivo físico para deletar assim.
-                    // Vamos manter a lógica de apagar arquivo se getFoto() for um nome de arquivo.
-                    // Contudo, o código atual para 'foto' no método cadastrarProduto e atualizarProduto usa PDO::PARAM_LOB,
-                    // sugerindo que a foto é armazenada como blob. Nesse caso, unlink não é necessário aqui.
                 }
 
                 $estoqueId = $produto->getEstoqueId();
-
-                // Deleta o produto primeiro para liberar a FK se houver ON DELETE RESTRICT
-                // Ou para evitar problemas se a exclusão do estoque falhar por algum motivo.
                 $sqlDeleteProduto = "DELETE FROM produtos WHERE id = :id";
                 $stmtDeleteProduto = $this->pdo->prepare($sqlDeleteProduto);
                 $stmtDeleteProduto->bindValue(':id', $id, PDO::PARAM_INT);
                 $stmtDeleteProduto->execute();
 
                 if ($estoqueId) {
-                    // Verificar se o estoque ainda é referenciado por outros produtos
                     $sqlCheckEstoque = "SELECT COUNT(*) FROM produtos WHERE estoque_id = :estoque_id";
                     $stmtCheckEstoque = $this->pdo->prepare($sqlCheckEstoque);
                     $stmtCheckEstoque->bindValue(':estoque_id', $estoqueId, PDO::PARAM_INT);
@@ -255,8 +232,6 @@ class ProdutoDAO {
             }
             throw new Exception("Produto não encontrado");
         } catch (Exception $e) {
-            // Se a transação for controlada externamente, não fazer rollback aqui.
-            // O controller excluir_produto.php já controla a transação.
             throw $e;
         }
     }
@@ -290,7 +265,6 @@ class ProdutoDAO {
 
             $produtos = [];
             while ($linha = $stmt->fetch(PDO::FETCH_ASSOC)) {
-                // Converte o recurso da foto em string
                 $foto = null;
                 if ($linha['foto']) {
                     $foto = stream_get_contents($linha['foto']);
@@ -319,8 +293,6 @@ class ProdutoDAO {
             if (empty($ids)) {
                 return [];
             }
-
-            // Valida e limpa os IDs
             $ids = array_filter(array_map('intval', $ids), function($id) {
                 return $id > 0;
             });
@@ -368,13 +340,11 @@ class ProdutoDAO {
                     $produto->fornecedor_nome = $linha['fornecedor_nome'] ?? 'Sem fornecedor';
                     $produtos[] = $produto;
                 } catch (Exception $e) {
-                    error_log("Erro ao criar objeto Produto: " . $e->getMessage());
                     continue;
                 }
             }
             return $produtos;
         } catch (PDOException $e) {
-            error_log(date('[Y-m-d H:i:s] ') . "Erro em buscarProdutosPorIds: " . $e->getMessage() . PHP_EOL);
             throw $e;
         }
     }
