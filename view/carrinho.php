@@ -136,7 +136,7 @@ try {
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="js/carrinho.js"></script>
+    <script src="carrinho.js"></script>
     <script>
         // Função para atualizar a interface do carrinho
         function atualizarInterfaceCarrinho() {

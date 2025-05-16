@@ -19,9 +19,7 @@ class PedidoDAO {
         $this->estoqueDAO = new EstoqueDAO($pdo);
     }
 
-    /**
-     * Cria um novo pedido no banco de dados
-     */
+
     public function criarPedido($clienteId, $itensPedido) {
         try {
             if (empty($itensPedido) || !is_array($itensPedido)) {
@@ -102,7 +100,6 @@ class PedidoDAO {
                 $valorTotal += $subtotal;
             }
             
-            // Atualizar o valor total do pedido
             $sqlTotal = "UPDATE pedidos SET valor_total = :valor_total WHERE id = :pedido_id";
             $stmtTotal = $this->pdo->prepare($sqlTotal);
             $stmtTotal->bindParam(':valor_total', $valorTotal);

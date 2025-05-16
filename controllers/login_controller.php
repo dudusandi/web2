@@ -29,7 +29,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 'usuario_id' => $cliente->getId(),
                 'usuario_email' => $cliente->getEmail(),
                 'usuario_nome' => $cliente->getNome(),
-                'is_admin' => ($cliente->getEmail() === 'dudaesouza@gmail.com' || $cliente->getEmail() === 'admin@admin.com')
+                'is_admin' => ($cliente->getEmail() === 'admin@admin.com')
             ];
             
             echo "<script>

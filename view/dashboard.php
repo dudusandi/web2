@@ -391,7 +391,7 @@ try {
     }
     </script>
     <script src="./dashboard.js"></script>
-    <script src="js/carrinho.js"></script>
+    <script src="./carrinho.js"></script>
     <script>
         // Preencher select de fornecedores
         document.addEventListener('DOMContentLoaded', function() {
