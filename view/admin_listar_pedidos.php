@@ -65,6 +65,7 @@ function badgeSituacao($situacao) {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="refresh" content="5">
     <title>Administração de Pedidos - UcsExpress</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
@@ -111,57 +112,101 @@ function badgeSituacao($situacao) {
         <?php if (empty($pedidos) && $tipoMensagem !== 'erro'): ?>
             <div class="alert alert-info">Nenhum pedido encontrado.</div>
         <?php elseif (!empty($pedidos)): ?>
-            <div class="table-responsive">
-                <table class="table table-striped table-hover">
-                    <thead class="table-dark">
-                        <tr>
-                            <th>#</th>
-                            <th>Nº Pedido</th>
-                            <th>Data</th>
-                            <th>Cliente</th>
-                            <th>Valor Total</th>
-                            <th>Situação</th>
-                            <th>Ações</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <?php foreach ($pedidos as $index => $pedido): ?>
+            <!-- Container para atualização AJAX -->
+            <div id="pedidos-list-container">
+                <div class="table-responsive">
+                    <table class="table table-striped table-hover">
+                        <thead class="table-dark">
                             <tr>
-                                <td><?= ($paginaAtual - 1) * $itensPorPagina + $index + 1 ?></td>
-                                <td><?= htmlspecialchars($pedido['numero']) ?></td>
-                                <td><?= formatarData($pedido['data_pedido']) ?></td>
-                                <td>
-                                    <?= htmlspecialchars($pedido['nome_cliente']) ?><br>
-                                    <small class="text-muted"><?= htmlspecialchars($pedido['email_cliente']) ?></small>
-                                </td>
-                                <td><?= formatarValor($pedido['valor_total']) ?></td>
-                                <td><?= badgeSituacao($pedido['situacao']) ?></td>
-                                <td>
-                                    <a href="admin_detalhes_pedido.php?id=<?= $pedido['id'] ?>" class="btn btn-info btn-sm" title="Ver Detalhes">
-                                        <i class="bi bi-eye-fill"></i>
-                                    </a>
-                                </td>
+                                <th>#</th>
+                                <th>Nº Pedido</th>
+                                <th>Data</th>
+                                <th>Cliente</th>
+                                <th>Valor Total</th>
+                                <th>Situação</th>
+                                <th>Ações</th>
                             </tr>
-                        <?php endforeach; ?>
-                    </tbody>
-                </table>
-            </div>
+                        </thead>
+                        <tbody>
+                            <?php foreach ($pedidos as $index => $pedido): ?>
+                                <tr>
+                                    <td><?= ($paginaAtual - 1) * $itensPorPagina + $index + 1 ?></td>
+                                    <td><?= htmlspecialchars($pedido['numero']) ?></td>
+                                    <td><?= formatarData($pedido['data_pedido']) ?></td>
+                                    <td>
+                                        <?= htmlspecialchars($pedido['nome_cliente']) ?><br>
+                                        <small class="text-muted"><?= htmlspecialchars($pedido['email_cliente']) ?></small>
+                                    </td>
+                                    <td><?= formatarValor($pedido['valor_total']) ?></td>
+                                    <td><?= badgeSituacao($pedido['situacao']) ?></td>
+                                    <td>
+                                        <a href="admin_detalhes_pedido.php?id=<?= $pedido['id'] ?>" class="btn btn-info btn-sm" title="Ver Detalhes">
+                                            <i class="bi bi-eye-fill"></i>
+                                        </a>
+                                    </td>
+                                </tr>
+                            <?php endforeach; ?>
+                        </tbody>
+                    </table>
+                </div>
 
-            <!-- Paginação -->
-            <?php if ($totalPaginas > 1): ?>
-                <nav aria-label="Paginação de pedidos">
-                    <ul class="pagination justify-content-center">
-                        <?php for ($i = 1; $i <= $totalPaginas; $i++): ?>
-                            <li class="page-item <?= ($i == $paginaAtual) ? 'active' : '' ?>">
-                                <a class="page-link" href="?pagina=<?= $i ?>&busca=<?= urlencode($termoBusca) ?>"><?= $i ?></a>
-                            </li>
-                        <?php endfor; ?>
-                    </ul>
-                </nav>
-            <?php endif; ?>
+                <!-- Paginação -->
+                <?php if ($totalPaginas > 1): ?>
+                    <nav aria-label="Paginação de pedidos">
+                        <ul class="pagination justify-content-center">
+                            <?php for ($i = 1; $i <= $totalPaginas; $i++): ?>
+                                <li class="page-item <?= ($i == $paginaAtual) ? 'active' : '' ?>">
+                                    <a class="page-link" href="?pagina=<?= $i ?>&busca=<?= urlencode($termoBusca) ?>"><?= $i ?></a>
+                                </li>
+                            <?php endfor; ?>
+                        </ul>
+                    </nav>
+                <?php endif; ?>
+            </div> <!-- Fim de #pedidos-list-container -->
         <?php endif; ?>
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const pedidosListContainer = document.getElementById('pedidos-list-container');
+            const campoBusca = document.querySelector('input[name="busca"]');
+
+            function carregarPedidos() {
+                // Pega o termo de busca atual do input
+                const termoBuscaAtual = campoBusca ? campoBusca.value : '';
+                
+                // Pega a página atual da URL da página principal
+                const urlParams = new URLSearchParams(window.location.search);
+                const paginaAtual = urlParams.get('pagina') || '1';
+
+                // Constrói a URL para a requisição AJAX
+                const url = `ajax_carregar_pedidos.php?busca=${encodeURIComponent(termoBuscaAtual)}&pagina=${paginaAtual}`;
+
+                fetch(url)
+                    .then(response => {
+                        if (!response.ok) {
+                            throw new Error('Falha na requisição de rede: ' + response.statusText);
+                        }
+                        return response.text(); // Espera HTML como texto
+                    })
+                    .then(html => {
+                        if (pedidosListContainer) {
+                            pedidosListContainer.innerHTML = html;
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Erro ao carregar lista de pedidos via AJAX:', error);
+                        // Opcional: exibir uma mensagem de erro no container
+                        if (pedidosListContainer) {
+                            // pedidosListContainer.innerHTML = '<div class="alert alert-danger">Erro ao atualizar a lista. Tente recarregar a página.</div>';
+                        }
+                    });
+            }
+
+            // Carrega os pedidos a cada 5 segundos
+            setInterval(carregarPedidos, 5000);
+        });
+    </script>
 </body>
 </html> 
