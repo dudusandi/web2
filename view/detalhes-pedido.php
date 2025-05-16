@@ -177,13 +177,9 @@ try {
                                     <?php endforeach; ?>
                                 </tbody>
                                 <tfoot>
-                                    <tr>
-                                        <td colspan="3" class="text-end"><strong>Total do Pedido (calculado na view):</strong></td>
-                                        <td><strong>R$ <?= number_format($totalGeralPedido, 2, ',', '.') ?></strong></td>
-                                    </tr>
                                     <?php if ($pedido->getvalortotal()): ?>
                                     <tr>
-                                        <td colspan="3" class="text-end"><strong>Total do Pedido (armazenado):</strong></td>
+                                        <td colspan="3" class="text-end"><strong>Total do Pedido:</strong></td>
                                         <td><strong>R$ <?= number_format($pedido->getvalortotal(), 2, ',', '.') ?></strong></td>
                                     </tr>
                                     <?php endif; ?>

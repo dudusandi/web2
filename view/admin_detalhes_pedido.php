@@ -125,7 +125,6 @@ function exibirBadgeSituacao($situacao) {
                         </div>
                     </div>
 
-                    <!-- Formulário para Alterar Status -->
                     <div class="card mb-3">
                         <div class="card-header">Alterar Situação do Pedido</div>
                         <div class="card-body">
@@ -135,14 +134,9 @@ function exibirBadgeSituacao($situacao) {
                                     <label for="nova_situacao" class="form-label">Nova Situação:</label>
                                     <select name="nova_situacao" id="nova_situacao" class="form-select">
                                         <?php 
-                                        $statusDisponiveis = ['NOVO', 'EM_PREPARACAO', 'ENVIADO', 'ENTREGUE', 'CANCELADO'];
+                                        $statusDisponiveis = ['NOVO', 'EM PREPARAÇÃO', 'ENVIADO', 'ENTREGUE', 'CANCELADO'];
                                         foreach ($statusDisponiveis as $status) {
                                             $selected = ($pedido->getSituacao() === $status) ? 'selected' : '';
-                                            // Regra simples: não permitir mudar para o status atual ou para status "anteriores" de forma simplificada
-                                            // Ex: Se já ENVIADO, não mostrar opção NOVO ou EM_PREPARACAO diretamente no select (a lógica de negócio no DAO/Controller pode ser mais robusta)
-                                            // if ($pedido->getSituacao() === $status && $status !== 'CANCELADO') { // Não permitir selecionar o mesmo status, exceto se for cancelar
-                                            //    // Pode desabilitar ou não mostrar a opção
-                                            // }
                                             echo "<option value=\"$status\" $selected>" . htmlspecialchars(str_replace('_', ' ', $status)) . "</option>";
                                         }
                                         ?>
