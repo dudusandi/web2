@@ -37,7 +37,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 'is_admin' => ($cliente->getEmail() === 'dudaesouza@gmail.com' || $cliente->getEmail() === 'admin@admin.com')
             ];
             
-            header('Location: ../view/dashboard.php');
+            // Redirecionar para a página anterior se existir
+            echo "<script>
+                var returnUrl = localStorage.getItem('returnUrl');
+                localStorage.removeItem('returnUrl');
+                window.location.href = returnUrl || '../view/dashboard.php';
+            </script>";
             exit();
         } else {
             header('Location: ../view/login.php?erro=1');

@@ -1,9 +1,5 @@
 <?php
-session_start();
-if (!isset($_SESSION['usuario_id'])) {
-    header('Location: ../view/login.php');
-    exit;
-}
+session_start(); // Adicionado para iniciar a sessão
 
 require_once __DIR__ . '/../config/database.php';
 require_once __DIR__ . '/../dao/produto_dao.php';
@@ -58,8 +54,12 @@ try {
             </form>
         </div>
         <div class="user-options">
-            <span>Olá, <?= htmlspecialchars($_SESSION['usuario_nome']) ?>!</span>
-            <a href="../controllers/logout_controller.php">Sair</a>
+            <?php if (isset($_SESSION['usuario_nome'])): ?>
+                <span>Olá, <?= htmlspecialchars($_SESSION['usuario_nome']) ?>!</span>
+                <a href="../controllers/logout_controller.php">Sair</a>
+            <?php else: ?>
+                <a href="login.php" class="btn btn-primary btn-sm">Login</a>
+            <?php endif; ?>
             <a href="carrinho.php" class="btn btn-outline-primary btn-sm">
                 <i class="bi bi-cart"></i> Carrinho <span id="contador-carrinho" style="display: none;">0</span>
             </a>
@@ -311,8 +311,29 @@ try {
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
     window.fornecedores = <?php echo json_encode($fornecedores); ?>;
-    window.usuarioLogadoId = <?php echo json_encode($_SESSION['usuario_id']); ?>;
+    window.usuarioLogadoId = <?php echo json_encode(isset($_SESSION['usuario_id']) ? $_SESSION['usuario_id'] : null); ?>;
     window.isAdmin = <?php echo json_encode(isset($_SESSION['is_admin']) && $_SESSION['is_admin']); ?>;
+
+    function verificarLogin() {
+        if (!window.usuarioLogadoId) {
+            if (confirm('Você precisa estar logado para adicionar produtos ao carrinho. Deseja fazer login agora?')) {
+                // Salvar a URL atual para retornar após o login
+                localStorage.setItem('returnUrl', window.location.href);
+                window.location.href = 'login.php';
+            }
+            return false;
+        }
+        return true;
+    }
+
+    function adicionarProdutoDoModalAoCarrinho() {
+        if (!verificarLogin()) {
+            return;
+        }
+        const quantidade = parseInt(document.getElementById('quantidadeModalProduto').value) || 1;
+        const produtoId = document.getElementById('produtoId').value;
+        carrinho.adicionarItem(produtoId, quantidade);
+    }
     </script>
     <script src="./dashboard.js"></script>
     <script src="js/carrinho.js"></script>

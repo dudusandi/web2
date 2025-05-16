@@ -4,11 +4,9 @@ class Carrinho {
         this.onChange = null;
         this.carregando = true;
         this.carregarCarrinho().then(() => {
-            console.log('Carrinho inicializado com sucesso');
             this.carregando = false;
             this.notificarMudanca();
         }).catch(error => {
-            console.error('Erro ao inicializar carrinho:', error);
             this.carregando = false;
         });
     }
@@ -19,7 +17,6 @@ class Carrinho {
             const data = await response.json();
             
             if (!data.success) {
-                throw new Error(data.erro || 'Erro ao carregar carrinho');
             }
 
             // Converte o array de produtos para o formato esperado pelo carrinho
@@ -31,13 +28,15 @@ class Carrinho {
             console.log('Carrinho carregado:', this.itens);
             this.atualizarContador();
         } catch (error) {
-            console.error('Erro ao carregar carrinho:', error);
             this.itens = {};
-            this.mostrarNotificacao('Erro ao carregar carrinho!', true);
         }
     }
 
     async adicionarItem(produtoId, quantidade = 1) {
+        if (typeof verificarLogin === 'function' && !verificarLogin()) {
+            return;
+        }
+
         try {
             produtoId = parseInt(produtoId);
             quantidade = parseInt(quantidade);

@@ -15,7 +15,6 @@ if (!isset($_SESSION['carrinhos'])) {
 // Função para obter o carrinho do cliente atual
 function obterCarrinhoAtual() {
     if (!isset($_SESSION['usuario_id'])) {
-        error_log("Usuário não está logado");
         return [];
     }
     
@@ -29,9 +28,6 @@ function obterCarrinhoAtual() {
     // Inicializa o carrinho do cliente se não existir
     if (!isset($_SESSION['carrinhos'][$clienteId])) {
         $_SESSION['carrinhos'][$clienteId] = [];
-        error_log("Criando novo carrinho para cliente ID: " . $clienteId);
-    } else {
-        error_log("Usando carrinho existente para cliente ID: " . $clienteId);
     }
     
     return $_SESSION['carrinhos'][$clienteId];
