@@ -87,19 +87,43 @@ try {
                             <p><strong>Número:</strong> <?= htmlspecialchars($pedido->getnumero()) ?></p>
                             <p><strong>Data:</strong> <?= date('d/m/Y H:i', strtotime($pedido->getdatapedido())) ?></p>
                             <p>
-                                <strong>Situação:</strong> 
-                                <span class="badge 
-                                    <?php 
+                                <strong>Situação:</strong>
+                                <span class="badge
+                                    <?php
+                                    // Este switch define a cor do badge
                                     switch($pedido->getsituacao()) {
                                         case 'NOVO': echo 'bg-primary'; break;
-                                        case 'EM_PREPARACAO': echo 'bg-warning'; break;
+                                        case 'EM_PREPARACAO': echo 'bg-warning'; break; // Classe para EM_PREPARACAO
                                         case 'ENVIADO': echo 'bg-info'; break;
                                         case 'ENTREGUE': echo 'bg-success'; break;
                                         case 'CANCELADO': echo 'bg-danger'; break;
                                         default: echo 'bg-secondary';
                                     }
                                     ?>">
-                                    <?= htmlspecialchars($pedido->getsituacao()) ?>
+                                    <?php // Este é o bloco para o TEXTO do badge
+                                    $statusBruto = $pedido->getsituacao();
+                                    $statusExibicao = '';
+                                    switch ($statusBruto) {
+                                        case 'NOVO':
+                                            $statusExibicao = 'Novo';
+                                            break;
+                                        case 'EM_PREPARACAO': // Case para o texto EM_PREPARACAO
+                                            $statusExibicao = 'Em Preparação';
+                                            break;
+                                        case 'ENVIADO':
+                                            $statusExibicao = 'Enviado';
+                                            break;
+                                        case 'ENTREGUE':
+                                            $statusExibicao = 'Entregue';
+                                            break;
+                                        case 'CANCELADO':
+                                            $statusExibicao = 'Cancelado';
+                                            break;
+                                        default:
+                                            $statusExibicao = ucwords(strtolower(str_replace('_', ' ', $statusBruto)));
+                                    }
+                                    echo htmlspecialchars($statusExibicao);
+                                    ?>
                                 </span>
                             </p>
                         </div>

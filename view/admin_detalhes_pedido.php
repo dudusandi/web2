@@ -134,7 +134,7 @@ function exibirBadgeSituacao($situacao) {
                                     <label for="nova_situacao" class="form-label">Nova Situação:</label>
                                     <select name="nova_situacao" id="nova_situacao" class="form-select">
                                         <?php 
-                                        $statusDisponiveis = ['NOVO', 'EM PREPARAÇÃO', 'ENVIADO', 'ENTREGUE', 'CANCELADO'];
+                                        $statusDisponiveis = ['NOVO', 'EM_PREPARACAO', 'ENVIADO', 'ENTREGUE', 'CANCELADO'];
                                         foreach ($statusDisponiveis as $status) {
                                             $selected = ($pedido->getSituacao() === $status) ? 'selected' : '';
                                             echo "<option value=\"$status\" $selected>" . htmlspecialchars(str_replace('_', ' ', $status)) . "</option>";

@@ -92,7 +92,31 @@ try {
                                             default: echo 'bg-secondary';
                                         }
                                         ?>">
-                                        <?= htmlspecialchars($pedido['situacao']) ?>
+                                            
+                                        <?php 
+                                        $statusBruto = $pedido['situacao'];
+                                        $statusExibicao = '';
+                                        switch ($statusBruto) {
+                                            case 'NOVO':
+                                                $statusExibicao = 'Novo';
+                                                break;
+                                            case 'EM_PREPARACAO':
+                                                $statusExibicao = 'Em Preparação';
+                                                break;
+                                            case 'ENVIADO':
+                                                $statusExibicao = 'Enviado';
+                                                break;
+                                            case 'ENTREGUE':
+                                                $statusExibicao = 'Entregue';
+                                                break;
+                                            case 'CANCELADO':
+                                                $statusExibicao = 'Cancelado';
+                                                break;
+                                            default:
+                                                $statusExibicao = ucwords(strtolower(str_replace('_', ' ', $statusBruto)));
+                                        }
+                                        echo htmlspecialchars($statusExibicao);
+                                    ?>
                                     </span>
                                 </td>
                                 <td>R$ <?= number_format($pedido['valor_total'], 2, ',', '.') ?></td>
