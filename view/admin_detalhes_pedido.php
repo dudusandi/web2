@@ -109,13 +109,50 @@ function exibirBadgeSituacao($situacao) {
                         <div class="card-body">
                             <p><strong>Número:</strong> <?= htmlspecialchars($pedido->getNumero()) ?></p>
                             <p><strong>Data do Pedido:</strong> <?= formatarDataDetalhes($pedido->getDataPedido()) ?></p>
-                            <p><strong>Situação:</strong> <?= exibirBadgeSituacao($pedido->getSituacao()) ?></p>
-                            <p><strong>Valor Total:</strong> <span class="total-pedido"><?= formatarValorDetalhes($pedido->getValorTotal()) ?></span></p>
+                            <p><strong>Situação Atual:</strong> <?= exibirBadgeSituacao($pedido->getSituacao()) ?></p>
+                            
+                            <?php if ($pedido->getDataEnvio()): ?>
+                                <p><strong>Data de Envio:</strong> <?= formatarDataDetalhes($pedido->getDataEnvio()) ?></p>
+                            <?php endif; ?>
                             <?php if ($pedido->getDataEntrega()): ?>
                                 <p><strong>Data da Entrega:</strong> <?= formatarDataDetalhes($pedido->getDataEntrega()) ?></p>
                             <?php endif; ?>
+                            <?php if ($pedido->getDataCancelamento()): ?>
+                                <p><strong>Data de Cancelamento:</strong> <?= formatarDataDetalhes($pedido->getDataCancelamento()) ?></p>
+                            <?php endif; ?>
+
+                            <p><strong>Valor Total:</strong> <span class="total-pedido"><?= formatarValorDetalhes($pedido->getValorTotal()) ?></span></p>
                         </div>
                     </div>
+
+                    <!-- Formulário para Alterar Status -->
+                    <div class="card mb-3">
+                        <div class="card-header">Alterar Situação do Pedido</div>
+                        <div class="card-body">
+                            <form action="../controllers/admin_atualizar_status_pedido.php" method="POST">
+                                <input type="hidden" name="pedido_id" value="<?= $pedido->getId() // Corrigido para usar o ID numérico ?>">
+                                <div class="mb-3">
+                                    <label for="nova_situacao" class="form-label">Nova Situação:</label>
+                                    <select name="nova_situacao" id="nova_situacao" class="form-select">
+                                        <?php 
+                                        $statusDisponiveis = ['NOVO', 'EM_PREPARACAO', 'ENVIADO', 'ENTREGUE', 'CANCELADO'];
+                                        foreach ($statusDisponiveis as $status) {
+                                            $selected = ($pedido->getSituacao() === $status) ? 'selected' : '';
+                                            // Regra simples: não permitir mudar para o status atual ou para status "anteriores" de forma simplificada
+                                            // Ex: Se já ENVIADO, não mostrar opção NOVO ou EM_PREPARACAO diretamente no select (a lógica de negócio no DAO/Controller pode ser mais robusta)
+                                            // if ($pedido->getSituacao() === $status && $status !== 'CANCELADO') { // Não permitir selecionar o mesmo status, exceto se for cancelar
+                                            //    // Pode desabilitar ou não mostrar a opção
+                                            // }
+                                            echo "<option value=\"$status\" $selected>" . htmlspecialchars(str_replace('_', ' ', $status)) . "</option>";
+                                        }
+                                        ?>
+                                    </select>
+                                </div>
+                                <button type="submit" class="btn btn-primary">Atualizar Situação</button>
+                            </form>
+                        </div>
+                    </div>
+
                 </div>
                 <div class="col-md-6">
                     <div class="card mb-3">

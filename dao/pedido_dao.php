@@ -124,8 +124,9 @@ class PedidoDAO {
 
     public function buscarPorId($pedidoId) {
         try {
-            $sql = "SELECT p.id, p.numero, p.data_pedido, p.data_entrega, p.situacao, 
-                           p.cliente_id, p.valor_total
+            $sql = "SELECT p.id, p.numero, p.data_pedido, p.data_entrega, 
+                           p.situacao, p.cliente_id, p.valor_total,
+                           p.data_envio, p.data_cancelamento                   -- Novas colunas
                     FROM pedidos p
                     WHERE p.id = :pedido_id";
             $stmt = $this->pdo->prepare($sql);
@@ -134,27 +135,26 @@ class PedidoDAO {
             
             if ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
                 $cliente = $this->clienteDAO->buscarPorId($row['cliente_id']);
-                
-                if(!$cliente){
-
-                }
 
                 $pedido = new Pedido(
+                    $row['id'],
                     $row['numero'],
                     $row['data_pedido'],
                     $cliente, 
-                    $row['valor_total'],      // Passando o valor_total aqui
+                    $row['valor_total'],
                     $row['data_entrega'],
-                    $row['situacao']
+                    $row['situacao'],
+                    $row['data_envio'],         // Passando data_envio
+                    $row['data_cancelamento']  // Passando data_cancelamento
                 );
-
-                $this->carregarItensPedido($pedido, $row['id']); // Passar o ID do pedido para carregarItensPedido
+                $this->carregarItensPedido($pedido, $row['id']);
                 
                 return $pedido;
             }
             
             return null;
         } catch (Exception $e) {
+            error_log("Erro em PedidoDAO->buscarPorId: " . $e->getMessage());
             throw $e;
         }
     }
@@ -220,14 +220,37 @@ class PedidoDAO {
     }
     
 
-    public function atualizarSituacao($pedidoId, $situacao) {
+    public function atualizarStatusPedido($pedidoId, $novaSituacao) {
         try {
-            $sql = "UPDATE pedidos SET situacao = :situacao WHERE id = :pedido_id";
+            $sqlUpdates = ["situacao = :novaSituacao"];
+            $params = [':pedidoId' => $pedidoId, ':novaSituacao' => $novaSituacao];
+
+            $agora = date('c');
+
+            if ($novaSituacao === 'ENVIADO') {
+
+                $sqlUpdates[] = "data_envio = :dataEnvio";
+                $params[':dataEnvio'] = $agora;
+                $sqlUpdates[] = "data_cancelamento = NULL";
+            } 
+            else if ($novaSituacao === 'ENTREGUE') {
+                $sqlUpdates[] = "data_entrega = :dataEntrega";
+                $params[':dataEntrega'] = $agora;
+            } 
+            else if ($novaSituacao === 'CANCELADO') {
+                $sqlUpdates[] = "data_cancelamento = :dataCancelamento";
+                $params[':dataCancelamento'] = $agora;
+
+            } else if ($novaSituacao === 'NOVO' || $novaSituacao === 'EM_PREPARACAO') {
+
+            }
+
+            $sql = "UPDATE pedidos SET " . implode(", ", $sqlUpdates) . " WHERE id = :pedidoId";
             $stmt = $this->pdo->prepare($sql);
-            $stmt->bindParam(':situacao', $situacao);
-            $stmt->bindParam(':pedido_id', $pedidoId);
-            return $stmt->execute();
+            return $stmt->execute($params);
+
         } catch (Exception $e) {
+            error_log("Erro em PedidoDAO->atualizarStatusPedido: " . $e->getMessage());
             throw $e;
         }
     }
