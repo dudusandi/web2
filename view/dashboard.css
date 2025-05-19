@@ -25,6 +25,14 @@ body {
     flex-shrink: 0;
 }
 
+.header .logo {
+    font-size: 24px;
+    font-weight: bold;
+    color: white;
+    text-decoration: none;
+    transition: opacity 0.3s;
+}
+
 #loading {
     color: #ff6f00; /* Cor do spinner */
 }

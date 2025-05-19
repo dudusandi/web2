@@ -44,7 +44,7 @@ try {
 </head>
 <body>
     <div class="header">
-        <div class="logo">UCS<span>express</span></div>
+        <a href="dashboard.php" class="logo">UCS<span>express</span></a>
         <div class="search-bar">
             <form id="searchForm" class="d-flex" method="GET">
                 <input type="text" id="searchInput" name="termo" placeholder="Pesquisar produtos..." value="<?= htmlspecialchars($_GET['termo'] ?? '') ?>">
