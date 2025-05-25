@@ -46,7 +46,7 @@ if ($endereco && $endereco->getEstado()) {
 </head>
 <body>
     <div class="header">
-        <div class="logo">UCS<span>express</span></div>
+        <a href="dashboard.php" class="logo">UCS<span>express</span></a>
     </div>
 
     <div class="container">

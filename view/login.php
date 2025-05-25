@@ -8,7 +8,7 @@
 </head>
 <body>
     <div class="login-container">
-        <div class="logo">UCS<span>express</span></div>
+        <a href="dashboard.php" class="logo">UCS<span>express</span></a>
     
         <?php if (isset($_GET['erro'])): ?>
             <p class="error-message">Email ou senha inválidos.</p>

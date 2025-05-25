@@ -35,7 +35,7 @@ try {
 </head>
 <body>
     <div class="header">
-        <div class="logo">UCS<span>express</span></div>
+        <a href="dashboard.php" class="logo">UCS<span>express</span></a>
         <div class="user-options">
             <span>Olá, <?= htmlspecialchars($_SESSION['usuario_nome']) ?>!</span>
             <a href="../controllers/logout_controller.php">Sair</a>

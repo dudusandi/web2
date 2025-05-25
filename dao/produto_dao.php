@@ -96,8 +96,16 @@ class ProdutoDAO {
                     LEFT JOIN estoques e ON p.estoque_id = e.id
                     LEFT JOIN fornecedores f ON p.fornecedor_id = f.id
                     WHERE LOWER(p.nome) LIKE :termo OR LOWER(p.descricao) LIKE :termo";
+            
+            if (is_numeric($termo)) {
+                $sql .= " OR p.id = :termo_id";
+            }
+
             $stmt = $this->pdo->prepare($sql);
             $stmt->bindValue(':termo', $termoPesquisa, PDO::PARAM_STR);
+            if (is_numeric($termo)) {
+                $stmt->bindValue(':termo_id', (int)$termo, PDO::PARAM_INT);
+            }
             $stmt->execute();
             return (int)$stmt->fetchColumn();
         } catch (PDOException $e) {
@@ -246,8 +254,13 @@ class ProdutoDAO {
                     FROM produtos p
                     LEFT JOIN estoques e ON p.estoque_id = e.id
                     LEFT JOIN fornecedores f ON p.fornecedor_id = f.id
-                    WHERE LOWER(p.nome) LIKE :termo OR LOWER(p.descricao) LIKE :termo
-                    ORDER BY p.id DESC";
+                    WHERE LOWER(p.nome) LIKE :termo OR LOWER(p.descricao) LIKE :termo";
+
+            if (is_numeric($termo)) {
+                $sql .= " OR p.id = :termo_id";
+            }
+            
+            $sql .= " ORDER BY p.id DESC";
             
             if ($limite !== null && $offset !== null) {
                 $sql .= " LIMIT :limite OFFSET :offset";
@@ -255,6 +268,9 @@ class ProdutoDAO {
             
             $stmt = $this->pdo->prepare($sql);
             $stmt->bindValue(':termo', $termoPesquisa, PDO::PARAM_STR);
+            if (is_numeric($termo)) {
+                $stmt->bindValue(':termo_id', (int)$termo, PDO::PARAM_INT);
+            }
 
             if ($limite !== null && $offset !== null) {
                 $stmt->bindValue(':limite', (int)$limite, PDO::PARAM_INT);

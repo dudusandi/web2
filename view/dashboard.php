@@ -381,15 +381,6 @@ try {
         }
         return true;
     }
-
-    function adicionarProdutoDoModalAoCarrinho() {
-        if (!verificarLogin()) {
-            return;
-        }
-        const quantidade = parseInt(document.getElementById('quantidadeModalProduto').value) || 1;
-        const produtoId = document.getElementById('produtoId').value;
-        carrinho.adicionarItem(produtoId, quantidade);
-    }
     </script>
     <script src="./dashboard.js"></script>
     <script src="./carrinho.js"></script>

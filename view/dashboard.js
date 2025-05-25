@@ -161,6 +161,15 @@ function adicionarProdutoDoModalAoCarrinho() {
 
     if (currentProdutoId && quantidade > 0) {
         carrinho.adicionarItem(currentProdutoId, quantidade);
+        
+        // Fechar o modal após adicionar ao carrinho
+        const modalElement = document.getElementById('produtoModal');
+        if (modalElement) {
+            const modalInstance = bootstrap.Modal.getInstance(modalElement);
+            if (modalInstance) {
+                modalInstance.hide();
+            }
+        }
     } else {
         alert('Por favor, insira uma quantidade válida.');
     }
