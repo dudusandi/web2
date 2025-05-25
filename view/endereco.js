@@ -1,8 +1,3 @@
-/**
- * Funções para manipulação de endereço
- * - Busca de CEP via ViaCEP
- * - Carregamento de cidades via IBGE
- */
 
 function inicializarEndereco() {
     $.getJSON('https://servicodados.ibge.gov.br/api/v1/localidades/estados', function(data) {

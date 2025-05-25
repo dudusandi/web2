@@ -156,8 +156,7 @@ function exibirBadgeSituacao($situacao) {
                             <?php if ($cliente): ?>
                                 <p><strong>Nome:</strong> <?= htmlspecialchars($cliente->getNome()) ?></p>
                                 <p><strong>Email:</strong> <?= htmlspecialchars($cliente->getEmail()) ?></p>
-                                <?php /* Você pode adicionar mais detalhes do cliente se o objeto Cliente tiver, 
-                                          ex: $cliente->getTelefone(), $cliente->getEndereco()->getRuaCompleta() */ ?>
+                                <?php ?>
                             <?php else: ?>
                                 <p class="text-muted">Cliente não disponível.</p>
                             <?php endif; ?>
