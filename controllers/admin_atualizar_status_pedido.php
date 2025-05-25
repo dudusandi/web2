@@ -47,4 +47,4 @@ try {
     header('Location: ../view/admin_detalhes_pedido.php?id=' . $pedidoId . '&mensagem=Erro crítico ao atualizar status: ' . urlencode($e->getMessage()) . '&tipo_mensagem=erro');
     exit;
 }
-?> 
+?>
