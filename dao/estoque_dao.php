@@ -39,7 +39,6 @@ class EstoqueDAO {
             $result = $stmt->fetch(PDO::FETCH_ASSOC);
             return $result ? $result['quantidade'] : 0;
         } catch (PDOException $e) {
-            // error_log("Erro ao buscar estoque: " . $e->getMessage());
             throw $e;
         }
     }

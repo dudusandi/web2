@@ -19,13 +19,11 @@ class Carrinho {
             if (!data.success) {
             }
 
-            // Converte o array de produtos para o formato esperado pelo carrinho
             this.itens = {};
             data.produtos.forEach(produto => {
                 this.itens[produto.id] = produto.quantidade;
             });
             
-            console.log('Carrinho carregado:', this.itens);
             this.atualizarContador();
         } catch (error) {
             this.itens = {};
@@ -75,7 +73,6 @@ class Carrinho {
             }
 
         } catch (error) {
-            console.error('Erro ao adicionar item:', error);
             this.mostrarNotificacao('Ocorreu um erro na comunicação com o servidor ao tentar adicionar o produto.', true);
         }
     }
@@ -104,7 +101,6 @@ class Carrinho {
             this.mostrarNotificacao('Produto removido do carrinho!');
             this.notificarMudanca();
         } catch (error) {
-            console.error('Erro ao remover item:', error);
             this.mostrarNotificacao('Erro ao remover produto do carrinho!', true);
         }
     }
@@ -146,7 +142,6 @@ class Carrinho {
             }
 
         } catch (error) {
-            console.error('Erro ao atualizar quantidade:', error);
             this.mostrarNotificacao('Erro de comunicação ao tentar atualizar a quantidade.', true);
             await this.carregarCarrinho();
             this.notificarMudanca();
@@ -171,7 +166,6 @@ class Carrinho {
             this.mostrarNotificacao('Carrinho limpo!');
             this.notificarMudanca();
         } catch (error) {
-            console.error('Erro ao limpar carrinho:', error);
             this.mostrarNotificacao('Erro ao limpar carrinho!', true);
         }
     }
@@ -193,7 +187,6 @@ class Carrinho {
                 contador.style.display = total > 0 ? 'inline' : 'none';
             }
         } catch (error) {
-            console.error('Erro ao atualizar contador:', error);
         }
     }
 
@@ -208,7 +201,6 @@ class Carrinho {
                 notificacao.remove();
             }, 3000);
         } catch (error) {
-            console.error('Erro ao mostrar notificação:', error);
         }
     }
 
@@ -217,16 +209,13 @@ class Carrinho {
             try {
                 this.onChange();
             } catch (error) {
-                console.error('Erro ao notificar mudança:', error);
             }
         }
     }
 }
 
-// Inicializar o carrinho
 const carrinho = new Carrinho();
 
-// Adicionar estilos para a notificação
 const style = document.createElement('style');
 style.textContent = `
     .notificacao-carrinho {

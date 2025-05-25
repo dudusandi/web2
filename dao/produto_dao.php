@@ -333,7 +333,6 @@ class ProdutoDAO {
             $produtos = [];
             while ($linha = $stmt->fetch(PDO::FETCH_ASSOC)) {
                 try {
-                    // Converte valores nulos para valores padrão
                     $linha['nome'] = $linha['nome'] ?? '';
                     $linha['descricao'] = $linha['descricao'] ?? '';
                     $linha['foto'] = $linha['foto'] ?? null;

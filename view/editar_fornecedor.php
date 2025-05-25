@@ -10,14 +10,12 @@ require_once '../dao/fornecedor_dao.php';
 require_once '../model/fornecedor.php';
 require_once '../model/endereco.php';
 
-// Verifica se o ID 
 $id = $_GET['id'] ?? null;
 if (!$id) {
     header('Location: listar_fornecedor.php?mensagem=ID do fornecedor não fornecido');
     exit;
 }
 
-// Busca o fornecedor pelo ID
 try {
     $fornecedorDAO = new FornecedorDAO(Database::getConnection());
     $fornecedor = $fornecedorDAO->buscarPorId($id);
@@ -30,7 +28,6 @@ try {
     exit;
 }
 
-// Dados do fornecedor e do endereço
 $endereco = $fornecedor->getEndereco();
 $mensagem = $_GET['mensagem'] ?? '';
 ?>
@@ -48,13 +45,11 @@ $mensagem = $_GET['mensagem'] ?? '';
     <script src="endereco.js"></script>
 </head>
 <body>
-    <!-- Cabeçalho -->
     <div class="header">
         <a href="dashboard.php" class="logo">UCS<span>express</span></a>
     </div>
 
     <div class="container">
-        <!-- Mensagens -->
         <?php if (!empty($mensagem)): ?>
             <div class="alert alert-<?php echo strpos($mensagem, 'Erro') !== false ? 'danger' : 'success'; ?> alert-dismissible fade show" role="alert">
                 <?= htmlspecialchars($mensagem, ENT_QUOTES, 'UTF-8') ?>
@@ -62,14 +57,12 @@ $mensagem = $_GET['mensagem'] ?? '';
             </div>
         <?php endif; ?>
 
-        <!-- Formulário de Edição -->
         <div class="form-section">
             <h2>Editar Fornecedor</h2>
             <form id="formFornecedor" action="../controllers/fornecedor_controller.php" method="POST">
                 <input type="hidden" name="acao" value="editar">
                 <input type="hidden" name="id" value="<?= $fornecedor->getId() ?>">
 
-                <!-- Dados do Fornecedor -->
                 <div class="mb-3">
                     <label for="nome" class="form-label">Nome *</label>
                     <input type="text" class="form-control" id="nome" name="nome" value="<?= htmlspecialchars($fornecedor->getNome(), ENT_QUOTES, 'UTF-8') ?>" required>
@@ -87,7 +80,6 @@ $mensagem = $_GET['mensagem'] ?? '';
                     <input type="email" class="form-control" id="email" name="email" value="<?= htmlspecialchars($fornecedor->getEmail(), ENT_QUOTES, 'UTF-8') ?>" required>
                 </div>
 
-                <!-- Endereço -->
                 <h5 class="mt-4">Endereço</h5>
                 <div class="row">
                     <div class="col-md-8 mb-3">
@@ -129,7 +121,6 @@ $mensagem = $_GET['mensagem'] ?? '';
                     </div>
                 </div>
 
-                <!-- Botões -->
                 <div class="d-flex justify-content-between mt-4">
                     <button type="submit" class="btn btn-primary">Salvar Alterações</button>
                     <a href="listar_fornecedor.php" class="btn btn-secondary">Voltar</a>

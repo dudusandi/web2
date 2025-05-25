@@ -5,7 +5,6 @@
  */
 
 function inicializarEndereco() {
-    // Carrega os estados ao carregar a página
     $.getJSON('https://servicodados.ibge.gov.br/api/v1/localidades/estados', function(data) {
         var items = [];
         items.push('<option value="">Selecione um estado</option>');
@@ -15,14 +14,12 @@ function inicializarEndereco() {
         });
         $('#estado').html(items.join(''));
         
-        // Se já tiver um estado selecionado, carrega as cidades
         var estadoSelecionado = $('#estado').data('selected');
         if (estadoSelecionado) {
             carregarCidades(estadoSelecionado, $('#cidade').data('selected'));
         }
     });
 
-    // Quando o estado é selecionado, carrega as cidades
     $('#estado').change(function() {
         var uf = $(this).val();
         if (uf) {
@@ -33,7 +30,6 @@ function inicializarEndereco() {
         }
     });
 
-    // Autocompletar endereço via CEP usando ViaCEP
     $('#cep').blur(function() {
         var cep = $(this).val().replace(/\D/g, '');
         if (cep.length === 8) {
@@ -43,10 +39,8 @@ function inicializarEndereco() {
                     $('#bairro').val(data.bairro);
                     $('#complemento').val(data.complemento);
                     
-                    // Primeiro atualiza o estado
                     $('#estado').val(data.uf);
                     
-                    // Depois carrega as cidades do estado
                     carregarCidades(data.uf, data.localidade);
                 } else {
                     alert('CEP não encontrado');
@@ -58,7 +52,6 @@ function inicializarEndereco() {
     });
 }
 
-// Função para carregar cidades
 function carregarCidades(uf, cidadeSelecionada = null) {
     $('#cidade').prop('disabled', false);
     $.getJSON('https://servicodados.ibge.gov.br/api/v1/localidades/estados/' + uf + '/municipios', function(data) {
@@ -72,7 +65,6 @@ function carregarCidades(uf, cidadeSelecionada = null) {
     });
 }
 
-// Inicializa quando o documento estiver pronto
 $(document).ready(function() {
     inicializarEndereco();
 }); 

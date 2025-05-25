@@ -19,7 +19,6 @@ class Endereco {
         $this->estado = $estado;
     }
     
-    // Getters
     public function getRua() {
         return $this->rua;
     }
@@ -48,7 +47,6 @@ class Endereco {
         return $this->estado;
     }
     
-    // Setters
     public function setRua($rua) {
         $this->rua = $rua;
     }

@@ -15,7 +15,6 @@ class FornecedorController {
         return !empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) == 'xmlhttprequest';
     }
 
-    //Cadastra um novo fornecedor
     public function cadastrarFornecedor($nome, $descricao, $telefone, $email, $rua, $numero, $complemento, $bairro, $cep, $cidade, $estado) {
         try {
             if (empty($nome) || empty($email)) {

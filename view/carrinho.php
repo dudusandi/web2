@@ -61,7 +61,6 @@ try {
                         </tr>
                     </thead>
                     <tbody id="itens-carrinho">
-                        <!-- Itens serão inseridos aqui via JavaScript -->
                     </tbody>
                     <tfoot>
                         <tr>
@@ -85,7 +84,6 @@ try {
             </div>
         </div>
 
-        <!-- Modal de confirmação do pedido -->
         <div class="modal fade" id="modalConfirmacao" tabindex="-1" aria-hidden="true">
             <div class="modal-dialog">
                 <div class="modal-content">
@@ -107,7 +105,6 @@ try {
             </div>
         </div>
 
-        <!-- Modal de sucesso do pedido -->
         <div class="modal fade" id="modalSucesso" tabindex="-1" aria-hidden="true">
             <div class="modal-dialog">
                 <div class="modal-content">
@@ -135,45 +132,31 @@ try {
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script src="carrinho.js"></script>
     <script>
-        // Função para atualizar a interface do carrinho
         function atualizarInterfaceCarrinho() {
             const itens = carrinho.obterItens();
             const tbody = document.getElementById('itens-carrinho');
             const carrinhoVazio = document.getElementById('carrinho-vazio');
             const carrinhoItens = document.getElementById('carrinho-itens');
             
-            console.log('Atualizando interface do carrinho...');
-            console.log('Itens no carrinho:', itens);
-            
-            // Buscar detalhes do carrinho diretamente do controller do carrinho
             fetch('../controllers/carrinho.php?json=1')
                 .then(response => {
-                    console.log('Resposta recebida do servidor:', response);
-                    
                     if (!response.ok) {
                         throw new Error(`Erro na requisição: ${response.status} ${response.statusText}`);
                     }
                     
                     return response.text().then(text => {
-                        console.log('Texto da resposta:', text);
-                        
                         if (!text || text.trim() === '') {
                             throw new Error('Resposta vazia recebida do servidor');
                         }
                         
                         try {
-                            // Tentar analisar o JSON
                             return JSON.parse(text);
                         } catch (error) {
-                            console.error('Erro ao analisar JSON:', error);
-                            console.error('Texto recebido:', text);
                             throw new Error('Resposta inválida do servidor: ' + error.message);
                         }
                     });
                 })
                 .then(data => {
-                    console.log('Resposta do servidor:', data);
-                    
                     if (!data.success) {
                         throw new Error(data.erro || 'Erro ao buscar produtos');
                     }
@@ -183,13 +166,11 @@ try {
                     let total = data.total || 0;
 
                     if (!produtos || produtos.length === 0) {
-                        console.log('Nenhum produto no carrinho');
                         carrinhoVazio.style.display = 'block';
                         carrinhoItens.style.display = 'none';
                         return;
                     }
 
-                    console.log('Exibindo', produtos.length, 'produtos no carrinho');
                     carrinhoVazio.style.display = 'none';
                     carrinhoItens.style.display = 'block';
 
@@ -223,7 +204,6 @@ try {
                         `<strong>R$ ${parseFloat(total).toFixed(2)}</strong>`;
                 })
                 .catch(error => {
-                    console.error('Erro ao buscar produtos:', error);
                     carrinhoVazio.style.display = 'block';
                     carrinhoItens.style.display = 'none';
                     alert('Erro ao carregar produtos do carrinho: ' + error.message);
@@ -231,22 +211,17 @@ try {
         }
 
         document.addEventListener('DOMContentLoaded', function() {
-            // Garantir que a interface seja atualizada assim que a página carregar
             atualizarInterfaceCarrinho();
             
-            // Atualizar interface quando o carrinho mudar
             carrinho.onChange = atualizarInterfaceCarrinho;
             
-            // Configurar o botão de confirmação do pedido
             document.getElementById('btn-confirmar-pedido').addEventListener('click', function() {
                 const modalConfirmacao = bootstrap.Modal.getInstance(document.getElementById('modalConfirmacao'));
                 modalConfirmacao.hide();
                 
-                // Exibir indicador de carregamento
                 this.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Processando...';
                 this.disabled = true;
                 
-                // Enviar pedido para o servidor
                 fetch('../controllers/finalizar_pedido.php', {
                     method: 'POST', 
                     headers: {
@@ -254,50 +229,39 @@ try {
                     }
                 })
                 .then(response => {
-                    console.log('Resposta recebida do servidor:', response);
-                    
                     if (!response.ok) {
                         throw new Error(`Erro na requisição: ${response.status} ${response.statusText}`);
                     }
                     
                     return response.text().then(text => {
-                        console.log('Texto da resposta:', text);
-                        
                         if (!text || text.trim() === '') {
                             throw new Error('Resposta vazia recebida do servidor');
                         }
                         
                         try {
-                            // Tentar analisar o JSON
                             return JSON.parse(text);
                         } catch (error) {
-                            console.error('Erro ao analisar JSON:', error);
-                            console.error('Texto recebido:', text);
                             throw new Error('Resposta inválida do servidor: ' + error.message);
                         }
                     });
                 })
                 .then(data => {
-                    // Resetar o botão
                     this.innerHTML = '<i class="bi bi-check-circle"></i> Confirmar Pedido';
                     this.disabled = false;
                     
                     if (data.success) {
-                        // Exibir modal de sucesso
                         document.getElementById('numero-pedido').textContent = data.pedido.numero;
                         document.getElementById('valor-total').textContent = `R$ ${data.pedido.valor_total}`;
                         
                         const modalSucesso = new bootstrap.Modal(document.getElementById('modalSucesso'));
                         modalSucesso.show();
                         
-                        // Atualizar interface do carrinho
                         atualizarInterfaceCarrinho();
                     } else {
                         alert(data.mensagem || 'Erro ao finalizar pedido');
                     }
                 })
                 .catch(error => {
-                    console.error('Erro ao finalizar pedido:', error);
                     this.innerHTML = '<i class="bi bi-check-circle"></i> Confirmar Pedido';
                     this.disabled = false;
                     alert('Erro ao finalizar pedido: ' + error.message);
@@ -305,9 +269,7 @@ try {
             });
         });
 
-        // Função para finalizar compra
         function finalizarCompra() {
-            // Buscar detalhes do carrinho para o modal
             fetch('../controllers/carrinho.php?json=1')
                 .then(response => response.json())
                 .then(data => {
@@ -316,16 +278,13 @@ try {
                         return;
                     }
                     
-                    // Atualizar informações no modal
                     document.getElementById('qtd-itens').textContent = data.produtos.length;
                     document.getElementById('total-modal').textContent = `R$ ${parseFloat(data.total).toFixed(2)}`;
                     
-                    // Exibir modal de confirmação
                     const modalConfirmacao = new bootstrap.Modal(document.getElementById('modalConfirmacao'));
                     modalConfirmacao.show();
                 })
                 .catch(error => {
-                    console.error('Erro ao preparar compra:', error);
                     alert('Erro ao preparar compra. Tente novamente.');
                 });
         }

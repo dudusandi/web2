@@ -62,7 +62,6 @@ class FornecedorDAO {
             $result = $stmt->fetch(PDO::FETCH_ASSOC);
             return $result ? $result['nome'] : 'Desconhecido';
         } catch (PDOException $e) {
-            // error_log("Erro ao buscar fornecedor: " . $e->getMessage());
             throw $e;
         }
     }
@@ -292,7 +291,6 @@ class FornecedorDAO {
 
     public function removerFornecedor($id) {
         try {
-            // Verificar se o fornecedor está associado a produtos
             $sqlCheckProdutos = "SELECT COUNT(*) FROM produtos WHERE fornecedor_id = :id";
             $stmtCheckProdutos = $this->pdo->prepare($sqlCheckProdutos);
             $stmtCheckProdutos->bindParam(":id", $id, PDO::PARAM_INT);

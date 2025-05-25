@@ -96,7 +96,6 @@ try {
                                 <strong>Situação:</strong>
                                 <span class="badge
                                     <?php
-                                    // Este switch define a cor do badge
                                     switch($pedido->getsituacao()) {
                                         case 'NOVO': echo 'bg-primary'; break;
                                         case 'EM_PREPARACAO': echo 'bg-warning'; break; // Classe para EM_PREPARACAO
@@ -106,14 +105,14 @@ try {
                                         default: echo 'bg-secondary';
                                     }
                                     ?>">
-                                    <?php // Este é o bloco para o TEXTO do badge
+                                    <?php 
                                     $statusBruto = $pedido->getsituacao();
                                     $statusExibicao = '';
                                     switch ($statusBruto) {
                                         case 'NOVO':
                                             $statusExibicao = 'Novo';
                                             break;
-                                        case 'EM_PREPARACAO': // Case para o texto EM_PREPARACAO
+                                        case 'EM_PREPARACAO': 
                                             $statusExibicao = 'Em Preparação';
                                             break;
                                         case 'ENVIADO':

@@ -10,7 +10,6 @@ require_once '../dao/fornecedor_dao.php';
 require_once '../model/fornecedor.php';
 require_once '../model/endereco.php';
 
-// Inicialização de variáveis para mensagens
 $mensagem = $_GET['mensagem'] ?? '';
 $tipoMensagem = $_GET['tipo_mensagem'] ?? '';
 $campoErro = $_GET['campo'] ?? '';
@@ -36,13 +35,11 @@ try {
     <script src="endereco.js"></script>
 </head>
 <body>
-    <!-- Cabeçalho -->
     <div class="header">
         <a href="dashboard.php" class="logo">UCS<span>express</span></a>
     </div>
 
     <div class="container">
-        <!-- Mensagens -->
         <?php if (!empty($mensagem)): ?>
             <div class="alert alert-<?php echo $tipoMensagem === 'erro' ? 'danger' : 'success'; ?> alert-dismissible fade show" role="alert">
                 <?= htmlspecialchars($mensagem, ENT_QUOTES, 'UTF-8') ?>
@@ -50,7 +47,6 @@ try {
             </div>
         <?php endif; ?>
 
-        <!-- Formulário -->
         <div class="form-section mt-4">
             <h2 class="mb-4">Cadastro de Fornecedor</h2>
 

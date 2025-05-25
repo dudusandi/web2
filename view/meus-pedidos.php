@@ -13,7 +13,6 @@ try {
     $pedidoDao = new PedidoDAO($pdo);
     $clienteId = $_SESSION['usuario_id'];
     
-    // Buscar pedidos do cliente
     $pedidos = $pedidoDao->listarPedidosCliente($clienteId);
     
 } catch (Exception $e) {

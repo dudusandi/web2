@@ -1,7 +1,6 @@
 <?php
 session_start();
 
-// Verificar se o usuário é administrador e se a requisição é POST
 if (!isset($_SESSION['usuario_id']) || !isset($_SESSION['is_admin']) || $_SESSION['is_admin'] !== true) {
     header('Location: ../view/login.php');
     exit;

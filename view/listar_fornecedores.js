@@ -3,7 +3,6 @@ let carregando = false;
 let termoBusca = '';
 let observer;
 
-// Função para criar o card do fornecedor
 function criarCardFornecedor(fornecedor) {
     return `
         <div class="col">
@@ -33,7 +32,6 @@ function criarCardFornecedor(fornecedor) {
     `;
 }
 
-// Função para carregar fornecedores
 async function carregarFornecedores(resetar = false) {
     if (carregando) return;
     carregando = true;
@@ -88,7 +86,6 @@ async function carregarFornecedores(resetar = false) {
     }
 }
 
-// Configurar o Intersection Observer
 function configurarObserver() {
     const options = {
         root: null,
@@ -107,7 +104,6 @@ function configurarObserver() {
     observer.observe(document.getElementById('loadingIndicator'));
 }
 
-// Função de debounce para a busca
 function debounce(func, wait) {
     let timeout;
     return function executedFunction(...args) {
@@ -120,7 +116,6 @@ function debounce(func, wait) {
     };
 }
 
-// Configurar eventos
 document.addEventListener('DOMContentLoaded', () => {
     configurarObserver();
     carregarFornecedores();

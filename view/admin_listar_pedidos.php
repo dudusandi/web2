@@ -1,8 +1,7 @@
 <?php
 session_start();
-// Verificar se o usuário é administrador
 if (!isset($_SESSION['usuario_id']) || !isset($_SESSION['is_admin']) || $_SESSION['is_admin'] !== true) {
-    header('Location: ../view/login.php'); // Redireciona para login se não for admin
+    header('Location: ../view/login.php');
     exit;
 }
 
@@ -13,17 +12,16 @@ $mensagem = $_GET['mensagem'] ?? '';
 $tipoMensagem = $_GET['tipo_mensagem'] ?? '';
 
 $paginaAtual = isset($_GET['pagina']) ? max(1, (int)$_GET['pagina']) : 1;
-$itensPorPagina = 15; // Pode ajustar conforme necessário
-$termoBusca = $_GET['busca'] ?? ''; // Novo: Captura o termo de busca
+$itensPorPagina = 15; 
+$termoBusca = $_GET['busca'] ?? ''; 
 
 $pdo = null;
 try {
     $pdo = Database::getConnection();
     $pedidoDao = new PedidoDAO($pdo);
-    // Modificado: Passar termo de busca para o DAO
     $resultado = $pedidoDao->listarTodosPedidos($paginaAtual, $itensPorPagina, $termoBusca);
     $pedidos = $resultado['pedidos'];
-    $totalPedidos = $resultado['total']; // Este total agora reflete a busca
+    $totalPedidos = $resultado['total']; 
     $totalPaginas = ceil($totalPedidos / $itensPorPagina);
 } catch (Exception $e) {
     error_log("Erro ao buscar todos os pedidos (admin): " . $e->getMessage());
@@ -40,7 +38,7 @@ function formatarData($data) {
         $dt = new DateTime($data);
         return $dt->format('d/m/Y H:i:s');
     } catch (Exception $e) {
-        return $data; // Retorna a data original se houver erro na formatação
+        return $data; 
     }
 }
 
@@ -68,7 +66,7 @@ function badgeSituacao($situacao) {
     <title>Administração de Pedidos - UcsExpress</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
-    <link rel="stylesheet" href="dashboard.css"> <!-- Pode reutilizar ou criar um CSS específico -->
+    <link rel="stylesheet" href="dashboard.css"> 
     <style>
         .table th, .table td {
             vertical-align: middle;
@@ -90,7 +88,6 @@ function badgeSituacao($situacao) {
     <div class="container mt-4">
         <h2>Todos os Pedidos (<?= $totalPedidos ?>)</h2>
 
-        <!-- Formulário de Busca Adicionado -->
         <form method="GET" action="admin_listar_pedidos.php" class="mb-3">
             <div class="input-group">
                 <input type="text" name="busca" class="form-control" placeholder="Buscar por Nº Pedido ou Nome do Cliente" value="<?= htmlspecialchars($termoBusca) ?>">
@@ -111,7 +108,6 @@ function badgeSituacao($situacao) {
         <?php if (empty($pedidos) && $tipoMensagem !== 'erro'): ?>
             <div class="alert alert-info">Nenhum pedido encontrado.</div>
         <?php elseif (!empty($pedidos)): ?>
-            <!-- Container para atualização AJAX -->
             <div id="pedidos-list-container">
                 <div class="table-responsive">
                     <table class="table table-striped table-hover">
@@ -149,7 +145,6 @@ function badgeSituacao($situacao) {
                     </table>
                 </div>
 
-                <!-- Paginação -->
                 <?php if ($totalPaginas > 1): ?>
                     <nav aria-label="Paginação de pedidos">
                         <ul class="pagination justify-content-center">
@@ -161,7 +156,7 @@ function badgeSituacao($situacao) {
                         </ul>
                     </nav>
                 <?php endif; ?>
-            </div> <!-- Fim de #pedidos-list-container -->
+            </div>
         <?php endif; ?>
     </div>
 
@@ -172,14 +167,11 @@ function badgeSituacao($situacao) {
             const campoBusca = document.querySelector('input[name="busca"]');
 
             function carregarPedidos() {
-                // Pega o termo de busca atual do input
                 const termoBuscaAtual = campoBusca ? campoBusca.value : '';
                 
-                // Pega a página atual da URL da página principal
                 const urlParams = new URLSearchParams(window.location.search);
                 const paginaAtual = urlParams.get('pagina') || '1';
 
-                // Constrói a URL para a requisição AJAX
                 const url = `ajax_carregar_pedidos.php?busca=${encodeURIComponent(termoBuscaAtual)}&pagina=${paginaAtual}`;
 
                 fetch(url)
@@ -187,7 +179,7 @@ function badgeSituacao($situacao) {
                         if (!response.ok) {
                             throw new Error('Falha na requisição de rede: ' + response.statusText);
                         }
-                        return response.text(); // Espera HTML como texto
+                        return response.text(); 
                     })
                     .then(html => {
                         if (pedidosListContainer) {
@@ -196,14 +188,11 @@ function badgeSituacao($situacao) {
                     })
                     .catch(error => {
                         console.error('Erro ao carregar lista de pedidos via AJAX:', error);
-                        // Opcional: exibir uma mensagem de erro no container
                         if (pedidosListContainer) {
-                            // pedidosListContainer.innerHTML = '<div class="alert alert-danger">Erro ao atualizar a lista. Tente recarregar a página.</div>';
                         }
                     });
             }
 
-            // Carrega os pedidos a cada 5 segundos
             setInterval(carregarPedidos, 5000);
         });
     </script>

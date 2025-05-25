@@ -42,7 +42,7 @@ try {
     }
 
 } catch (Exception $e) {
-    http_response_code(500); // Internal Server Error
+    http_response_code(500); 
     error_log("Erro na API de Pedidos (api/pedidos.php): " . $e->getMessage());
     $response = [
         'success' => false, 

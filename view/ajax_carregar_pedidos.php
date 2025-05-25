@@ -44,7 +44,7 @@ if (!function_exists('badgeSituacao')) {
 }
 
 $paginaAtual = isset($_GET['pagina']) ? max(1, (int)$_GET['pagina']) : 1;
-$itensPorPagina = 15; // Deve ser o mesmo que na página principal
+$itensPorPagina = 15; 
 $termoBusca = $_GET['busca'] ?? '';
 
 $pedidos = [];

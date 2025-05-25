@@ -12,7 +12,6 @@ try {
     $produtoDao = new ProdutoDAO($pdo);
     $fornecedorDao = new FornecedorDAO($pdo); 
 
-    // Busca lista de fornecedores
     $fornecedores = [];
     try {
         $fornecedores = $fornecedorDao->listarFornecedores();
@@ -22,7 +21,6 @@ try {
         $tipoMensagem = 'erro';
     }
 
-    // Mensagens
     $mensagem = $_GET['mensagem'] ?? '';
     $tipoMensagem = $_GET['tipo_mensagem'] ?? '';
 } catch (Exception $e) {
@@ -65,7 +63,6 @@ try {
             </a>
         </div>
     </div>
-    <!-- Menu com visualização apenas para o admin -->
     <div class="nav-bar">
         <?php if (isset($_SESSION['is_admin']) && $_SESSION['is_admin'] === true): ?>
             <a href="admin_listar_pedidos.php" class="btn btn-outline-warning">
@@ -86,9 +83,7 @@ try {
         </a>
     </div>
 
-    <!-- Seção de Produtos -->
     <div class="products-section container">
-        <!-- Mensagens -->
         <?php if (!empty($mensagem)): ?>
             <div class="alert alert-<?= $tipoMensagem === 'erro' ? 'danger' : 'success' ?> alert-dismissible fade show" role="alert">
                 <?= htmlspecialchars($mensagem, ENT_QUOTES, 'UTF-8') ?>
@@ -96,7 +91,6 @@ try {
             </div>
         <?php endif; ?>
 
-        <!-- Listagem -->
         <div id="produtosContainer">
             <?php
             try {
@@ -107,9 +101,7 @@ try {
 
                 $termo = $_GET['termo'] ?? '';
                 
-                // Buscar produtos paginados
                 $produtos = $produtoDao->buscarProdutos($termo, $itensPorPagina, $offset);
-                // Contar total de produtos para o termo (sem paginação)
                 $totalProdutos = $produtoDao->contarProdutosBuscados($termo);
                 $totalPaginas = ceil($totalProdutos / $itensPorPagina);
 
@@ -154,12 +146,10 @@ try {
                     }
                     echo '</div>';
 
-                    // Renderizar controles de paginação
                     if ($totalPaginas > 1) {
                         echo '<nav aria-label="Paginação de produtos" class="mt-4">';
                         echo '<ul class="pagination justify-content-center">';
 
-                        // Botão Anterior
                         if ($paginaAtual > 1) {
                             $linkAnterior = '?pagina=' . ($paginaAtual - 1) . ($termo ? '&termo=' . urlencode($termo) : '');
                             echo '<li class="page-item"><a class="page-link" href="' . $linkAnterior . '">Anterior</a></li>';
@@ -167,7 +157,6 @@ try {
                             echo '<li class="page-item disabled"><span class="page-link">Anterior</span></li>';
                         }
 
-                        // Links das páginas
                         for ($i = 1; $i <= $totalPaginas; $i++) {
                             $linkPagina = '?pagina=' . $i . ($termo ? '&termo=' . urlencode($termo) : '');
                             if ($i == $paginaAtual) {
@@ -177,7 +166,6 @@ try {
                             }
                         }
 
-                        // Botão Próximo
                         if ($paginaAtual < $totalPaginas) {
                             $linkProximo = '?pagina=' . ($paginaAtual + 1) . ($termo ? '&termo=' . urlencode($termo) : '');
                             echo '<li class="page-item"><a class="page-link" href="' . $linkProximo . '">Próximo</a></li>';
@@ -196,7 +184,6 @@ try {
         </div>
     </div>
 
-    <!-- Modal de Detalhes -->
     <div class="modal fade" id="produtoModal" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-lg">
             <div class="modal-content">
@@ -279,7 +266,6 @@ try {
         </div>
     </div>
 
-    <!-- Modal de Confirmação de Exclusão -->
     <div class="modal fade" id="confirmModal" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog">
             <div class="modal-content">
@@ -298,7 +284,6 @@ try {
         </div>
     </div>
 
-    <!-- Modal de Cadastro de Produto -->
     <div class="modal fade" id="cadastroProdutoModal" tabindex="-1" aria-labelledby="cadastroProdutoModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-lg">
             <div class="modal-content">
@@ -373,7 +358,6 @@ try {
     function verificarLogin() {
         if (!window.usuarioLogadoId) {
             if (confirm('Você precisa estar logado para adicionar produtos ao carrinho. Deseja fazer login agora?')) {
-                // Salvar a URL atual para retornar após o login
                 localStorage.setItem('returnUrl', window.location.href);
                 window.location.href = 'login.php';
             }
@@ -385,7 +369,6 @@ try {
     <script src="./dashboard.js"></script>
     <script src="./carrinho.js"></script>
     <script>
-        // Preencher select de fornecedores
         document.addEventListener('DOMContentLoaded', function() {
             const fornecedorSelect = document.getElementById('fornecedor');
             if (window.fornecedores && window.fornecedores.length > 0) {
@@ -406,18 +389,6 @@ try {
                 document.getElementById('produtoFoto').src = 'https://via.placeholder.com/200';
             }
         }
-
-        // Debug dos formulários de adicionar ao carrinho
-        document.querySelectorAll('form[action="carrinho.php"]').forEach(form => {
-            form.addEventListener('submit', function(e) {
-                console.log('Formulário enviado:', {
-                    acao: this.querySelector('[name="acao"]').value,
-                    produto_id: this.querySelector('[name="produto_id"]').value,
-                    quantidade: this.querySelector('[name="quantidade"]').value,
-                    redirect: this.querySelector('[name="redirect"]').value
-                });
-            });
-        });
     </script>
 </body>
 </html>

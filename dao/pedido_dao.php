@@ -68,7 +68,6 @@ class PedidoDAO {
                 $quantidadePedida = (int)$item['quantidade'];
                 $precoUnitario = (float)$item['preco'];
                 
-                // Buscar produto para verificar estoque
                 $produto = $this->produtoDAO->buscarPorId($produtoId);
                 if (!$produto) {
                     throw new Exception("Produto com ID {$produtoId} não encontrado no estoque.");
@@ -144,8 +143,8 @@ class PedidoDAO {
                     $row['valor_total'],
                     $row['data_entrega'],
                     $row['situacao'],
-                    $row['data_envio'],         // Passando data_envio
-                    $row['data_cancelamento']  // Passando data_cancelamento
+                    $row['data_envio'],        
+                    $row['data_cancelamento']  
                 );
                 $this->carregarItensPedido($pedido, $row['id']);
                 

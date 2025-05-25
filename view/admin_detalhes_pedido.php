@@ -7,7 +7,7 @@ if (!isset($_SESSION['usuario_id']) || !isset($_SESSION['is_admin']) || $_SESSIO
 
 require_once __DIR__ . '/../config/database.php';
 require_once __DIR__ . '/../dao/pedido_dao.php';
-require_once __DIR__ . '/../model/pedido.php'; // Para type hinting e instanceof
+require_once __DIR__ . '/../model/pedido.php'; 
 require_once __DIR__ . '/../model/item_pedido.php';
 require_once __DIR__ . '/../model/produto.php';
 
@@ -129,7 +129,7 @@ function exibirBadgeSituacao($situacao) {
                         <div class="card-header">Alterar Situação do Pedido</div>
                         <div class="card-body">
                             <form action="../controllers/admin_atualizar_status_pedido.php" method="POST">
-                                <input type="hidden" name="pedido_id" value="<?= $pedido->getId() // Corrigido para usar o ID numérico ?>">
+                                <input type="hidden" name="pedido_id" value="<?= $pedido->getId() ?>">
                                 <div class="mb-3">
                                     <label for="nova_situacao" class="form-label">Nova Situação:</label>
                                     <select name="nova_situacao" id="nova_situacao" class="form-select">
@@ -192,17 +192,14 @@ function exibirBadgeSituacao($situacao) {
                                         if ($produtoDoItem && method_exists($produtoDoItem, 'getFoto')) {
                                             $fotoData = $produtoDoItem->getFoto();
                                             if ($fotoData) {
-                                                if (is_resource($fotoData)) { // Para PostgreSQL bytea
+                                                if (is_resource($fotoData)) { 
                                                     $fotoData = stream_get_contents($fotoData);
                                                 }
-                                                // Se já não for base64 (ex: se o DAO já tratar isso), não precisa re-encodar.
-                                                // Assumindo que getFoto() retorna os dados binários ou string base64.
-                                                // Se for binário, precisa de base64_encode. Se já for string base64, não.
-                                                // Para simplificar, vamos assumir que precisamos encodar se não for uma string já formatada.
+                                        
                                                 if (strpos($fotoData, 'data:image') !== 0) {
                                                     $fotoBase64 = 'data:image/jpeg;base64,' . base64_encode($fotoData);
                                                 } else {
-                                                    $fotoBase64 = $fotoData; // Já está em formato data URL
+                                                    $fotoBase64 = $fotoData; 
                                                 }
                                             }
                                         }
