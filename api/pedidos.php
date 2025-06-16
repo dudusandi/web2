@@ -7,7 +7,7 @@ if (!isset($_SESSION['usuario_id']) || !isset($_SESSION['is_admin']) || $_SESSIO
     http_response_code(403); 
     echo json_encode([
         'success' => false, 
-        'error' => 'Com grandes poderes, vem grandes responsabilidades. Mas você não tem poder aqui.'
+        'error' => 'Com grandes poderes, vem grandes responsabilidades. Mas voce nao ta logado....'
     ]);
     exit;
 }
